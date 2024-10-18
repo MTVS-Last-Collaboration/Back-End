@@ -6,6 +6,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -16,6 +17,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 
 @Component
+@Slf4j
 public class JwtTokenFilter extends OncePerRequestFilter {
 
     private final JwtTokenProvider jwtTokenProvider;
@@ -32,17 +34,17 @@ public class JwtTokenFilter extends OncePerRequestFilter {
 
         if (token != null) {
             try {
-                // 액세스 토큰 유효성 검사
                 jwtTokenProvider.validateAccessToken(token);
-
                 String email = jwtTokenProvider.getEmailFromToken(token);
                 var userDetails = userDetailsService.loadUserByUsername(email);
 
                 var authentication = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(authentication);
+                log.debug("인증 성공 - 이메일: {}", maskEmail(email));
             } catch (InvalidAccessTokenException e) {
-                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Access Token is invalid or expired.");
+                log.warn("유효하지 않은 액세스 토큰: {}", e.getMessage());
+                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "액세스 토큰이 유효하지 않거나 만료되었습니다.");
                 return;
             }
         }
@@ -56,5 +58,10 @@ public class JwtTokenFilter extends OncePerRequestFilter {
             return bearerToken.substring(7);
         }
         return null;
+    }
+
+    private String maskEmail(String email) {
+        String[] parts = email.split("@");
+        return parts[0].substring(0, Math.min(3, parts[0].length())) + "***@" + parts[1];
     }
 }

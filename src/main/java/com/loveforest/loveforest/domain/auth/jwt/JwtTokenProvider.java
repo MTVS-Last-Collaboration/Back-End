@@ -19,12 +19,15 @@ public class JwtTokenProvider {
 
     private final SecretKey secretKey;
     private final long ACCESS_TOKEN_EXPIRATION_TIME = 1000 * 60 * 15;  // 액세스 토큰: 15분
-    private final long REFRESH_TOKEN_EXPIRATION_TIME = 1000 * 60 * 60 * 24 * 7;  // 리프레시 토큰: 7일
+    private final long refreshTokenExpirationTime;
 
     // secret 값을 주입
-    public JwtTokenProvider(@Value("${jwt.secret}") String secret) {
-        this.secretKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));  // SecretKey 생성
-
+    public JwtTokenProvider(
+            @Value("${jwt.secret}") String secret,
+            @Value("${jwt.refresh-token-expiration}") long refreshTokenExpiration
+    ) {
+        this.secretKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
+        this.refreshTokenExpirationTime = refreshTokenExpiration * 1000; // 밀리초로 변환
     }
 
     /**
@@ -48,7 +51,7 @@ public class JwtTokenProvider {
      */
     public String createRefreshToken(String email) {
         log.info("리프레시 토큰 생성 요청 - 이메일: {}", email);
-        return createToken(email, REFRESH_TOKEN_EXPIRATION_TIME);
+        return createToken(email, refreshTokenExpirationTime);
     }
 
     /**

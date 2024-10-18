@@ -33,6 +33,11 @@ public class UserService {
         this.refreshTokenRepository = refreshTokenRepository;
     }
 
+    private String maskEmail(String email) {
+        String[] parts = email.split("@");
+        return parts[0].substring(0, Math.min(3, parts[0].length())) + "***@" + parts[1];
+    }
+
     /**
      * 회원가입 처리 메서드
      *
@@ -42,20 +47,21 @@ public class UserService {
      * @explain 회원가입 시 이메일 중복 확인 후 비밀번호를 암호화하여 새로운 사용자로 등록한다.
      */
     public User signUp(UserSignupRequestDTO request) {
-        log.info("회원가입 요청 - 이메일: {}", request.getEmail());
+        String maskedEmail = maskEmail(request.getEmail());
+        log.info("회원가입 요청 - 이메일: {}", maskedEmail);
 
         if (userRepository.existsByEmail(request.getEmail())) {
-            log.warn("중복된 이메일로 회원가입 시도 - 이메일: {}", request.getEmail());
+            log.warn("중복된 이메일로 회원가입 시도 - 이메일: {}", maskedEmail);
             throw new EmailAlreadyExistsException();
         }
 
         // 비밀번호 암호화
         String encodedPassword = passwordEncoder.encode(request.getPassword());
-        log.debug("비밀번호 암호화 완료 - 이메일: {}", request.getEmail());
+        log.debug("비밀번호 암호화 완료 - 이메일: {}", maskedEmail);
 
         // 새로운 유저 생성
         User user = new User(request.getEmail(), request.getUsername(), encodedPassword, request.getNickname());
-        log.info("새로운 유저 생성 완료 - 이메일: {}", request.getEmail());
+        log.info("새로운 사용자 생성 완료 - 이메일: {}", maskedEmail);
 
         // 유저 저장
         return userRepository.save(user);
@@ -73,30 +79,33 @@ public class UserService {
      * @explain 사용자 로그인 시 이메일과 비밀번호를 확인한 후, 유효할 경우 액세스 토큰과 리프레시 토큰을 발급하여 반환합니다.
      */
     public Map<String, String> login(String email, String password) {
-        log.info("로그인 요청 - 이메일: {}", email);
+        String maskedEmail = maskEmail(email);
+        log.info("사용자 동작: {}, 상태: {}, 이메일: {}", "로그인", "시도", maskedEmail);
+        
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> {
-                    log.warn("존재하지 않는 이메일로 로그인 시도 - 이메일: {}", email);
+                    log.warn("존재하지 않는 이메일로 로그인 시도 - 이메일: {}", maskedEmail);
                     return new UserNotFoundException();
                 });
 
         if (!passwordEncoder.matches(password, user.getPassword())) {
-            log.warn("비밀번호 불일치 - 이메일: {}", email);
+            log.warn("비밀번호 불일치 - 이메일: {}", maskedEmail);
             throw new InvalidPasswordException();
         }
 
         // 액세스 토큰과 리프레시 토큰 발급
         String accessToken = jwtTokenProvider.createAccessToken(user.getEmail());
         String refreshToken = jwtTokenProvider.createRefreshToken(user.getEmail());
-        log.info("토큰 발급 완료 - 이메일: {}", email);
+        log.info("토큰 발급 완료 - 이메일: {}", maskedEmail);
 
         // 리프레시 토큰을 Redis에 저장
         refreshTokenRepository.saveRefreshToken(user.getEmail(), refreshToken);
-        log.debug("리프레시 토큰 저장 완료 - 이메일: {}", email);
+        log.debug("리프레시 토큰 저장 완료 - 이메일: {}", maskedEmail);
 
         Map<String, String> tokens = new HashMap<>();
         tokens.put("accessToken", accessToken);
         tokens.put("refreshToken", refreshToken);
+        log.info("사용자 동작: {}, 상태: {}, 이메일: {}", "로그인", "성공", maskedEmail);
         return tokens;
     }
 

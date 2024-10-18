@@ -10,11 +10,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import lombok.extern.slf4j.Slf4j;
 
 import java.time.LocalDateTime;
 
 
 @RestControllerAdvice
+@Slf4j
 public class GlobalExceptionHandler {
 
     // 400 BadRequest 관련 예외 처리
@@ -48,6 +50,7 @@ public class GlobalExceptionHandler {
     // 커스텀 예외 처리 (기타 공통 예외 처리)
     @ExceptionHandler(CustomException.class)
     public ResponseEntity<ErrorResponse> handleCustomException(CustomException ex) {
+        log.error("커스텀 예외 발생: {}", ex.getMessage(), ex);
         return buildErrorResponse(ex.getErrorCode().getStatus(), ex.getErrorCode().getErrorType(), ex.getErrorCode().getDescription());
     }
 
@@ -58,13 +61,15 @@ public class GlobalExceptionHandler {
         ex.getBindingResult().getFieldErrors().forEach(error ->
                 message.append(String.format("[%s: %s] ", error.getField(), error.getDefaultMessage()))
         );
-        return buildErrorResponse(HttpStatus.BAD_REQUEST, "Validation Error", message.toString());
+        log.warn("유효성 검사 실패: {}", message);
+        return buildErrorResponse(HttpStatus.BAD_REQUEST, "유효성 검사 오류", message.toString());
     }
 
     // 일반적인 예외 처리
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGeneralException(Exception ex) {
-        return buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "Server Error", "서버에 문제가 발생했습니다.");
+        log.error("예상치 못한 예외 발생: ", ex);
+        return buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "서버 오류", "서버에 문제가 발생했습니다.");
     }
 
     // 공통적으로 ErrorResponse를 생성하는 메서드

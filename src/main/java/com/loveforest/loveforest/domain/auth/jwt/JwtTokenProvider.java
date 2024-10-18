@@ -18,15 +18,16 @@ import java.util.Date;
 public class JwtTokenProvider {
 
     private final SecretKey secretKey;
-    private final long ACCESS_TOKEN_EXPIRATION_TIME = 1000 * 60 * 15;  // 액세스 토큰: 15분
+    private final long accessTokenExpirationTime;
     private final long refreshTokenExpirationTime;
 
-    // secret 값을 주입
     public JwtTokenProvider(
             @Value("${jwt.secret}") String secret,
+            @Value("${jwt.access-token-expiration}") long accessTokenExpiration,
             @Value("${jwt.refresh-token-expiration}") long refreshTokenExpiration
     ) {
         this.secretKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
+        this.accessTokenExpirationTime = accessTokenExpiration * 1000; // 밀리초로 변환
         this.refreshTokenExpirationTime = refreshTokenExpiration * 1000; // 밀리초로 변환
     }
 
@@ -39,7 +40,7 @@ public class JwtTokenProvider {
      */
     public String createAccessToken(String email) {
         log.info("액세스 토큰 생성 요청 - 이메일: {}", email);
-        return createToken(email, ACCESS_TOKEN_EXPIRATION_TIME);
+        return createToken(email, accessTokenExpirationTime);
     }
 
     /**
@@ -76,7 +77,7 @@ public class JwtTokenProvider {
      *
      * @param token JWT 토큰
      * @return 추출된 이메일 (subject 값)
-     * @explain 주어진 JWT 토큰에서 subject로 설정된 이메일을 추출하여 반환합니다.
+     * @explain ��어진 JWT 토큰에서 subject로 설정된 이메일을 추출하여 반환합니다.
      */
     public String getEmailFromToken(String token) {
         log.debug("토큰에서 이메일 추출 - 토큰: {}", token);
@@ -107,7 +108,7 @@ public class JwtTokenProvider {
             log.warn("토큰이 만료되었습니다 - 토큰: {}", token);
             throw new InvalidAccessTokenException();  // 구체적인 만료 에러 반환
         } catch (Exception e) {
-            log.error("유효하지 않은 토큰입니다 - 토큰: {}", token, e);
+            log.error("유효하지 않은 토큰입���다 - 토큰: {}", token, e);
             return false;
         }
     }
@@ -142,7 +143,7 @@ public class JwtTokenProvider {
      * 액세스 토큰의 유효성 및 만료 상태 검사 메서드
      *
      * @param accessToken 액세스 토큰
-     * @throws InvalidAccessTokenException 액세스 토큰이 유효하지 않거나 만료된 경우 예외 발생
+     * @throws InvalidAccessTokenException 액세스 토큰이 유효하지 않거나 ��료된 경우 예외 발생
      * @explain 주어진 액세스 토큰이 유효한지 확인하고, 만료된 경우 예외를 던집니다.
      */
     public void validateAccessToken(String accessToken) {

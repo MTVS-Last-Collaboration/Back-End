@@ -1,7 +1,9 @@
 package com.loveforest.loveforest.domain.user.controller;
 
 import com.loveforest.loveforest.domain.user.dto.LoginRequestDTO;
+import com.loveforest.loveforest.domain.user.dto.LoginResponseDTO;
 import com.loveforest.loveforest.domain.user.dto.UserSignupRequestDTO;
+import com.loveforest.loveforest.domain.user.dto.UserSignupResponseDTO;
 import com.loveforest.loveforest.domain.user.service.UserService;
 import com.loveforest.loveforest.exception.ErrorResponse;
 import com.loveforest.loveforest.exception.common.InvalidInputException;
@@ -13,6 +15,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -22,7 +26,7 @@ import java.util.Map;
 
 @Slf4j
 @RestController
-@RequestMapping("/api/users")
+@RequestMapping("/api/auth")
 @Tag(name = "User", description = "User API")
 public class UserController {
 
@@ -54,12 +58,12 @@ public class UserController {
             ))
     })
     @PostMapping("/signup")
-    public ResponseEntity<String> signup(@Valid @RequestBody UserSignupRequestDTO userSignupRequestDTO) {
+    public ResponseEntity<UserSignupResponseDTO> signup(@Valid @RequestBody UserSignupRequestDTO userSignupRequestDTO) {
         log.info("회원가입 요청 시작 - 이메일: {}", userSignupRequestDTO.getEmail());
         try {
-            userService.signUp(userSignupRequestDTO);
+            UserSignupResponseDTO reponse = userService.signUp(userSignupRequestDTO);
             log.info("회원가입 성공 - 이메일: {}", userSignupRequestDTO.getEmail());
-            return ResponseEntity.ok("회원가입 성공");
+            return ResponseEntity.ok().body(reponse);
         } catch (IllegalArgumentException e) {
             log.error("회원가입 실패 - 유효하지 않은 입력: {}", e.getMessage());
             throw new InvalidInputException();  // 메시지를 사용하지 않고 예외 던짐
@@ -89,14 +93,13 @@ public class UserController {
             ))
     })
     @PostMapping("/login")
-    public ResponseEntity<Map<String, String>> login(@RequestBody LoginRequestDTO request) {
-        log.info("로그인 요청 시작 - 이메일: {}", request.getEmail());
+    public ResponseEntity<LoginResponseDTO> login(@Valid @RequestBody LoginRequestDTO requestDTO) {
         try {
-            Map<String, String> tokens = userService.login(request.getEmail(), request.getPassword());
-            log.info("로그인 성공 - 이메일: {}", request.getEmail());
-            return ResponseEntity.ok(tokens);
+            LoginResponseDTO tokens = userService.login(requestDTO.getEmail(), requestDTO.getPassword());
+            log.info("로그인 성공 - 이메일: {}", userService.maskEmail(requestDTO.getEmail()));
+            return ResponseEntity.ok().body(tokens);
         } catch (IllegalArgumentException e) {
-            log.error("로그인 실패 - 유효하지 않은 회원: {}", request.getEmail());
+            log.error("로그인 실패 - 유효하지 않은 회원: {}", userService.maskEmail(requestDTO.getEmail()));
             throw new UnauthorizedException();
         }
     }
@@ -124,9 +127,9 @@ public class UserController {
     })
     @PostMapping("/logout")
     public ResponseEntity<String> logout(@RequestParam String email) {
-        log.info("로그아웃 요청 시작 - 이메일: {}", email);
+        log.info("로그아웃 요청 시작 - 이메일: {}", userService.maskEmail(email));
         userService.logout(email);
-        log.info("로그아웃 성공 - 이메일: {}", email);
+        log.info("로그아웃 성공 - 이메일: {}", userService.maskEmail(email));
         return ResponseEntity.ok("로그아웃 성공");
     }
 

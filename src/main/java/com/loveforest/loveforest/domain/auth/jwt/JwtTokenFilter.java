@@ -3,65 +3,43 @@ package com.loveforest.loveforest.domain.auth.jwt;
 import com.loveforest.loveforest.domain.auth.jwt.exception.InvalidAccessTokenException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
-import org.springframework.stereotype.Component;
-import org.springframework.web.filter.OncePerRequestFilter;
+import org.springframework.web.filter.GenericFilterBean;
 
 import java.io.IOException;
 
-@Component
 @Slf4j
-public class JwtTokenFilter extends OncePerRequestFilter {
+@RequiredArgsConstructor
+public class JwtTokenFilter extends GenericFilterBean {
 
     private final JwtTokenProvider jwtTokenProvider;
-    private final UserDetailsService userDetailsService;
-
-    public JwtTokenFilter(JwtTokenProvider jwtTokenProvider, UserDetailsService userDetailsService) {
-        this.jwtTokenProvider = jwtTokenProvider;
-        this.userDetailsService = userDetailsService;
-    }
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-        String token = getTokenFromRequest(request);
+    public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
+        String token = jwtTokenProvider.resolveToken((HttpServletRequest) request, "accessToken");
+        String requestURI = ((HttpServletRequest) request).getRequestURI();
 
-        if (token != null) {
-            try {
-                jwtTokenProvider.validateAccessToken(token);
-                String email = jwtTokenProvider.getEmailFromToken(token);
-                var userDetails = userDetailsService.loadUserByUsername(email);
-
-                var authentication = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
-                authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                SecurityContextHolder.getContext().setAuthentication(authentication);
-                log.debug("인증 성공 - 이메일: {}", maskEmail(email));
-            } catch (InvalidAccessTokenException e) {
-                log.warn("유효하지 않은 액세스 토큰: {}", e.getMessage());
-                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "액세스 토큰이 유효하지 않거나 만료되었습니다.");
-                return;
+        if (token != null && jwtTokenProvider.validateToken(token)) {
+            if (!requestURI.equals("/api/auth/refresh") && !requestURI.equals("/api/auth/logout")) {
+                try {
+                    jwtTokenProvider.validateAccessToken(token);
+                    Authentication auth = jwtTokenProvider.getAuthentication(token);
+                    SecurityContextHolder.getContext().setAuthentication(auth);
+                    log.info("{}님이 인증되었습니다. uri: {}", auth.getName(), requestURI);
+                } catch (InvalidAccessTokenException e) {
+                    log.warn("유효하지 않은 JWT 토큰입니다: {}", e.getMessage());
+                }
             }
+        } else {
+            log.debug("유효한 JWT 토큰이 없습니다, uri: {}", requestURI);
         }
 
-        filterChain.doFilter(request, response);
-    }
-
-    private String getTokenFromRequest(HttpServletRequest request) {
-        String bearerToken = request.getHeader("Authorization");
-        if (bearerToken != null && bearerToken.startsWith("Bearer ")) {
-            return bearerToken.substring(7);
-        }
-        return null;
-    }
-
-    private String maskEmail(String email) {
-        String[] parts = email.split("@");
-        return parts[0].substring(0, Math.min(3, parts[0].length())) + "***@" + parts[1];
+        chain.doFilter(request, response);
     }
 }

@@ -9,6 +9,11 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+
+/**
+ * User 엔티티 클래스
+ * 사용자의 기본 정보를 나타낸다.
+ */
 @Entity(name = "tbl_user")
 @Getter
 @NoArgsConstructor
@@ -33,14 +38,29 @@ public class User extends BaseTimeEntity {
     @Column(name = "nickname",nullable = false)
     private String nickname;
 
-    public User(String email, String username, String password, String nickname) {
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private Role role;
+
+    // Role 열거형 정의
+    public enum Role {
+        USER, ADMIN
+    }
+
+    /**
+     * User 생성자.
+     * 기본적으로 role은 USER로 설정된다.
+     */
+    @Builder
+    public User(String email, String username, String password, String nickname, Role role) {
         this.email = email;
         this.username = username;
         this.password = password;
         this.nickname = nickname;
+        // role이 null이면 기본값으로 USER 설정
+        this.role = role != null ? role : Role.USER;
     }
-
-    // nickname 변경을 위한 메서드
+    // 닉네임 변경 메서드
     public void changeNickname(String newNickname) {
         this.nickname = newNickname;
     }

@@ -9,6 +9,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
+@Schema(description = "로그인 요청 DTO")
 public class LoginRequestDTO {
 
     @Schema(description = "이메일", example = "example@example.com")

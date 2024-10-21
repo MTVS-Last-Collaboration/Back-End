@@ -30,9 +30,11 @@ public class Couple {
         this.coupleCode = coupleCode;
     }
 
-    // 사용자 추가 메서드
+    // 사용자 추가 메서드 (연관 관계 편의 메서드)
     public void addUser(User user) {
-        users.add(user);
-        user.setCouple(this);  // 사용자와 커플 간의 관계 설정
+        if (!users.contains(user)) {  // 중복 추가 방지
+            users.add(user);
+            user.setCouple(this);  // 사용자와 커플 간의 관계 설정
+        }
     }
 }

@@ -1,7 +1,8 @@
 package com.loveforest.loveforest.domain.user.controller;
 
-import com.loveforest.loveforest.domain.couple.entity.Couple;
 import com.loveforest.loveforest.domain.couple.repository.CoupleRepository;
+import com.loveforest.loveforest.domain.room.dto.RoomResponseDTO;
+import com.loveforest.loveforest.domain.room.service.RoomService;
 import com.loveforest.loveforest.domain.user.dto.LoginRequestDTO;
 import com.loveforest.loveforest.domain.user.dto.LoginResponseDTO;
 import com.loveforest.loveforest.domain.user.dto.UserSignupRequestDTO;
@@ -18,6 +19,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -27,16 +29,12 @@ import java.util.Map;
 @Slf4j
 @RestController
 @RequestMapping("/api/auth")
+@RequiredArgsConstructor
 @Tag(name = "회원 api", description = "회원 API 입니다.")
 public class UserController {
 
     private final UserService userService;
-    private final CoupleRepository coupleRepository;
-
-    public UserController(UserService userService, CoupleRepository coupleRepository) {
-        this.userService = userService;
-        this.coupleRepository = coupleRepository;
-    }
+    private final RoomService roomService;
 
     /**
      * 회원가입

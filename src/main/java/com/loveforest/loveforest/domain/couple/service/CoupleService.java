@@ -8,10 +8,13 @@ import com.loveforest.loveforest.domain.room.entity.Room;
 import com.loveforest.loveforest.domain.room.repository.RoomRepository;
 import com.loveforest.loveforest.domain.user.dto.UserSignupRequestDTO;
 import com.loveforest.loveforest.domain.user.entity.User;
+import com.loveforest.loveforest.domain.user.exception.UserNotFoundException;
 import com.loveforest.loveforest.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import java.util.UUID;
 
 
 @Service
@@ -19,37 +22,40 @@ import org.springframework.stereotype.Service;
 public class CoupleService {
 
     private final CoupleRepository coupleRepository;
-    private final RoomRepository roomRepository;
-    private final PasswordEncoder passwordEncoder;
+    private final UserRepository userRepository;
 
-    // 커플 코드로 두 번째 사용자 연결 및 방 배정
-    public void joinCouple(String coupleCode, UserSignupRequestDTO request) {
-        // 커플 코드로 커플 찾기
+
+    // 커플 코드 생성 및 발급
+    public String createCouple(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(UserNotFoundException::new);
+
+        // 커플 코드 생성
+        String coupleCode = UUID.randomUUID().toString();
+
+        // 커플 엔티티 생성 후 첫 번째 사용자와 연결
+        Couple couple = new Couple(coupleCode);
+        couple.addUser(user);
+        coupleRepository.save(couple);
+
+        return coupleCode;  // 생성된 커플 코드 반환
+    }
+
+    // 커플 코드로 두 번째 사용자를 커플에 연동
+    public void joinCouple(Long userId, String coupleCode) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(UserNotFoundException::new);
+
         Couple couple = coupleRepository.findByCoupleCode(coupleCode)
                 .orElseThrow(CoupleNotFoundException::new);
 
-        // 이미 두 명의 사용자가 있다면 예외 발생
+        // 이미 두 명의 사용자가 커플에 연결되어 있다면 예외 처리
         if (couple.getUsers().size() >= 2) {
             throw new CoupleCodeAlreadyUsedException();
         }
 
-        // 새로운 사용자 생성
-        String encodedPassword = passwordEncoder.encode(request.getPassword());
-        User user = User.builder()
-                .email(request.getEmail())
-                .username(request.getUsername())
-                .password(encodedPassword)
-                .nickname(request.getNickname())
-                .build();
-
-        // 커플과 사용자 연결
+        // 커플에 두 번째 사용자 추가
         couple.addUser(user);
         coupleRepository.save(couple);
-
-        // 커플이 완성되면 방 배정
-        if (couple.getUsers().size() == 2) {
-            Room room = new Room(couple);
-            roomRepository.save(room);
-        }
     }
 }

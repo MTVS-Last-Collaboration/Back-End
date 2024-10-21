@@ -11,4 +11,7 @@ import lombok.NoArgsConstructor;
 public class UserSignupResponseDTO {
     @Schema(description = "회원가입한 유저 닉네임", example = "nickname1")
     private String nickname;
+
+    @Schema(description = "커플 연동을 위한 커플코드", example = "aaa")
+    private String coupleCode;
 }

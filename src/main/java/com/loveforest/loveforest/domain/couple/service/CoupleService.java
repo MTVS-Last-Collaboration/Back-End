@@ -7,21 +7,17 @@ import com.loveforest.loveforest.domain.couple.repository.CoupleRepository;
 import com.loveforest.loveforest.domain.room.entity.Room;
 import com.loveforest.loveforest.domain.room.repository.RoomRepository;
 import com.loveforest.loveforest.domain.user.dto.UserSignupRequestDTO;
-import com.loveforest.loveforest.domain.user.dto.UserSignupResponseDTO;
 import com.loveforest.loveforest.domain.user.entity.User;
-import com.loveforest.loveforest.domain.user.exception.EmailAlreadyExistsException;
 import com.loveforest.loveforest.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 public class CoupleService {
 
-    private final UserRepository userRepository;
     private final CoupleRepository coupleRepository;
     private final RoomRepository roomRepository;
     private final PasswordEncoder passwordEncoder;

@@ -13,7 +13,6 @@ import com.loveforest.loveforest.domain.user.exception.EmailAlreadyExistsExcepti
 import com.loveforest.loveforest.domain.user.exception.InvalidPasswordException;
 import com.loveforest.loveforest.domain.user.exception.UserNotFoundException;
 import com.loveforest.loveforest.domain.user.repository.UserRepository;
-import com.loveforest.loveforest.exception.common.InvalidInputException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -85,7 +84,7 @@ public class UserService {
         coupleRepository.save(couple);
 
         // 응답 시 커플 코드를 함께 반환
-        return new UserSignupResponseDTO(user.getNickname());
+        return new UserSignupResponseDTO(user.getNickname(), coupleCode);
     }
 
 

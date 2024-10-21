@@ -13,10 +13,15 @@ public class CoupleController {
 
     private final CoupleService coupleService;
 
-    // 커플 코드로 사용자 연결
+    /** 커플 코드로 사용자 연결
+     *
+     * @param coupleCode
+     * @param request
+     * @return
+     */
     @PostMapping("/join")
     public ResponseEntity<String> joinCouple(@RequestParam String coupleCode, @RequestBody UserSignupRequestDTO request) {
         coupleService.joinCouple(coupleCode, request);
-        return ResponseEntity.ok("Successfully joined the couple and room assigned.");
+        return ResponseEntity.ok("커플 연결 및 방 배정이 성공적으로 완료되었습니다.");
     }
 }

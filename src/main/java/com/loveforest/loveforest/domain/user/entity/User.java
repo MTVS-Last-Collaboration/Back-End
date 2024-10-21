@@ -1,10 +1,8 @@
 package com.loveforest.loveforest.domain.user.entity;
 
 import com.loveforest.loveforest.BaseTimeEntity;
+import com.loveforest.loveforest.domain.couple.entity.Couple;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -14,7 +12,8 @@ import lombok.NoArgsConstructor;
  * User 엔티티 클래스
  * 사용자의 기본 정보를 나타낸다.
  */
-@Entity(name = "tbl_user")
+@Entity
+@Table(name = "tbl_user")
 @Getter
 @NoArgsConstructor
 public class User extends BaseTimeEntity {
@@ -42,6 +41,11 @@ public class User extends BaseTimeEntity {
     @Column(nullable = false)
     private Role role;
 
+    // 커플 ID (Foreign Key)
+    @ManyToOne(fetch = FetchType.LAZY)  // 지연 로딩을 사용하는 이유 : 데이터를 실제로 사용할 때까지 데이터베이스에서 조회하지 않는다.
+    @JoinColumn(name = "couple_id")
+    private Couple couple;
+
     // Role 열거형 정의
     public enum Role {
         USER, ADMIN
@@ -60,8 +64,20 @@ public class User extends BaseTimeEntity {
         // role이 null이면 기본값으로 USER 설정
         this.role = role != null ? role : Role.USER;
     }
-    // 닉네임 변경 메서드
+
+    /** 닉네임 변경 메서드
+     *
+     * @param newNickname
+     */
     public void changeNickname(String newNickname) {
         this.nickname = newNickname;
+    }
+
+    /** 커플 설정 메서드
+     *
+     * @param couple
+     */
+    public void setCouple(Couple couple) {
+        this.couple = couple;
     }
 }

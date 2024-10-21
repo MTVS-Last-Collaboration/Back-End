@@ -3,6 +3,8 @@ package com.loveforest.loveforest.domain.user.service;
 import com.loveforest.loveforest.domain.auth.jwt.JwtTokenProvider;
 import com.loveforest.loveforest.domain.auth.jwt.exception.InvalidRefreshTokenException;
 import com.loveforest.loveforest.domain.auth.jwt.refreshToken.RefreshTokenRepository;
+import com.loveforest.loveforest.domain.couple.entity.Couple;
+import com.loveforest.loveforest.domain.couple.repository.CoupleRepository;
 import com.loveforest.loveforest.domain.user.dto.LoginResponseDTO;
 import com.loveforest.loveforest.domain.user.dto.UserSignupRequestDTO;
 import com.loveforest.loveforest.domain.user.dto.UserSignupResponseDTO;
@@ -11,9 +13,12 @@ import com.loveforest.loveforest.domain.user.exception.EmailAlreadyExistsExcepti
 import com.loveforest.loveforest.domain.user.exception.InvalidPasswordException;
 import com.loveforest.loveforest.domain.user.exception.UserNotFoundException;
 import com.loveforest.loveforest.domain.user.repository.UserRepository;
+import com.loveforest.loveforest.exception.common.InvalidInputException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import java.util.UUID;
 
 
 @Slf4j
@@ -24,12 +29,14 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
     private final RefreshTokenRepository refreshTokenRepository;
+    private final CoupleRepository coupleRepository;
 
-    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtTokenProvider jwtTokenProvider, RefreshTokenRepository refreshTokenRepository) {
+    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtTokenProvider jwtTokenProvider, RefreshTokenRepository refreshTokenRepository, CoupleRepository coupleRepository) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtTokenProvider = jwtTokenProvider;
         this.refreshTokenRepository = refreshTokenRepository;
+        this.coupleRepository = coupleRepository;
     }
 
     public String maskEmail(String email) {
@@ -45,7 +52,7 @@ public class UserService {
      * @throws EmailAlreadyExistsException 중복된 이메일이 존재할 경우 예외 발생
      * @explain 회원가입 시 이메일 중복 확인 후 비밀번호를 암호화하여 새로운 사용자로 등록한다.
      */
-    public UserSignupResponseDTO signUp(UserSignupRequestDTO request) {
+    public UserSignupResponseDTO signUpWithCoupleCode(UserSignupRequestDTO request) {
         String maskedEmail = maskEmail(request.getEmail());
         log.info("회원가입 요청 - 이메일: {}", maskedEmail);
 
@@ -66,10 +73,18 @@ public class UserService {
                 .nickname(request.getNickname())
                 .build();
         log.info("새로운 사용자 생성 완료 - 이메일: {}", maskedEmail);
-        // 유저 저장
-        user = userRepository.save(user);
 
+        // 커플 코드 생성
+        String coupleCode = UUID.randomUUID().toString();
 
+        // 커플 엔티티 생성 후 유저와 연결
+        Couple couple = new Couple(coupleCode);
+        couple.addUser(user);
+
+        // 커플 및 유저 저장
+        coupleRepository.save(couple);
+
+        // 응답 시 커플 코드를 함께 반환
         return new UserSignupResponseDTO(user.getNickname());
     }
 

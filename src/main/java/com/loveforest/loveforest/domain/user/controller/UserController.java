@@ -1,5 +1,7 @@
 package com.loveforest.loveforest.domain.user.controller;
 
+import com.loveforest.loveforest.domain.couple.entity.Couple;
+import com.loveforest.loveforest.domain.couple.repository.CoupleRepository;
 import com.loveforest.loveforest.domain.user.dto.LoginRequestDTO;
 import com.loveforest.loveforest.domain.user.dto.LoginResponseDTO;
 import com.loveforest.loveforest.domain.user.dto.UserSignupRequestDTO;
@@ -15,8 +17,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -27,13 +27,15 @@ import java.util.Map;
 @Slf4j
 @RestController
 @RequestMapping("/api/auth")
-@Tag(name = "User", description = "User API")
+@Tag(name = "회원 api", description = "회원 API 입니다.")
 public class UserController {
 
     private final UserService userService;
+    private final CoupleRepository coupleRepository;
 
-    public UserController(UserService userService) {
+    public UserController(UserService userService, CoupleRepository coupleRepository) {
         this.userService = userService;
+        this.coupleRepository = coupleRepository;
     }
 
     /**
@@ -58,11 +60,11 @@ public class UserController {
             ))
     })
     @PostMapping("/signup")
-    public ResponseEntity<UserSignupResponseDTO> signup(@Valid @RequestBody UserSignupRequestDTO userSignupRequestDTO) {
-        log.info("회원가입 요청 시작 - 이메일: {}", userSignupRequestDTO.getEmail());
+    public ResponseEntity<UserSignupResponseDTO> signup(@Valid @RequestBody UserSignupRequestDTO request) {
+        log.info("회원가입 요청 시작 - 이메일: {}", request.getEmail());
         try {
-            UserSignupResponseDTO reponse = userService.signUp(userSignupRequestDTO);
-            log.info("회원가입 성공 - 이메일: {}", userSignupRequestDTO.getEmail());
+            UserSignupResponseDTO reponse = userService.signUpWithCoupleCode(request);
+            log.info("회원가입 성공 - 이메일: {}", request.getEmail());
             return ResponseEntity.ok().body(reponse);
         } catch (IllegalArgumentException e) {
             log.error("회원가입 실패 - 유효하지 않은 입력: {}", e.getMessage());
@@ -166,5 +168,4 @@ public class UserController {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
-
 }

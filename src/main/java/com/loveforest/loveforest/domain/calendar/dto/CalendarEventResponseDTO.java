@@ -10,6 +10,7 @@ import java.time.LocalDate;
 @Getter
 @Setter
 @AllArgsConstructor
+@Schema(description = "캘린더 이벤트 응답 DTO")
 public class CalendarEventResponseDTO {
 
     @Schema(description = "이벤트 ID", example = "1", required = true)

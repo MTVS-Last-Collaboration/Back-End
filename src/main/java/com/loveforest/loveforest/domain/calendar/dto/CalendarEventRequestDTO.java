@@ -8,6 +8,7 @@ import java.time.LocalDate;
 
 @Getter
 @Setter
+@Schema(description = "캘린더 이벤트 요청 DTO")
 public class CalendarEventRequestDTO {
 
     @Schema(description = "커플 ID", example = "1", required = true)
@@ -19,7 +20,7 @@ public class CalendarEventRequestDTO {
     @Schema(description = "이벤트 날짜", example = "2024-12-25", required = true)
     private LocalDate eventDate;
 
-    @Schema(description = "이벤트 설명", example = "첫 기념일")
+    @Schema(description = "이벤트 설명", example = "첫 기념일", required = false)
     private String description;
 }
 

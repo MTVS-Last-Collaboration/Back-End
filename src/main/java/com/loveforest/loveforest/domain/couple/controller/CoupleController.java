@@ -3,9 +3,6 @@ package com.loveforest.loveforest.domain.couple.controller;
 import com.loveforest.loveforest.domain.couple.dto.CoupleCodeResponseDTO;
 import com.loveforest.loveforest.domain.couple.dto.CoupleJoinRequestDTO;
 import com.loveforest.loveforest.domain.couple.dto.CoupleJoinResponseDTO;
-import com.loveforest.loveforest.domain.couple.dto.CoupleInfoResponseDTO;
-import com.loveforest.loveforest.domain.couple.dto.CoupleProfileResponseDTO;
-import com.loveforest.loveforest.domain.couple.dto.CoupleProfileRequestDTO;
 import com.loveforest.loveforest.domain.couple.service.CoupleService;
 import com.loveforest.loveforest.exception.ErrorResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -96,51 +93,5 @@ public class CoupleController {
     public ResponseEntity<CoupleJoinResponseDTO> joinCouple(@Valid @RequestBody CoupleJoinRequestDTO request) {
         coupleService.joinCouple(request.getUserId(), request.getCoupleCode());
         return ResponseEntity.ok(new CoupleJoinResponseDTO("커플 연동이 성공적으로 완료되었습니다."));
-    }
-
-    @Operation(summary = "커플 정보 조회", description = "커플 ID를 이용해 커플 정보를 조회합니다.")
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "커플 정보 조회 성공"),
-        @ApiResponse(responseCode = "404", description = "커플을 찾을 수 없습니다.")
-    })
-    @GetMapping("/{coupleId}")
-    public ResponseEntity<CoupleInfoResponseDTO> getCoupleInfo(@PathVariable Long coupleId) {
-        CoupleInfoResponseDTO coupleInfo = coupleService.getCoupleInfo(coupleId);
-        return ResponseEntity.ok(coupleInfo);
-    }
-
-    @Operation(summary = "커플 연결 해제", description = "커플 ID를 이용해 커플 연결을 해제합니다.")
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "커플 연결 해제 성공"),
-        @ApiResponse(responseCode = "404", description = "커플을 찾을 수 없습니다.")
-    })
-    @DeleteMapping("/{coupleId}")
-    public ResponseEntity<Void> disconnectCouple(@PathVariable Long coupleId) {
-        coupleService.disconnectCouple(coupleId);
-        return ResponseEntity.ok().build();
-    }
-
-    @Operation(summary = "커플 코드 재발급", description = "커플 ID를 이용해 새로운 커플 코드를 발급합니다.")
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "커플 코드 재발급 성공"),
-        @ApiResponse(responseCode = "404", description = "커플을 찾을 수 없습니다.")
-    })
-    @PostMapping("/{coupleId}/regenerate-code")
-    public ResponseEntity<CoupleCodeResponseDTO> regenerateCoupleCode(@PathVariable Long coupleId) {
-        String newCoupleCode = coupleService.regenerateCoupleCode(coupleId);
-        return ResponseEntity.ok(new CoupleCodeResponseDTO(newCoupleCode));
-    }
-
-    @Operation(summary = "커플 프로필 업데이트", description = "커플 ID를 이용해 커플 프로필 정보를 업데이트합니다.")
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "커플 프로필 업데이트 성공"),
-        @ApiResponse(responseCode = "404", description = "커플을 찾을 수 없습니다.")
-    })
-    @PutMapping("/{coupleId}/profile")
-    public ResponseEntity<CoupleProfileResponseDTO> updateCoupleProfile(
-            @PathVariable Long coupleId,
-            @Valid @RequestBody CoupleProfileRequestDTO request) {
-        CoupleProfileResponseDTO updatedProfile = coupleService.updateCoupleProfile(coupleId, request);
-        return ResponseEntity.ok(updatedProfile);
     }
 }

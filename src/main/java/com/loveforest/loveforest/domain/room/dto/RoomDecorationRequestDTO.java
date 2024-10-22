@@ -1,10 +1,14 @@
 package com.loveforest.loveforest.domain.room.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Schema(description = "가구 배치 요청 정보")
 @Getter
+@NoArgsConstructor
+@AllArgsConstructor
 public class RoomDecorationRequestDTO {
 
     @Schema(description = "커플 ID", example = "1", required = true)

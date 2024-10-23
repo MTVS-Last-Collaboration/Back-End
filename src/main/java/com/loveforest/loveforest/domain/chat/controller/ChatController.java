@@ -1,5 +1,6 @@
 package com.loveforest.loveforest.domain.chat.controller;
 
+import com.loveforest.loveforest.domain.auth.dto.LoginInfo;
 import com.loveforest.loveforest.domain.chat.dto.ChatMessageRequestDTO;
 import com.loveforest.loveforest.domain.chat.entity.ChatMessage;
 import com.loveforest.loveforest.domain.chat.service.ChatService;
@@ -11,8 +12,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -47,9 +48,10 @@ public class ChatController {
             ))
     })
     @PostMapping("/send")
-    public ResponseEntity<ChatMessage> sendMessage(@RequestBody ChatMessageRequestDTO request) {
-        ChatMessage chatMessage = chatService.processMessage(request.getSenderId(), request.getMessage());
-        return ResponseEntity.ok(chatMessage); // 처리된 메시지 반환
+    public ResponseEntity<ChatMessage> sendMessage(@AuthenticationPrincipal LoginInfo loginInfo, @RequestBody ChatMessageRequestDTO request) {
+        // 사용자 정보를 이용하여 메시지 처리
+        ChatMessage chatMessage = chatService.processMessage(loginInfo.getUserId(), request.getMessage());
+        return ResponseEntity.ok(chatMessage);
     }
 
 
@@ -75,8 +77,8 @@ public class ChatController {
             ))
     })
     @GetMapping("/history/{userId}")
-    public ResponseEntity<List<ChatMessage>> getChatHistory(@PathVariable Long userId) {
-        List<ChatMessage> history = chatService.getChatHistory(userId);
-        return ResponseEntity.ok(history); // 대화 이력 반환
+    public ResponseEntity<List<ChatMessage>> getChatHistory(@AuthenticationPrincipal LoginInfo loginInfo, @PathVariable Long userId) {
+        List<ChatMessage> history = chatService.getChatHistory(loginInfo.getUserId());
+        return ResponseEntity.ok(history);
     }
 }

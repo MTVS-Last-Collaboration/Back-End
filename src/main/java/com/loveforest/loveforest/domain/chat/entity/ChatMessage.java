@@ -15,9 +15,6 @@ public class ChatMessage {
     @Column(name = "sender_id", nullable = false)
     private Long senderId; // 발신자 ID
 
-    @Column(name = "receiver_id", nullable = false)
-    private Long receiverId; // 수신자 ID
-
     @Column(nullable = false)
     private String message; // 사용자가 보낸 메시지
 

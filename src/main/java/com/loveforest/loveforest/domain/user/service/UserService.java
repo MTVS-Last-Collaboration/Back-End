@@ -70,6 +70,7 @@ public class UserService {
                 .username(request.getUsername())
                 .password(encodedPassword)
                 .nickname(request.getNickname())
+                .gender(request.getGender())
                 .build();
         log.info("새로운 사용자 생성 완료 - 이메일: {}", maskedEmail);
 
@@ -115,6 +116,7 @@ public class UserService {
             throw new InvalidPasswordException();
         }
 
+        Long id = user.getId();
         // 액세스 토큰과 리프레시 토큰 발급
         String accessToken = jwtTokenProvider.createAccessToken(user.getEmail());
         String refreshToken = jwtTokenProvider.createRefreshToken(user.getEmail());
@@ -125,7 +127,7 @@ public class UserService {
         log.debug("리프레시 토큰 저장 완료 - 이메일: {}", maskedEmail);
 
         // 응답 DTO 반환
-        return new LoginResponseDTO(accessToken, refreshToken);
+        return new LoginResponseDTO(accessToken, refreshToken, id);
     }
 
     /**

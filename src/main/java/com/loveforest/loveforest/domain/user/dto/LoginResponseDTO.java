@@ -12,7 +12,10 @@ public record LoginResponseDTO(
         String accessToken,
 
         @Schema(description = "리프레시 토큰", example = "refresh_token_example")
-        String refreshToken
+        String refreshToken,
+
+        @Schema(description = "회원 아이디", example = "1")
+        Long id
 ) {
 }
 

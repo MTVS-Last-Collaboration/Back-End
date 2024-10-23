@@ -17,6 +17,9 @@ public class CalendarEventRequestDTO {
     @Schema(description = "이벤트 이름", example = "기념일", required = true)
     private String eventName;
 
+    @Schema(description = "아이콘 번호", example = "1", required = false)
+    private int iconNumber;
+
     @Schema(description = "이벤트 날짜", example = "2024-12-25", required = true)
     private LocalDate eventDate;
 

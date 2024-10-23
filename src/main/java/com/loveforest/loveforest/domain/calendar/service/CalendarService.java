@@ -27,7 +27,7 @@ public class CalendarService {
         Couple couple = coupleRepository.findById(requestDTO.getCoupleId())
                 .orElseThrow(() -> new IllegalArgumentException("해당 커플을 찾을 수 없습니다."));
 
-        CalendarEvent event = new CalendarEvent(couple, requestDTO.getEventName(), requestDTO.getEventDate(), requestDTO.getDescription());
+        CalendarEvent event = new CalendarEvent(couple, requestDTO.getEventName(), requestDTO.getIconNumber(), requestDTO.getEventDate(), requestDTO.getDescription());
         calendarEventRepository.save(event);
 
         return mapToResponseDTO(event);
@@ -47,7 +47,7 @@ public class CalendarService {
         CalendarEvent event = calendarEventRepository.findById(eventId)
                 .orElseThrow(() -> new IllegalArgumentException("이벤트를 찾을 수 없습니다."));
 
-        event.updateEvent(requestDTO.getEventName(), requestDTO.getEventDate(), requestDTO.getDescription());
+        event.updateEvent(requestDTO.getEventName(), requestDTO.getIconNumber(), requestDTO.getEventDate(), requestDTO.getDescription());
         calendarEventRepository.save(event);
 
         return mapToResponseDTO(event);

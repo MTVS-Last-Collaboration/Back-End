@@ -30,11 +30,10 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
-@Tag(name = "회원 api", description = "회원 API 입니다.")
+@Tag(name = "회원 API", description = "회원 API 입니다.")
 public class UserController {
 
     private final UserService userService;
-    private final RoomService roomService;
 
     /**
      * 회원가입

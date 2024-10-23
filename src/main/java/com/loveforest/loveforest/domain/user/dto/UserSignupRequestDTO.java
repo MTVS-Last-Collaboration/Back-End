@@ -1,5 +1,6 @@
 package com.loveforest.loveforest.domain.user.dto;
 
+import com.loveforest.loveforest.domain.user.enums.Gender;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -42,5 +43,12 @@ public class UserSignupRequestDTO {
     @NotBlank(message = "닉네임은 필수 입력값입니다.")
     @Size(min = 1, max = 10, message = "닉네임은 최소 1자 이상, 최대 10자 이하로 입력해야 합니다.")
     private String nickname;
+
+    @Schema(description = "회원가입 시 설정할 성별",
+            example = "MALE",
+            required = true,
+            type = "String")
+    @NotBlank(message = "성별은 필수 입력값입니다.")
+    private Gender gender;
 
 }

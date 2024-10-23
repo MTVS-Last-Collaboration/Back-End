@@ -2,10 +2,13 @@ package com.loveforest.loveforest.domain.user.entity;
 
 import com.loveforest.loveforest.BaseTimeEntity;
 import com.loveforest.loveforest.domain.couple.entity.Couple;
+import com.loveforest.loveforest.domain.user.enums.Gender;
+import com.loveforest.loveforest.domain.user.enums.Role;
 import jakarta.persistence.*;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.ColumnDefault;
 
 
 /**
@@ -37,30 +40,33 @@ public class User extends BaseTimeEntity {
     @Column(name = "nickname",nullable = false)
     private String nickname;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private Role role;
-
     // 커플 ID (Foreign Key)
     @ManyToOne(fetch = FetchType.LAZY)  // 지연 로딩을 사용하는 이유 : 데이터를 실제로 사용할 때까지 데이터베이스에서 조회하지 않는다.
     @JoinColumn(name = "couple_id")
     private Couple couple;
 
-    // Role 열거형 정의
-    public enum Role {
-        USER, ADMIN
-    }
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private Gender gender;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    @ColumnDefault("'USER'")
+    private Role role;
+
+
 
     /**
      * User 생성자.
      * 기본적으로 role은 USER로 설정된다.
      */
     @Builder
-    public User(String email, String username, String password, String nickname, Role role) {
+    public User(String email, String username, String password, String nickname, Gender gender ,Role role) {
         this.email = email;
         this.username = username;
         this.password = password;
         this.nickname = nickname;
+        this.gender = gender;
         // role이 null이면 기본값으로 USER 설정
         this.role = role != null ? role : Role.USER;
     }

@@ -1,5 +1,6 @@
 package com.loveforest.loveforest.exception;
 
+import com.loveforest.loveforest.domain.chat.exception.ChatNotFoundException;
 import com.loveforest.loveforest.domain.user.exception.EmailAlreadyExistsException;
 import com.loveforest.loveforest.domain.user.exception.InvalidPasswordException;
 import com.loveforest.loveforest.exception.common.InvalidInputException;
@@ -44,6 +45,11 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(InvalidPasswordException.class)
     public ResponseEntity<ErrorResponse> handleInvalidPasswordException(InvalidPasswordException ex) {
+        return buildErrorResponse(ex.getErrorCode().getStatus(), ex.getErrorCode().getErrorType(), ex.getErrorCode().getDescription());
+    }
+
+    @ExceptionHandler(ChatNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleChatNotFoundException(ChatNotFoundException ex) {
         return buildErrorResponse(ex.getErrorCode().getStatus(), ex.getErrorCode().getErrorType(), ex.getErrorCode().getDescription());
     }
 

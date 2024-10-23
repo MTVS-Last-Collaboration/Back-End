@@ -45,6 +45,10 @@ public class ChatController {
             @ApiResponse(responseCode = "400", description = "잘못된 요청입니다.", content = @Content(
                     mediaType = "application/json",
                     examples = @ExampleObject(value = "{\"status\": 400, \"error\": \"BadRequest\", \"message\": \"잘못된 요청입니다.\"}")
+            )),
+            @ApiResponse(responseCode = "404", description = "대화 이력이 존재하지 않습니다.", content = @Content(
+                    mediaType = "application/json",
+                    examples = @ExampleObject(value = "{\"status\": 404, \"error\": \"ChatNotFound\", \"message\": \"대화 이력이 존재하지 않습니다.\"}")
             ))
     })
     @PostMapping("/send")
@@ -74,6 +78,10 @@ public class ChatController {
             @ApiResponse(responseCode = "400", description = "잘못된 요청입니다.", content = @Content(
                     mediaType = "application/json",
                     examples = @ExampleObject(value = "{\"status\": 400, \"error\": \"BadRequest\", \"message\": \"잘못된 요청입니다.\"}")
+            )),
+            @ApiResponse(responseCode = "404", description = "대화 이력이 존재하지 않습니다.", content = @Content(
+                    mediaType = "application/json",
+                    examples = @ExampleObject(value = "{\"status\": 404, \"error\": \"ChatNotFound\", \"message\": \"대화 이력이 존재하지 않습니다.\"}")
             ))
     })
     @GetMapping("/history/{userId}")

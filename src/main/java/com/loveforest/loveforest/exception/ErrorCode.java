@@ -26,7 +26,10 @@ public enum ErrorCode {
     INVALID_COUPLE_CODE(HttpStatus.BAD_REQUEST, "Invalid Couple Code", "유효하지 않은 커플 코드입니다.", "COUPLE-003"),
 
     // Room 관련 에러
-    ROOM_NOT_FOUND(HttpStatus.NOT_FOUND, "Room Not Found", "해당 커플에 대한 방을 찾을 수 없습니다.", "ROOM-001");
+    ROOM_NOT_FOUND(HttpStatus.NOT_FOUND, "Room Not Found", "해당 커플에 대한 방을 찾을 수 없습니다.", "ROOM-001"),
+
+    // Chat 관련 에러
+    CHAT_NOT_FOUND(HttpStatus.NOT_FOUND, "Chat Not Found", "대화 이력이 존재하지 않습니다.", "CHAT-001");
 
     private final HttpStatus status;
     private final String errorType;

@@ -231,4 +231,21 @@ public class JwtTokenProvider {
             throw new InvalidAccessTokenException();
         }
     }
+
+    public Long getUserIdFromToken(String token) {
+        Claims claims = Jwts.parserBuilder()
+                .setSigningKey(secretKey)
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
+
+        // 토큰에서 사용자 이메일(subject) 추출
+        String email = claims.getSubject();
+
+        // 이메일을 통해 사용자 ID를 가져옴
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+
+        return user.getId();
+    }
 }

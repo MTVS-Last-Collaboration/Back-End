@@ -3,7 +3,7 @@ package com.loveforest.loveforest.domain.user.entity;
 import com.loveforest.loveforest.BaseTimeEntity;
 import com.loveforest.loveforest.domain.couple.entity.Couple;
 import com.loveforest.loveforest.domain.user.enums.Gender;
-import com.loveforest.loveforest.domain.user.enums.Role;
+import com.loveforest.loveforest.domain.user.enums.Authority;
 import jakarta.persistence.*;
 import lombok.Builder;
 import lombok.Getter;
@@ -52,7 +52,7 @@ public class User extends BaseTimeEntity {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     @ColumnDefault("'USER'")
-    private Role role;
+    private Authority authority;
 
 
 
@@ -61,14 +61,14 @@ public class User extends BaseTimeEntity {
      * 기본적으로 role은 USER로 설정된다.
      */
     @Builder
-    public User(String email, String username, String password, String nickname, Gender gender ,Role role) {
+    public User(String email, String username, String password, String nickname, Gender gender , Authority authority) {
         this.email = email;
         this.username = username;
         this.password = password;
         this.nickname = nickname;
         this.gender = gender;
         // role이 null이면 기본값으로 USER 설정
-        this.role = role != null ? role : Role.USER;
+        this.authority = authority != null ? authority : Authority.USER;
     }
 
     /** 닉네임 변경 메서드

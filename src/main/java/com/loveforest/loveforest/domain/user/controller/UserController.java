@@ -1,10 +1,6 @@
 package com.loveforest.loveforest.domain.user.controller;
 
-import com.loveforest.loveforest.domain.couple.repository.CoupleRepository;
-import com.loveforest.loveforest.domain.room.dto.RoomResponseDTO;
-import com.loveforest.loveforest.domain.room.service.RoomService;
 import com.loveforest.loveforest.domain.user.dto.LoginRequestDTO;
-import com.loveforest.loveforest.domain.user.dto.LoginResponseDTO;
 import com.loveforest.loveforest.domain.user.dto.UserSignupRequestDTO;
 import com.loveforest.loveforest.domain.user.dto.UserSignupResponseDTO;
 import com.loveforest.loveforest.domain.user.service.UserService;
@@ -21,6 +17,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -92,16 +89,25 @@ public class UserController {
             ))
     })
     @PostMapping("/login")
-    public ResponseEntity<LoginResponseDTO> login(@Valid @RequestBody LoginRequestDTO requestDTO) {
+    public ResponseEntity<Void> login(@Valid @RequestBody LoginRequestDTO requestDTO) {
         try {
-            LoginResponseDTO tokens = userService.login(requestDTO.getEmail(), requestDTO.getPassword());
+            // Map으로 토큰을 받기
+            Map<String, String> tokens = userService.login(requestDTO.getEmail(), requestDTO.getPassword());
             log.info("로그인 성공 - 이메일: {}", userService.maskEmail(requestDTO.getEmail()));
-            return ResponseEntity.ok().body(tokens);
+
+            // 헤더에 토큰 추가
+            HttpHeaders headers = new HttpHeaders();
+            headers.set("Authorization", "Bearer " + tokens.get("accessToken"));
+            headers.set("Refresh-Token", tokens.get("refreshToken"));
+
+            // 응답 시 헤더에 추가된 토큰을 반환
+            return ResponseEntity.ok().headers(headers).build();
         } catch (IllegalArgumentException e) {
             log.error("로그인 실패 - 유효하지 않은 회원: {}", userService.maskEmail(requestDTO.getEmail()));
             throw new UnauthorizedException();
         }
     }
+
 
     /**
      * 로그아웃

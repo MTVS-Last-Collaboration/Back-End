@@ -14,6 +14,4 @@ public class ChatMessageRequestDTO {
     private Long senderId; // 발신자 ID
     private String message; // 메시지 내용
 
-    // Getters and Setters
-    // ...
 }

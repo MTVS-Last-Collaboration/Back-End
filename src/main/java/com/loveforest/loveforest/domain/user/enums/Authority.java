@@ -1,5 +1,5 @@
 package com.loveforest.loveforest.domain.user.enums;
 
-public enum Role {
+public enum Authority {
     USER, ADMIN
 }

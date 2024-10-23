@@ -1,11 +1,11 @@
 package com.loveforest.loveforest.domain.user.service;
 
+import com.loveforest.loveforest.domain.auth.dto.LoginInfo;
 import com.loveforest.loveforest.domain.auth.jwt.JwtTokenProvider;
 import com.loveforest.loveforest.domain.auth.jwt.exception.InvalidRefreshTokenException;
 import com.loveforest.loveforest.domain.auth.jwt.refreshToken.RefreshTokenRepository;
 import com.loveforest.loveforest.domain.couple.entity.Couple;
 import com.loveforest.loveforest.domain.couple.repository.CoupleRepository;
-import com.loveforest.loveforest.domain.user.dto.LoginResponseDTO;
 import com.loveforest.loveforest.domain.user.dto.UserSignupRequestDTO;
 import com.loveforest.loveforest.domain.user.dto.UserSignupResponseDTO;
 import com.loveforest.loveforest.domain.user.entity.User;
@@ -17,6 +17,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 
@@ -99,7 +101,7 @@ public class UserService {
      * @throws InvalidPasswordException 비밀번호가 일치하지 않을 경우 예외 발생
      * @explain 사용자 로그인 시 이메일과 비밀번호를 확인한 후, 유효할 경우 액세스 토큰과 리프레시 토큰을 발급하여 반환합니다.
      */
-    public LoginResponseDTO login(String email, String password) {
+    public Map<String, String> login(String email, String password) {
         String maskedEmail = maskEmail(email);
         log.info("로그인 시도 - 이메일: {}", maskedEmail);
 
@@ -117,18 +119,26 @@ public class UserService {
         }
 
         Long id = user.getId();
+        String nickname = user.getNickname();
+        String authorities = user.getAuthority().name(); // User 엔티티의 Authority에서 권한 추출
+
         // 액세스 토큰과 리프레시 토큰 발급
-        String accessToken = jwtTokenProvider.createAccessToken(user.getEmail());
-        String refreshToken = jwtTokenProvider.createRefreshToken(user.getEmail());
+        String accessToken = jwtTokenProvider.createAccessToken(user.getEmail(), id, nickname, authorities);
+        String refreshToken = jwtTokenProvider.createRefreshToken(user.getEmail(), id, nickname);
         log.info("토큰 발급 완료 - 이메일: {}", maskedEmail);
 
         // 리프레시 토큰을 Redis에 저장
         refreshTokenRepository.saveRefreshToken(user.getEmail(), refreshToken);
         log.debug("리프레시 토큰 저장 완료 - 이메일: {}", maskedEmail);
 
-        // 응답 DTO 반환
-        return new LoginResponseDTO(accessToken, refreshToken, id);
+        // 결과를 Map으로 반환
+        Map<String, String> tokens = new HashMap<>();
+        tokens.put("accessToken", accessToken);
+        tokens.put("refreshToken", refreshToken);
+
+        return tokens;
     }
+
 
     /**
      * 로그아웃 처리 메서드
@@ -153,6 +163,7 @@ public class UserService {
     public String refreshAccessToken(String refreshToken) {
         log.info("리프레시 토큰을 통한 액세스 토큰 재발급 요청");
         if (jwtTokenProvider.validateToken(refreshToken) && !jwtTokenProvider.isTokenExpired(refreshToken)) {
+            LoginInfo loginInfo = jwtTokenProvider.getLoginInfoFromToken(refreshToken);
             String email = jwtTokenProvider.getEmailFromToken(refreshToken);
             log.debug("리프레시 토큰에서 이메일 추출 - 이메일: {}", email);
 
@@ -163,7 +174,7 @@ public class UserService {
             }
 
             // 새로운 액세스 토큰 발급
-            String newAccessToken = jwtTokenProvider.createAccessToken(email);
+            String newAccessToken = jwtTokenProvider.createAccessToken(email, loginInfo.getUserId(), loginInfo.getNickname(), loginInfo.getAuthorities().name());
             log.info("새로운 액세스 토큰 발급 완료 - 이메일: {}", email);
             return newAccessToken;
         } else {

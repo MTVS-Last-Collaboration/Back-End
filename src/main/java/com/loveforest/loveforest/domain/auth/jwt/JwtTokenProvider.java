@@ -1,7 +1,8 @@
 package com.loveforest.loveforest.domain.auth.jwt;
 
+import com.loveforest.loveforest.domain.auth.dto.LoginInfo;
 import com.loveforest.loveforest.domain.auth.jwt.exception.InvalidAccessTokenException;
-import com.loveforest.loveforest.domain.user.entity.User;
+import com.loveforest.loveforest.domain.user.enums.Authority;
 import com.loveforest.loveforest.domain.user.repository.UserRepository;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
@@ -46,38 +47,22 @@ public class JwtTokenProvider {
     }
 
     /**
-     * 액세스 토큰 생성 메서드
+     * JWT 토큰 생성 메서드 (공통 로직)
      *
      * @param email 사용자 이메일
-     * @return 생성된 액세스 토큰 문자열
-     * @explain 주어진 이메일을 바탕으로 만료 기간 15분짜리 액세스 토큰을 생성하여 반환합니다.
-     */
-    public String createAccessToken(String email) {
-        return createToken(email, accessTokenExpirationTime, TYPE_ACCESS);
-    }
-
-    /**
-     * 리프레시 토큰 생성 메서드
-     *
-     * @param email 사용자 이메일
-     * @return 생성된 리프레시 토큰 문자열
-     * @explain 주어진 이메일을 바탕으로 만료 기간 7일짜리 리프레시 토큰을 생성하여 반환합니다.
-     */
-    public String createRefreshToken(String email) {
-        return createToken(email, refreshTokenExpirationTime, TYPE_REFRESH);
-    }
-
-    /**
-     * 토큰 생성 메서드 (공통 로직)
-     *
-     * @param email 사용자 이메일
-     * @param expirationTime 토큰 만료 시간
+     * @param expirationTime 토큰 만료 시간 (밀리초)
      * @param tokenType 토큰 타입 (액세스 또는 리프레시)
+     * @param userId 사용자 ID
+     * @param nickname 사용자 닉네임
      * @return 생성된 JWT 토큰 문자열
+     * @explain 주어진 사용자 정보를 바탕으로 JWT 토큰을 생성하여 반환합니다.
      */
-    private String createToken(String email, long expirationTime, String tokenType) {
+    private String createToken(String email, long expirationTime, String tokenType, Long userId, String nickname, String authorities) {
         Claims claims = Jwts.claims().setSubject(email);
         claims.put("type", tokenType);
+        claims.put("userId", userId); // 추가된 사용자 정보
+        claims.put("nickname", nickname); // 추가된 사용자 정보
+        claims.put(AUTHORITIES_KEY, authorities); // 권한 추가
         Date now = new Date();
         Date validity = new Date(now.getTime() + expirationTime);
 
@@ -87,6 +72,32 @@ public class JwtTokenProvider {
                 .setExpiration(validity)
                 .signWith(secretKey, SignatureAlgorithm.HS256)
                 .compact();
+    }
+
+    /**
+     * 액세스 토큰 생성 메서드
+     *
+     * @param email 사용자 이메일
+     * @param userId 사용자 ID
+     * @param nickname 사용자 닉네임
+     * @return 생성된 액세스 토큰 문자열
+     * @explain 주어진 사용자 정보를 바탕으로 만료 기간이 설정된 액세스 토큰을 생성하여 반환합니다.
+     */
+    public String createAccessToken(String email, Long userId, String nickname, String authorities) {
+        return createToken(email, accessTokenExpirationTime, TYPE_ACCESS, userId, nickname, authorities);
+    }
+
+    /**
+     * 리프레시 토큰 생성 메서드
+     *
+     * @param email 사용자 이메일
+     * @param userId 사용자 ID
+     * @param nickname 사용자 닉네임
+     * @return 생성된 리프레시 토큰 문자열
+     * @explain 주어진 사용자 정보를 바탕으로 만료 기간이 설정된 리프레시 토큰을 생성하여 반환합니다.
+     */
+    public String createRefreshToken(String email, Long userId, String nickname) {
+        return createToken(email, refreshTokenExpirationTime, TYPE_REFRESH, userId, nickname, "");
     }
 
     /**
@@ -184,10 +195,11 @@ public class JwtTokenProvider {
                         .map(SimpleGrantedAuthority::new)
                         .collect(Collectors.toList());
 
-        User user = userRepository.findByEmail(claims.getSubject())
-                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+        LoginInfo loginInfo = new LoginInfo();
+        loginInfo.setUserId(claims.get("userId", Long.class));
+        loginInfo.setNickname(claims.get("nickname", String.class));
 
-        return new UsernamePasswordAuthenticationToken(user, token, authorities);
+        return new UsernamePasswordAuthenticationToken(loginInfo, token, authorities);
     }
 
     /**
@@ -217,35 +229,56 @@ public class JwtTokenProvider {
     }
 
     /**
-     * 토큰 재발급 메서드
+     * 리프레시 토큰을 사용하여 새로운 액세스 토큰을 발급하는 메서드
      *
-     * @param refreshToken 리프레시 토큰
-     * @return 새로 발급된 액세스 토큰
+     * @param refreshToken 유효한 리프레시 토큰
+     * @return 새로 발급된 액세스 토큰 문자열
      * @throws InvalidAccessTokenException 리프레시 토큰이 유효하지 않거나 만료된 경우 예외 발생
      */
     public String reissueAccessToken(String refreshToken) {
         if (validateToken(refreshToken) && isRefreshToken(refreshToken) && !isTokenExpired(refreshToken)) {
-            String email = getEmailFromToken(refreshToken);
-            return createAccessToken(email);
+            Claims claims = Jwts.parserBuilder()
+                    .setSigningKey(secretKey)
+                    .build()
+                    .parseClaimsJws(refreshToken)
+                    .getBody();
+
+            String email = claims.getSubject();
+            Long userId = claims.get("userId", Long.class);
+            String nickname = claims.get("nickname", String.class);
+            String authorities = claims.get(AUTHORITIES_KEY, String.class);
+
+            return createAccessToken(email, userId, nickname, authorities);
         } else {
             throw new InvalidAccessTokenException();
         }
     }
 
-    public Long getUserIdFromToken(String token) {
+    /**
+     * JWT 토큰에서 로그인 정보를 가져오는 메서드
+     *
+     * @param token JWT 토큰
+     * @return LoginInfo 객체 (userId와 nickname이 포함됨)
+     */
+    public LoginInfo getLoginInfoFromToken(String token) {
         Claims claims = Jwts.parserBuilder()
                 .setSigningKey(secretKey)
                 .build()
                 .parseClaimsJws(token)
                 .getBody();
 
-        // 토큰에서 사용자 이메일(subject) 추출
-        String email = claims.getSubject();
+        Long userId = claims.get("userId", Long.class); // Claims에서 userId 추출
+        String nickname = claims.get("nickname", String.class); // Claims에서 nickname 추출
+        String authorities = claims.get(AUTHORITIES_KEY, String.class); // Claims에서 authorities 추출
 
-        // 이메일을 통해 사용자 ID를 가져옴
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+        // 문자열로 된 권한을 Authority 열거형으로 변환
+        Authority authority = Authority.valueOf(authorities);
 
-        return user.getId();
+        LoginInfo loginInfo = new LoginInfo();
+        loginInfo.setUserId(userId);
+        loginInfo.setNickname(nickname);
+        loginInfo.setAuthorities(authority); // LoginInfo에 권한 정보 추가
+
+        return loginInfo;
     }
 }

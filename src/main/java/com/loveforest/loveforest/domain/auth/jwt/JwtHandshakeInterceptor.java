@@ -1,5 +1,6 @@
 package com.loveforest.loveforest.domain.auth.jwt;
 
+import com.loveforest.loveforest.domain.auth.dto.LoginInfo;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.http.server.ServerHttpResponse;
@@ -26,8 +27,14 @@ public class JwtHandshakeInterceptor implements HandshakeInterceptor {
             // HTTP 헤더에서 JWT 추출 및 검증
             String token = jwtTokenProvider.resolveToken(servletRequest, "accessToken"); // HttpServletRequest로 전달
             if (token != null && jwtTokenProvider.validateToken(token)) {
-                Long userId = jwtTokenProvider.getUserIdFromToken(token);
-                attributes.put("userId", userId); // 세션에 사용자 ID 저장
+                // getLoginInfoFromToken을 사용하여 LoginInfo 추출
+                LoginInfo loginInfo = jwtTokenProvider.getLoginInfoFromToken(token);
+
+                // WebSocket 세션에 필요한 사용자 정보를 저장
+                attributes.put("userId", loginInfo.getUserId());
+                attributes.put("nickname", loginInfo.getNickname());
+                attributes.put("authorities", loginInfo.getAuthorities().name());
+
                 return true;
             }
         }

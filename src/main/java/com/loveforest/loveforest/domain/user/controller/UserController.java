@@ -57,7 +57,7 @@ public class UserController {
     public ResponseEntity<UserSignupResponseDTO> signup(@Valid @RequestBody UserSignupRequestDTO request) {
         log.info("회원가입 요청 시작 - 이메일: {}", request.getEmail());
         try {
-            UserSignupResponseDTO reponse = userService.signUpWithCoupleCode(request);
+            UserSignupResponseDTO reponse = userService.signUp(request);
             log.info("회원가입 성공 - 이메일: {}", request.getEmail());
             return ResponseEntity.ok().body(reponse);
         } catch (IllegalArgumentException e) {

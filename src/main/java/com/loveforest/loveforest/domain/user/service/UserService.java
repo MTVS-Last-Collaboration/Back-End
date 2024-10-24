@@ -53,7 +53,7 @@ public class UserService {
      * @throws EmailAlreadyExistsException 중복된 이메일이 존재할 경우 예외 발생
      * @explain 회원가입 시 이메일 중복 확인 후 비밀번호를 암호화하여 새로운 사용자로 등록한다.
      */
-    public UserSignupResponseDTO signUpWithCoupleCode(UserSignupRequestDTO request) {
+    public UserSignupResponseDTO signUp(UserSignupRequestDTO request) {
         String maskedEmail = maskEmail(request.getEmail());
         log.info("회원가입 요청 - 이메일: {}", maskedEmail);
 
@@ -76,18 +76,10 @@ public class UserService {
                 .build();
         log.info("새로운 사용자 생성 완료 - 이메일: {}", maskedEmail);
 
-        // 커플 코드 생성
-        String coupleCode = UUID.randomUUID().toString();
+        // 사용자 정보 저장
+        userRepository.save(user);
 
-        // 커플 엔티티 생성 후 유저와 연결
-        Couple couple = new Couple(coupleCode);
-        couple.addUser(user);
-
-        // 커플 및 유저 저장
-        coupleRepository.save(couple);
-
-        // 응답 시 커플 코드를 함께 반환
-        return new UserSignupResponseDTO(user.getNickname(), coupleCode);
+        return new UserSignupResponseDTO(user.getNickname(), null);
     }
 
 
@@ -121,7 +113,7 @@ public class UserService {
         Long id = user.getId();
         String nickname = user.getNickname();
         String authorities = user.getAuthority().name(); // User 엔티티의 Authority에서 권한 추출
-        Long coupleId = user.getCouple().getId();
+        Long coupleId = user.getCouple() != null ? user.getCouple().getId() : null; // 커플이 없는 경우 null 처리
 
         // 액세스 토큰과 리프레시 토큰 발급
         String accessToken = jwtTokenProvider.createAccessToken(user.getEmail(), id, nickname, authorities, coupleId);

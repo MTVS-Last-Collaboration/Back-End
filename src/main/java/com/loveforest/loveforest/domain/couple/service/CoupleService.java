@@ -30,13 +30,23 @@ public class CoupleService {
         User user = userRepository.findById(userId)
                 .orElseThrow(UserNotFoundException::new);
 
-        // 커플 코드 생성
-        String coupleCode = UUID.randomUUID().toString();
+        // 1. 커플이 성사된 상태인지 확인
+        if (user.getCouple() != null) {
+            throw new IllegalStateException("이미 커플이 성사된 상태입니다. 커플 코드를 다시 생성할 수 없습니다.");
+        }
 
-        // 커플 엔티티 생성 후 첫 번째 사용자와 연결
-        Couple couple = new Couple(coupleCode);
-        couple.addUser(user);
-        coupleRepository.save(couple);
+        // 2. 이미 사용자가 커플 코드를 가지고 있는지 확인
+        Couple existingCouple = coupleRepository.findByUsersContaining(user);
+        if (existingCouple != null) {
+            // 기존 커플 코드 삭제
+            coupleRepository.delete(existingCouple);
+        }
+
+        // 3. 새로운 커플 코드 생성
+        String coupleCode = UUID.randomUUID().toString();
+        Couple newCouple = new Couple(coupleCode);
+        newCouple.addUser(user);
+        coupleRepository.save(newCouple);
 
         return coupleCode;  // 생성된 커플 코드 반환
     }
@@ -45,6 +55,12 @@ public class CoupleService {
     public void joinCouple(Long userId, String coupleCode) {
         User user = userRepository.findById(userId)
                 .orElseThrow(UserNotFoundException::new);
+
+        // 이미 사용자가 다른 커플과 연동되어 있는지 확인
+        Couple existingCouple = coupleRepository.findByUsersContaining(user);
+        if (existingCouple != null) {
+            throw new IllegalStateException("이미 다른 커플과 연동된 상태입니다. 새로운 커플과 연동할 수 없습니다.");
+        }
 
         Couple couple = coupleRepository.findByCoupleCode(coupleCode)
                 .orElseThrow(CoupleNotFoundException::new);

@@ -121,10 +121,11 @@ public class UserService {
         Long id = user.getId();
         String nickname = user.getNickname();
         String authorities = user.getAuthority().name(); // User 엔티티의 Authority에서 권한 추출
+        Long coupleId = user.getCouple().getId();
 
         // 액세스 토큰과 리프레시 토큰 발급
-        String accessToken = jwtTokenProvider.createAccessToken(user.getEmail(), id, nickname, authorities);
-        String refreshToken = jwtTokenProvider.createRefreshToken(user.getEmail(), id, nickname);
+        String accessToken = jwtTokenProvider.createAccessToken(user.getEmail(), id, nickname, authorities, coupleId);
+        String refreshToken = jwtTokenProvider.createRefreshToken(user.getEmail(), id, nickname, coupleId);
         log.info("토큰 발급 완료 - 이메일: {}", maskedEmail);
 
         // 리프레시 토큰을 Redis에 저장
@@ -174,7 +175,7 @@ public class UserService {
             }
 
             // 새로운 액세스 토큰 발급
-            String newAccessToken = jwtTokenProvider.createAccessToken(email, loginInfo.getUserId(), loginInfo.getNickname(), loginInfo.getAuthorities().name());
+            String newAccessToken = jwtTokenProvider.createAccessToken(email, loginInfo.getUserId(), loginInfo.getNickname(), loginInfo.getAuthorities().name(), loginInfo.getCoupleId());
             log.info("새로운 액세스 토큰 발급 완료 - 이메일: {}", email);
             return newAccessToken;
         } else {

@@ -8,4 +8,5 @@ public class LoginInfo {
     private Long userId;
     private String nickname;
     private Authority authorities;
+    private Long coupleId;
 }

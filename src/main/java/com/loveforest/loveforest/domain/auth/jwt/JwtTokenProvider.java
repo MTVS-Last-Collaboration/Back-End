@@ -57,12 +57,13 @@ public class JwtTokenProvider {
      * @return 생성된 JWT 토큰 문자열
      * @explain 주어진 사용자 정보를 바탕으로 JWT 토큰을 생성하여 반환합니다.
      */
-    private String createToken(String email, long expirationTime, String tokenType, Long userId, String nickname, String authorities) {
+    private String createToken(String email, long expirationTime, String tokenType, Long userId, String nickname, String authorities, Long coupleId) {
         Claims claims = Jwts.claims().setSubject(email);
         claims.put("type", tokenType);
         claims.put("userId", userId); // 추가된 사용자 정보
         claims.put("nickname", nickname); // 추가된 사용자 정보
         claims.put(AUTHORITIES_KEY, authorities); // 권한 추가
+        claims.put("coupleId", coupleId);
         Date now = new Date();
         Date validity = new Date(now.getTime() + expirationTime);
 
@@ -83,8 +84,8 @@ public class JwtTokenProvider {
      * @return 생성된 액세스 토큰 문자열
      * @explain 주어진 사용자 정보를 바탕으로 만료 기간이 설정된 액세스 토큰을 생성하여 반환합니다.
      */
-    public String createAccessToken(String email, Long userId, String nickname, String authorities) {
-        return createToken(email, accessTokenExpirationTime, TYPE_ACCESS, userId, nickname, authorities);
+    public String createAccessToken(String email, Long userId, String nickname, String authorities, Long coupleId) {
+        return createToken(email, accessTokenExpirationTime, TYPE_ACCESS, userId, nickname, authorities, coupleId);
     }
 
     /**
@@ -96,8 +97,8 @@ public class JwtTokenProvider {
      * @return 생성된 리프레시 토큰 문자열
      * @explain 주어진 사용자 정보를 바탕으로 만료 기간이 설정된 리프레시 토큰을 생성하여 반환합니다.
      */
-    public String createRefreshToken(String email, Long userId, String nickname) {
-        return createToken(email, refreshTokenExpirationTime, TYPE_REFRESH, userId, nickname, "");
+    public String createRefreshToken(String email, Long userId, String nickname, Long coupleId) {
+        return createToken(email, refreshTokenExpirationTime, TYPE_REFRESH, userId, nickname, "", coupleId);
     }
 
     /**
@@ -247,8 +248,9 @@ public class JwtTokenProvider {
             Long userId = claims.get("userId", Long.class);
             String nickname = claims.get("nickname", String.class);
             String authorities = claims.get(AUTHORITIES_KEY, String.class);
+            Long coupleId = claims.get("coupleId", Long.class);
 
-            return createAccessToken(email, userId, nickname, authorities);
+            return createAccessToken(email, userId, nickname, authorities, coupleId);
         } else {
             throw new InvalidAccessTokenException();
         }
@@ -270,6 +272,7 @@ public class JwtTokenProvider {
         Long userId = claims.get("userId", Long.class); // Claims에서 userId 추출
         String nickname = claims.get("nickname", String.class); // Claims에서 nickname 추출
         String authorities = claims.get(AUTHORITIES_KEY, String.class); // Claims에서 authorities 추출
+        Long coupleId = claims.get("coupleId", Long.class);
 
         // 문자열로 된 권한을 Authority 열거형으로 변환
         Authority authority = Authority.valueOf(authorities);
@@ -278,6 +281,7 @@ public class JwtTokenProvider {
         loginInfo.setUserId(userId);
         loginInfo.setNickname(nickname);
         loginInfo.setAuthorities(authority); // LoginInfo에 권한 정보 추가
+        loginInfo.setCoupleId(coupleId);
 
         return loginInfo;
     }

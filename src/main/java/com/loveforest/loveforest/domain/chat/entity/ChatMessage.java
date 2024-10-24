@@ -15,6 +15,9 @@ public class ChatMessage {
     @Column(name = "sender_id", nullable = false)
     private Long senderId; // 발신자 ID
 
+    @Column(name = "couple_id", nullable = false)
+    private Long coupleId; // 커플 ID
+
     @Column(nullable = false)
     private String message; // 사용자가 보낸 메시지
 
@@ -27,8 +30,9 @@ public class ChatMessage {
     public ChatMessage() {}
 
     // 생성자
-    public ChatMessage(Long senderId, String message, String response) {
+    public ChatMessage(Long senderId, Long coupleId ,String message, String response) {
         this.senderId = senderId;
+        this.coupleId = coupleId;
         this.message = message;
         this.response = response;
         this.timestamp = LocalDateTime.now();

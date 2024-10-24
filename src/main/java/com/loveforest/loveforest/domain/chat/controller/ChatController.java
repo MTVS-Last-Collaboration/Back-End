@@ -54,7 +54,8 @@ public class ChatController {
     @PostMapping("/send")
     public ResponseEntity<ChatMessage> sendMessage(@AuthenticationPrincipal LoginInfo loginInfo, @RequestBody ChatMessageRequestDTO request) {
         // 사용자 정보를 이용하여 메시지 처리
-        ChatMessage chatMessage = chatService.processMessage(loginInfo.getUserId(), request.getMessage());
+
+        ChatMessage chatMessage = chatService.processMessage(loginInfo.getUserId(), loginInfo.getCoupleId(), request.getMessage());
         return ResponseEntity.ok(chatMessage);
     }
 
@@ -62,7 +63,6 @@ public class ChatController {
     /**
      * 사용자 대화 이력 조회 API
      *
-     * @param userId 사용자 ID
      * @return 해당 사용자의 대화 이력을 반환
      */
     @Operation(summary = "대화 이력 조회", description = "사용자의 대화 이력을 조회합니다.")
@@ -84,9 +84,9 @@ public class ChatController {
                     examples = @ExampleObject(value = "{\"status\": 404, \"error\": \"ChatNotFound\", \"message\": \"대화 이력이 존재하지 않습니다.\"}")
             ))
     })
-    @GetMapping("/history/{userId}")
-    public ResponseEntity<List<ChatMessage>> getChatHistory(@AuthenticationPrincipal LoginInfo loginInfo, @PathVariable Long userId) {
-        List<ChatMessage> history = chatService.getChatHistory(loginInfo.getUserId());
+    @GetMapping("/history")
+    public ResponseEntity<List<ChatMessage>> getChatHistory(@AuthenticationPrincipal LoginInfo loginInfo) {
+        List<ChatMessage> history = chatService.getChatHistory(loginInfo.getCoupleId());
         return ResponseEntity.ok(history);
     }
 }

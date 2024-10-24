@@ -2,6 +2,7 @@ package com.loveforest.loveforest.domain.chat.controller;
 
 import com.loveforest.loveforest.domain.auth.dto.LoginInfo;
 import com.loveforest.loveforest.domain.chat.dto.ChatMessageRequestDTO;
+import com.loveforest.loveforest.domain.chat.dto.ChatMessageResponseDTO;
 import com.loveforest.loveforest.domain.chat.entity.ChatMessage;
 import com.loveforest.loveforest.domain.chat.service.ChatService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -52,11 +53,10 @@ public class ChatController {
             ))
     })
     @PostMapping("/send")
-    public ResponseEntity<ChatMessage> sendMessage(@AuthenticationPrincipal LoginInfo loginInfo, @RequestBody ChatMessageRequestDTO request) {
+    public ResponseEntity<ChatMessageResponseDTO> sendMessage(@AuthenticationPrincipal LoginInfo loginInfo, @RequestBody ChatMessageRequestDTO request) {
         // 사용자 정보를 이용하여 메시지 처리
-
-        ChatMessage chatMessage = chatService.processMessage(loginInfo.getUserId(), loginInfo.getCoupleId(), request.getMessage());
-        return ResponseEntity.ok(chatMessage);
+        ChatMessageResponseDTO responseDTO = chatService.processMessage(loginInfo.getUserId(), loginInfo.getCoupleId(), request.getMessages());
+        return ResponseEntity.ok(responseDTO);
     }
 
 

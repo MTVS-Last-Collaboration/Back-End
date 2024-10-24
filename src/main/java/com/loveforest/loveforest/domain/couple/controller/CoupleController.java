@@ -1,5 +1,6 @@
 package com.loveforest.loveforest.domain.couple.controller;
 
+import com.loveforest.loveforest.domain.auth.dto.LoginInfo;
 import com.loveforest.loveforest.domain.couple.dto.CoupleCodeResponseDTO;
 import com.loveforest.loveforest.domain.couple.dto.CoupleJoinRequestDTO;
 import com.loveforest.loveforest.domain.couple.dto.CoupleJoinResponseDTO;
@@ -15,6 +16,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -28,7 +30,6 @@ public class CoupleController {
     /**
      * 커플 코드 생성 API
      *
-     * @param userId 커플 코드 생성에 사용될 사용자 ID
      * @return 커플 코드
      */
     @Operation(summary = "커플 코드 생성", description = "커플 코드는 첫 번째 사용자가 생성하며, 해당 사용자는 나중에 커플로 연동될 다른 사용자와 연결됩니다." +
@@ -51,7 +52,8 @@ public class CoupleController {
             ))
     })
     @PostMapping("/create")
-    public ResponseEntity<CoupleCodeResponseDTO> createCouple(@RequestParam Long userId) {
+    public ResponseEntity<CoupleCodeResponseDTO> createCouple(@AuthenticationPrincipal LoginInfo loginInfo) {
+        Long userId = loginInfo.getUserId();
         String coupleCode = coupleService.createCouple(userId);
         return ResponseEntity.ok(new CoupleCodeResponseDTO(coupleCode));
     }
@@ -90,8 +92,9 @@ public class CoupleController {
             ))
     })
     @PostMapping("/join")
-    public ResponseEntity<CoupleJoinResponseDTO> joinCouple(@Valid @RequestBody CoupleJoinRequestDTO request) {
-        coupleService.joinCouple(request.getUserId(), request.getCoupleCode());
+    public ResponseEntity<CoupleJoinResponseDTO> joinCouple(@AuthenticationPrincipal LoginInfo loginInfo, @Valid @RequestBody CoupleJoinRequestDTO request) {
+        Long userId = loginInfo.getUserId();
+        coupleService.joinCouple(userId, request.getCoupleCode());
         return ResponseEntity.ok(new CoupleJoinResponseDTO("커플 연동이 성공적으로 완료되었습니다."));
     }
 }

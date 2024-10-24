@@ -9,14 +9,6 @@ import lombok.Getter;
 @Schema(description = "커플 코드 연동 요청 DTO")
 public class CoupleJoinRequestDTO {
 
-
-    @Schema(description = "두 번째 사용자 ID",
-            example = "2",
-            required = true,
-            type = "Long")
-    @NotNull(message = "사용자 ID는 필수 입력 값입니다.")
-    private Long userId;
-
     @Schema(description = "연동할 커플 코드. 커플 코드는 첫 번째 사용자가 생성한 고유 코드입니다.",
             example = "123e4567-e89b-12d3-a456-426614174000",
             required = true,

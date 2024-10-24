@@ -9,6 +9,8 @@ import com.loveforest.loveforest.domain.couple.repository.CoupleRepository;
 import com.loveforest.loveforest.domain.user.dto.UserSignupRequestDTO;
 import com.loveforest.loveforest.domain.user.dto.UserSignupResponseDTO;
 import com.loveforest.loveforest.domain.user.entity.User;
+import com.loveforest.loveforest.domain.user.enums.Authority;
+import com.loveforest.loveforest.domain.user.enums.Gender;
 import com.loveforest.loveforest.domain.user.exception.EmailAlreadyExistsException;
 import com.loveforest.loveforest.domain.user.exception.InvalidPasswordException;
 import com.loveforest.loveforest.domain.user.exception.UserNotFoundException;
@@ -174,5 +176,18 @@ public class UserService {
             log.warn("리프레시 토큰이 유효하지 않거나 만료됨");
             throw new InvalidRefreshTokenException();
         }
+    }
+
+    public void createUser(String email, String username, String password, String nickname, Gender gender, Authority authority) {
+        String encodedPassword = passwordEncoder.encode(password);
+        User user = User.builder()
+                .email(email)
+                .username(username)
+                .password(encodedPassword)
+                .nickname(nickname)
+                .gender(gender)
+                .authority(authority)
+                .build();
+        userRepository.save(user);
     }
 }

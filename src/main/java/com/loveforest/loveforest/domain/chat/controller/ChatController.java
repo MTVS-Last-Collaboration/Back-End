@@ -5,6 +5,8 @@ import com.loveforest.loveforest.domain.chat.dto.ChatMessageRequestDTO;
 import com.loveforest.loveforest.domain.chat.dto.ChatMessageResponseDTO;
 import com.loveforest.loveforest.domain.chat.entity.ChatMessage;
 import com.loveforest.loveforest.domain.chat.service.ChatService;
+import com.loveforest.loveforest.domain.user.entity.User;
+import com.loveforest.loveforest.domain.user.repository.UserRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
@@ -18,6 +20,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/chat")
@@ -26,6 +29,7 @@ import java.util.List;
 public class ChatController {
 
     private final ChatService chatService;
+    private final UserRepository userRepository;
 
     /**
      * 메시지 전송 API
@@ -53,9 +57,12 @@ public class ChatController {
             ))
     })
     @PostMapping("/send")
-    public ResponseEntity<ChatMessageResponseDTO> sendMessage(@AuthenticationPrincipal LoginInfo loginInfo, @RequestBody ChatMessageRequestDTO request) {
+    public ResponseEntity<ChatMessageResponseDTO> sendMessage(/*@AuthenticationPrincipal LoginInfo loginInfo,*/ @RequestBody ChatMessageRequestDTO request) {
         // 사용자 정보를 이용하여 메시지 처리
-        ChatMessageResponseDTO responseDTO = chatService.processMessage(loginInfo.getUserId(), loginInfo.getCoupleId(), request.getMessages());
+        System.out.println(request);
+        User user1 = userRepository.findByEmail("1@example.com");
+
+        ChatMessageResponseDTO responseDTO = chatService.processMessage(user1.getId(), user1.getCouple().getId(), request.getMessages());
         return ResponseEntity.ok(responseDTO);
     }
 

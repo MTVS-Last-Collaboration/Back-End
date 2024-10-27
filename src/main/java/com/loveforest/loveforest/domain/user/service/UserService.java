@@ -101,10 +101,10 @@ public class UserService {
 
         // 1. 이메일 확인
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> {
+                /*.orElseThrow(() -> {
                     log.warn("존재하지 않는 이메일로 로그인 시도 - 이메일: {}", maskedEmail);
                     return new UserNotFoundException();
-                });
+                })*/;
 
         // 2. 비밀번호 확인
         if (!passwordEncoder.matches(password, user.getPassword())) {

@@ -12,4 +12,6 @@ public interface CoupleRepository extends JpaRepository<Couple, Long> {
 
     // 특정 User가 속한 Couple을 찾는 메서드 정의
     Couple findByUsersContaining(User user);
+
+    boolean existsByCoupleCode(String coupleCode);
 }

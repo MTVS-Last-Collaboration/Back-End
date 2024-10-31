@@ -1,20 +1,20 @@
 package com.loveforest.loveforest.domain.couple.service;
 
 import com.loveforest.loveforest.domain.couple.entity.Couple;
+import com.loveforest.loveforest.domain.couple.exception.CoupleAlreadyExists;
 import com.loveforest.loveforest.domain.couple.exception.CoupleCodeAlreadyUsedException;
 import com.loveforest.loveforest.domain.couple.exception.CoupleNotFoundException;
 import com.loveforest.loveforest.domain.couple.repository.CoupleRepository;
-import com.loveforest.loveforest.domain.room.entity.Room;
-import com.loveforest.loveforest.domain.room.repository.RoomRepository;
-import com.loveforest.loveforest.domain.user.dto.UserSignupRequestDTO;
 import com.loveforest.loveforest.domain.user.entity.User;
 import com.loveforest.loveforest.domain.user.exception.UserNotFoundException;
 import com.loveforest.loveforest.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.security.SecureRandom;
 import java.util.UUID;
+
+import static com.loveforest.loveforest.exception.ErrorCode.COUPLE_ALREADY_EXISTS;
 
 
 @Service
@@ -32,7 +32,7 @@ public class CoupleService {
 
         // 1. 커플이 성사된 상태인지 확인
         if (user.getCouple() != null) {
-            throw new IllegalStateException("이미 커플이 성사된 상태입니다. 커플 코드를 다시 생성할 수 없습니다.");
+            throw new CoupleAlreadyExists();
         }
 
         // 2. 이미 사용자가 커플 코드를 가지고 있는지 확인
@@ -43,12 +43,26 @@ public class CoupleService {
         }
 
         // 3. 새로운 커플 코드 생성
-        String coupleCode = UUID.randomUUID().toString();
+        String coupleCode;
+        do{
+            coupleCode = generateCoupleCode();
+        } while (coupleRepository.existsByCoupleCode(coupleCode));
+
         Couple newCouple = new Couple(coupleCode);
         newCouple.addUser(user);
         coupleRepository.save(newCouple);
 
         return coupleCode;  // 생성된 커플 코드 반환
+    }
+
+    private String generateCoupleCode() {
+        String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        SecureRandom random = new SecureRandom();
+        StringBuilder code = new StringBuilder();
+        for (int i = 0; i < 5; i++) {
+            code.append(chars.charAt(random.nextInt(chars.length())));
+        }
+        return code.toString();
     }
 
     // 커플 코드로 두 번째 사용자를 커플에 연동

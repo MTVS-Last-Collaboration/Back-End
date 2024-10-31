@@ -24,6 +24,7 @@ public enum ErrorCode {
     COUPLE_NOT_FOUND(HttpStatus.NOT_FOUND, "Couple Not Found", "해당 커플을 찾을 수 없습니다.", "COUPLE-001"),
     COUPLE_CODE_ALREADY_USED(HttpStatus.CONFLICT, "Couple Code Already Used", "이미 사용 중인 커플 코드입니다.", "COUPLE-002"),
     INVALID_COUPLE_CODE(HttpStatus.BAD_REQUEST, "Invalid Couple Code", "유효하지 않은 커플 코드입니다.", "COUPLE-003"),
+    COUPLE_ALREADY_EXISTS(HttpStatus.CONFLICT, "Already Couple Existed", "이미 커플이 성사된 상태입니다. 커플 코드를 다시 생성할 수 없습니다.", "COUPLE-004"),
 
     // Room 관련 에러
     ROOM_NOT_FOUND(HttpStatus.NOT_FOUND, "Room Not Found", "해당 커플에 대한 방을 찾을 수 없습니다.", "ROOM-001"),

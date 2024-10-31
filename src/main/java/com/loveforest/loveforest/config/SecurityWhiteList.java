@@ -8,7 +8,8 @@ public class SecurityWhiteList {
         "/api/auth/**",
         "/v3/api-docs/**",
         "/swagger-ui/**",
-        "/swagger-ui.html"
+        "/swagger-ui.html",
+            "/actuator/**"
     };
 
     public String[] getWhiteList() {

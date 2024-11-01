@@ -1,4 +1,4 @@
-package com.loveforest.loveforest.domain.couple.dto;
+package com.loveforest.loveforest.domain.chat.dto;
 
 public class AiResponseDTO {
     private Response response;

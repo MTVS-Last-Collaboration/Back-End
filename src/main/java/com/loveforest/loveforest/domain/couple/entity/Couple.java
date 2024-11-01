@@ -1,5 +1,6 @@
 package com.loveforest.loveforest.domain.couple.entity;
 
+import com.loveforest.loveforest.BaseTimeEntity;
 import com.loveforest.loveforest.domain.user.entity.User;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -12,7 +13,7 @@ import java.util.List;
 @Table(name = "tbl_couple")
 @Getter
 @NoArgsConstructor
-public class Couple {
+public class Couple extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

@@ -25,7 +25,9 @@ public class CoupleService {
     private final UserRepository userRepository;
 
 
-    // 커플 코드 생성 및 발급
+    /**
+     * 커플 코드 생성 및 발급
+     * */
     public String createCouple(Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(UserNotFoundException::new);
@@ -65,15 +67,23 @@ public class CoupleService {
         return code.toString();
     }
 
-    // 커플 코드로 두 번째 사용자를 커플에 연동
+    /**
+     * 커플 코드로 두 번째 사용자를 커플에 연동
+     * */
     public void joinCouple(Long userId, String coupleCode) {
         User user = userRepository.findById(userId)
                 .orElseThrow(UserNotFoundException::new);
 
-        // 이미 사용자가 다른 커플과 연동되어 있는지 확인
+        // 사용자가 이미 연동된 커플에 속해 있는지 확인
         Couple existingCouple = coupleRepository.findByUsersContaining(user);
         if (existingCouple != null) {
-            throw new IllegalStateException("이미 다른 커플과 연동된 상태입니다. 새로운 커플과 연동할 수 없습니다.");
+            // 사용자가 속한 커플이 이미 두 명의 사용자로 연동된 상태인지 확인
+            if (existingCouple.getUsers().size() < 2) {
+                // 연동되지 않은 커플 코드인 경우 삭제
+                coupleRepository.delete(existingCouple);
+            } else {
+                throw new IllegalStateException("이미 다른 커플과 연동된 상태입니다. 새로운 커플과 연동할 수 없습니다.");
+            }
         }
 
         Couple couple = coupleRepository.findByCoupleCode(coupleCode)

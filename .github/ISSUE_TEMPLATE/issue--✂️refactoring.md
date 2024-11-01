@@ -1,7 +1,7 @@
 ---
-name: 'Refactoring - '
-about: Describe this issue template's purpose here.
-title: ''
+name: issue--✂️refactoring
+about: 코드 변경 사항 적용 시 이슈 작성
+title: 'Refactoring - '
 labels: refactor
 assignees: YachaTree
 

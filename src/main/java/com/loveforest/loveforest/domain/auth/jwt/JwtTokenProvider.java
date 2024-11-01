@@ -173,6 +173,7 @@ public class JwtTokenProvider {
         Claims claims = extractClaims(token);
 
         Long userId = claims.get("userId", Long.class); // Claims에서 userId 추출
+        String email = claims.getSubject();
         String nickname = claims.get("nickname", String.class); // Claims에서 nickname 추출
         String authorities = claims.get(AUTHORITIES_KEY, String.class); // Claims에서 authorities 추출
         Long coupleId = claims.get("coupleId", Long.class);
@@ -182,6 +183,7 @@ public class JwtTokenProvider {
         Authority authority = Authority.valueOf(authorities);
 
         LoginInfo loginInfo = new LoginInfo();
+        loginInfo.setEmail(email);
         loginInfo.setUserId(userId);
         loginInfo.setNickname(nickname);
         loginInfo.setAuthorities(authority); // LoginInfo에 권한 정보 추가

@@ -155,52 +155,39 @@ public class JwtTokenProvider {
         }
     }
 
-    /**
-     * 액세스 토큰의 유효성 및 만료 상태 검사 메서드
-     *
-     * @param accessToken 액세스 토큰
-     * @throws InvalidAccessTokenException 액세스 토큰이 유효하지 않거나 만료된 경우 예외 발생
-     * @explain 주어진 액세스 토큰이 유효한지 확인하고, 만료된 경우 예외를 던집니다.
-     */
-    public void validateAccessToken(String accessToken) {
-        log.info("액세스 토큰 유효성 및 만료 상태 검증 요청 - 토큰: {}", accessToken);
-
-        if (!validateToken(accessToken)) {
-            log.warn("액세스 토큰이 유효하지 않음 - 토큰: {}", accessToken);
-            throw new InvalidAccessTokenException();
-        }
-
-        if (isTokenExpired(accessToken)) {
-            log.warn("액세스 토큰이 만료됨 - 토큰: {}", accessToken);
-            throw new InvalidAccessTokenException();
-        }
-
-        log.debug("액세스 토큰이 유효함 - 토큰: {}", accessToken);
-    }
-
-    /**
-     * JWT 토큰을 바탕으로 인증 정보를 가져오는 메서드
-     *
-     * @param token JWT 토큰
-     * @return 인증 정보 (Authentication 객체)
-     */
-    public Authentication getAuthentication(String token) {
-        Claims claims = Jwts.parserBuilder()
+    private Claims extractClaims(String token) {
+        return Jwts.parserBuilder()
                 .setSigningKey(secretKey)
                 .build()
                 .parseClaimsJws(token)
                 .getBody();
+    }
 
-        Collection<? extends GrantedAuthority> authorities =
-                Arrays.stream(claims.get(AUTHORITIES_KEY, String.class).split(","))
-                        .map(SimpleGrantedAuthority::new)
-                        .collect(Collectors.toList());
+    /**
+     * JWT 토큰에서 로그인 정보를 가져오는 메서드
+     *
+     * @param token JWT 토큰
+     * @return LoginInfo 객체 (userId와 nickname이 포함됨)
+     */
+    public LoginInfo getLoginInfoFromToken(String token) {
+        Claims claims = extractClaims(token);
+
+        Long userId = claims.get("userId", Long.class); // Claims에서 userId 추출
+        String nickname = claims.get("nickname", String.class); // Claims에서 nickname 추출
+        String authorities = claims.get(AUTHORITIES_KEY, String.class); // Claims에서 authorities 추출
+        Long coupleId = claims.get("coupleId", Long.class);
+
+
+        // 문자열로 된 권한을 Authority 열거형으로 변환
+        Authority authority = Authority.valueOf(authorities);
 
         LoginInfo loginInfo = new LoginInfo();
-        loginInfo.setUserId(claims.get("userId", Long.class));
-        loginInfo.setNickname(claims.get("nickname", String.class));
+        loginInfo.setUserId(userId);
+        loginInfo.setNickname(nickname);
+        loginInfo.setAuthorities(authority); // LoginInfo에 권한 정보 추가
+        loginInfo.setCoupleId(coupleId);
 
-        return new UsernamePasswordAuthenticationToken(loginInfo, token, authorities);
+        return loginInfo;
     }
 
     /**
@@ -254,35 +241,5 @@ public class JwtTokenProvider {
         } else {
             throw new InvalidAccessTokenException();
         }
-    }
-
-    /**
-     * JWT 토큰에서 로그인 정보를 가져오는 메서드
-     *
-     * @param token JWT 토큰
-     * @return LoginInfo 객체 (userId와 nickname이 포함됨)
-     */
-    public LoginInfo getLoginInfoFromToken(String token) {
-        Claims claims = Jwts.parserBuilder()
-                .setSigningKey(secretKey)
-                .build()
-                .parseClaimsJws(token)
-                .getBody();
-
-        Long userId = claims.get("userId", Long.class); // Claims에서 userId 추출
-        String nickname = claims.get("nickname", String.class); // Claims에서 nickname 추출
-        String authorities = claims.get(AUTHORITIES_KEY, String.class); // Claims에서 authorities 추출
-        Long coupleId = claims.get("coupleId", Long.class);
-
-        // 문자열로 된 권한을 Authority 열거형으로 변환
-        Authority authority = Authority.valueOf(authorities);
-
-        LoginInfo loginInfo = new LoginInfo();
-        loginInfo.setUserId(userId);
-        loginInfo.setNickname(nickname);
-        loginInfo.setAuthorities(authority); // LoginInfo에 권한 정보 추가
-        loginInfo.setCoupleId(coupleId);
-
-        return loginInfo;
     }
 }

@@ -89,7 +89,7 @@ public class UserService {
         // 사용자 정보 저장
         userRepository.save(user);
 
-        return new UserSignupResponseDTO(user.getNickname(), null);
+        return new UserSignupResponseDTO(user.getNickname());
     }
 
 

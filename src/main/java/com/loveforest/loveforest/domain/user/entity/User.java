@@ -8,7 +8,10 @@ import jakarta.persistence.*;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.hibernate.annotations.ColumnDefault;
+
+import java.time.LocalDate;
 
 
 /**
@@ -40,7 +43,14 @@ public class User extends BaseTimeEntity {
     @Column(name = "nickname",nullable = false)
     private String nickname;
 
+    /**
+     * -- SETTER --
+     * 커플 설정 메서드
+     *
+     * @param couple
+     */
     // 커플 ID (Foreign Key)
+    @Setter
     @ManyToOne(fetch = FetchType.LAZY)  // 지연 로딩을 사용하는 이유 : 데이터를 실제로 사용할 때까지 데이터베이스에서 조회하지 않는다.
     @JoinColumn(name = "couple_id")
     private Couple couple;
@@ -54,6 +64,10 @@ public class User extends BaseTimeEntity {
     @ColumnDefault("'USER'")
     private Authority authority;
 
+    @Setter
+    @Column(name = "anniversary_date")
+    private LocalDate anniversaryDate;
+
 
 
     /**
@@ -61,7 +75,7 @@ public class User extends BaseTimeEntity {
      * 기본적으로 role은 USER로 설정된다.
      */
     @Builder
-    public User(String email, String username, String password, String nickname, Gender gender , Authority authority) {
+    public User(String email, String username, String password, String nickname, Gender gender , Authority authority , LocalDate anniversaryDate, Couple couple) {
         this.email = email;
         this.username = username;
         this.password = password;
@@ -69,6 +83,8 @@ public class User extends BaseTimeEntity {
         this.gender = gender;
         // role이 null이면 기본값으로 USER 설정
         this.authority = authority != null ? authority : Authority.USER;
+        this.anniversaryDate = anniversaryDate;
+        this.couple = couple;
     }
 
     /** 닉네임 변경 메서드
@@ -79,11 +95,4 @@ public class User extends BaseTimeEntity {
         this.nickname = newNickname;
     }
 
-    /** 커플 설정 메서드
-     *
-     * @param couple
-     */
-    public void setCouple(Couple couple) {
-        this.couple = couple;
-    }
 }

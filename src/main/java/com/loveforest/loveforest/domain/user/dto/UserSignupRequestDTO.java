@@ -4,9 +4,12 @@ import com.loveforest.loveforest.domain.user.enums.Gender;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Builder;
 import lombok.Getter;
+
+import java.time.LocalDate;
 
 @Getter
 @Builder
@@ -50,5 +53,12 @@ public class UserSignupRequestDTO {
             type = "String")
     @NotBlank(message = "성별은 필수 입력값입니다.")
     private Gender gender;
+
+    @Schema(description = "기념일 날짜",
+            example = "2023-01-01",
+            required = true,
+            type = "String", format = "date")
+    @NotNull(message = "기념일은 필수 입력값입니다.")
+    private LocalDate anniversary;
 
 }

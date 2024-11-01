@@ -1,5 +1,6 @@
 package com.loveforest.loveforest.domain.couple.entity;
 
+import com.loveforest.loveforest.BaseTimeEntity;
 import com.loveforest.loveforest.domain.user.entity.User;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -12,7 +13,7 @@ import java.util.List;
 @Table(name = "tbl_couple")
 @Getter
 @NoArgsConstructor
-public class Couple {
+public class Couple extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -23,7 +24,7 @@ public class Couple {
     private String coupleCode;
 
     // 사용자들 (1:N 관계로 한 커플에 2명의 사용자 연결)
-    @OneToMany(mappedBy = "couple", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "couple", cascade = {CascadeType.MERGE, CascadeType.PERSIST}, orphanRemoval = false)
     private List<User> users = new ArrayList<>();
 
     public Couple(String coupleCode) {

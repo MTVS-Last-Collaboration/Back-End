@@ -164,27 +164,6 @@ public class JwtTokenProvider {
     }
 
     /**
-     * JWT 토큰을 바탕으로 인증 정보를 가져오는 메서드
-     *
-     * @param token JWT 토큰
-     * @return 인증 정보 (Authentication 객체)
-     */
-    public Authentication getAuthentication(String token) {
-        Claims claims = extractClaims(token);
-
-        Collection<? extends GrantedAuthority> authorities =
-                Arrays.stream(claims.get(AUTHORITIES_KEY, String.class).split(","))
-                        .map(SimpleGrantedAuthority::new)
-                        .collect(Collectors.toList());
-
-        LoginInfo loginInfo = new LoginInfo();
-        loginInfo.setUserId(claims.get("userId", Long.class));
-        loginInfo.setNickname(claims.get("nickname", String.class));
-
-        return new UsernamePasswordAuthenticationToken(loginInfo, token, authorities);
-    }
-
-    /**
      * JWT 토큰에서 로그인 정보를 가져오는 메서드
      *
      * @param token JWT 토큰

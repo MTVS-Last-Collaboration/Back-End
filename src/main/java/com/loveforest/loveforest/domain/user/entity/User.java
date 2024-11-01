@@ -64,6 +64,7 @@ public class User extends BaseTimeEntity {
     @ColumnDefault("'USER'")
     private Authority authority;
 
+    @Setter
     @Column(name = "anniversary_date")
     private LocalDate anniversaryDate;
 
@@ -74,7 +75,7 @@ public class User extends BaseTimeEntity {
      * 기본적으로 role은 USER로 설정된다.
      */
     @Builder
-    public User(String email, String username, String password, String nickname, Gender gender , Authority authority , LocalDate anniversaryDate) {
+    public User(String email, String username, String password, String nickname, Gender gender , Authority authority , LocalDate anniversaryDate, Couple couple) {
         this.email = email;
         this.username = username;
         this.password = password;
@@ -83,6 +84,7 @@ public class User extends BaseTimeEntity {
         // role이 null이면 기본값으로 USER 설정
         this.authority = authority != null ? authority : Authority.USER;
         this.anniversaryDate = anniversaryDate;
+        this.couple = couple;
     }
 
     /** 닉네임 변경 메서드

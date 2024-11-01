@@ -6,6 +6,7 @@ import com.loveforest.loveforest.domain.auth.jwt.exception.InvalidRefreshTokenEx
 import com.loveforest.loveforest.domain.auth.jwt.refreshToken.RefreshTokenRepository;
 import com.loveforest.loveforest.domain.couple.entity.Couple;
 import com.loveforest.loveforest.domain.couple.repository.CoupleRepository;
+import com.loveforest.loveforest.domain.couple.service.CoupleService;
 import com.loveforest.loveforest.domain.user.dto.UserSignupRequestDTO;
 import com.loveforest.loveforest.domain.user.dto.UserSignupResponseDTO;
 import com.loveforest.loveforest.domain.user.entity.User;
@@ -15,6 +16,7 @@ import com.loveforest.loveforest.domain.user.exception.EmailAlreadyExistsExcepti
 import com.loveforest.loveforest.domain.user.exception.InvalidPasswordException;
 import com.loveforest.loveforest.domain.user.exception.UserNotFoundException;
 import com.loveforest.loveforest.domain.user.repository.UserRepository;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -27,19 +29,16 @@ import java.util.UUID;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
     private final RefreshTokenRepository refreshTokenRepository;
+    private final CoupleService coupleService;
+    private final CoupleRepository coupleRepository;
 
-    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtTokenProvider jwtTokenProvider, RefreshTokenRepository refreshTokenRepository) {
-        this.userRepository = userRepository;
-        this.passwordEncoder = passwordEncoder;
-        this.jwtTokenProvider = jwtTokenProvider;
-        this.refreshTokenRepository = refreshTokenRepository;
-    }
 
     public String maskEmail(String email) {
         String[] parts = email.split("@");
@@ -49,7 +48,7 @@ public class UserService {
     /**
      * 회원가입 처리 메서드
      *
-     * @param request 사용자로부터 전달받은 회원가입 요청 정보 (이메일, 유저명, 비밀번호, 닉네임)
+     * @param request 사용자로부터 전달받은 회원가입 요청 정보 (이메일, 유저명, 비밀번호, 닉네임, 기념일)
      * @return 등록된 사용자 정보 (User 엔티티)
      * @throws EmailAlreadyExistsException 중복된 이메일이 존재할 경우 예외 발생
      * @explain 회원가입 시 이메일 중복 확인 후 비밀번호를 암호화하여 새로운 사용자로 등록한다.
@@ -67,7 +66,15 @@ public class UserService {
         String encodedPassword = passwordEncoder.encode(request.getPassword());
         log.debug("비밀번호 암호화 완료 - 이메일: {}", maskedEmail);
 
+        // 새로운 커플 코드 생성
+        String coupleCode = coupleService.generateCoupleCode();
+
+        // 새로운 커플 객체 생성 후 사용자 연결
+        Couple couple = new Couple(coupleCode);
+        coupleRepository.save(couple);
+
         // 새로운 유저 생성, role 기본값 USER 설정
+
         User user = User.builder()
                 .email(request.getEmail())
                 .username(request.getUsername())
@@ -75,6 +82,7 @@ public class UserService {
                 .nickname(request.getNickname())
                 .gender(request.getGender())
                 .anniversaryDate(request.getAnniversary())
+                .couple(couple)
                 .build();
         log.info("새로운 사용자 생성 완료 - 이메일: {}", maskedEmail);
 
@@ -176,19 +184,5 @@ public class UserService {
             log.warn("리프레시 토큰이 유효하지 않거나 만료됨");
             throw new InvalidRefreshTokenException();
         }
-    }
-
-    public void createUser(String email, String username, String password, String nickname, Gender gender, Authority authority, LocalDate anniversary) {
-        String encodedPassword = passwordEncoder.encode(password);
-        User user = User.builder()
-                .email(email)
-                .username(username)
-                .password(encodedPassword)
-                .nickname(nickname)
-                .gender(gender)
-                .authority(authority)
-                .anniversaryDate(anniversary)
-                .build();
-        userRepository.save(user);
     }
 }

@@ -24,7 +24,7 @@ public class Couple extends BaseTimeEntity {
     private String coupleCode;
 
     // 사용자들 (1:N 관계로 한 커플에 2명의 사용자 연결)
-    @OneToMany(mappedBy = "couple", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "couple", cascade = {CascadeType.MERGE, CascadeType.PERSIST}, orphanRemoval = false)
     private List<User> users = new ArrayList<>();
 
     public Couple(String coupleCode) {

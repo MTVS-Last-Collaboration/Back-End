@@ -12,7 +12,7 @@ import lombok.Setter;
 @Schema(description = "로그인 요청 DTO")
 public class LoginRequestDTO {
 
-    @Schema(description = "이메일", example = "example@example.com")
+    @Schema(description = "이메일", example = "1@example.com")
     @Email(message = "이메일 형식이 잘못되었습니다.")
     @NotBlank(message = "이메일은 필수 입력 값입니다.")
     private String email;

@@ -12,9 +12,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.security.SecureRandom;
-import java.util.UUID;
-
-import static com.loveforest.loveforest.exception.ErrorCode.COUPLE_ALREADY_EXISTS;
 
 
 @Service

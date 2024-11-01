@@ -9,6 +9,8 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import java.time.LocalDate;
+
 @Configuration
 @RequiredArgsConstructor
 public class MockDataLoader {
@@ -20,16 +22,16 @@ public class MockDataLoader {
     public CommandLineRunner loadMockData() {
         return args -> {
             // 남자 회원 생성
-            createUserIfNotExists("1@example.com", "남자회원", "1234", "남자", Gender.MALE, Authority.USER);
+            createUserIfNotExists("1@example.com", "남자회원", "1234", "남자", Gender.MALE, Authority.USER, LocalDate.parse("2023-01-01"));
 
             // 여자 회원 생성
-            createUserIfNotExists("2@example.com", "여자회원", "1234", "여자", Gender.FEMALE, Authority.USER);
+            createUserIfNotExists("2@example.com", "여자회원", "1234", "여자", Gender.FEMALE, Authority.USER, LocalDate.parse("2023-01-01"));
         };
     }
 
-    private void createUserIfNotExists(String email, String username, String password, String nickname, Gender gender, Authority authority) {
+    private void createUserIfNotExists(String email, String username, String password, String nickname, Gender gender, Authority authority, LocalDate anniversary) {
         if (!userRepository.existsByEmail(email)) {
-            userService.createUser(email, username, password, nickname, gender, authority);
+            userService.createUser(email, username, password, nickname, gender, authority, anniversary);
         }
     }
 }

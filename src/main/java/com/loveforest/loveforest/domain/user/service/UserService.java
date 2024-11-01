@@ -19,6 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -32,14 +33,12 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
     private final RefreshTokenRepository refreshTokenRepository;
-    private final CoupleRepository coupleRepository;
 
-    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtTokenProvider jwtTokenProvider, RefreshTokenRepository refreshTokenRepository, CoupleRepository coupleRepository) {
+    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtTokenProvider jwtTokenProvider, RefreshTokenRepository refreshTokenRepository) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtTokenProvider = jwtTokenProvider;
         this.refreshTokenRepository = refreshTokenRepository;
-        this.coupleRepository = coupleRepository;
     }
 
     public String maskEmail(String email) {
@@ -75,6 +74,7 @@ public class UserService {
                 .password(encodedPassword)
                 .nickname(request.getNickname())
                 .gender(request.getGender())
+                .anniversaryDate(request.getAnniversary())
                 .build();
         log.info("새로운 사용자 생성 완료 - 이메일: {}", maskedEmail);
 
@@ -178,7 +178,7 @@ public class UserService {
         }
     }
 
-    public void createUser(String email, String username, String password, String nickname, Gender gender, Authority authority) {
+    public void createUser(String email, String username, String password, String nickname, Gender gender, Authority authority, LocalDate anniversary) {
         String encodedPassword = passwordEncoder.encode(password);
         User user = User.builder()
                 .email(email)
@@ -187,6 +187,7 @@ public class UserService {
                 .nickname(nickname)
                 .gender(gender)
                 .authority(authority)
+                .anniversaryDate(anniversary)
                 .build();
         userRepository.save(user);
     }

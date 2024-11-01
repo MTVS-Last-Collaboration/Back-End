@@ -14,10 +14,4 @@ public class UserSignupResponseDTO {
             required = true,
             type = "String")
     private String nickname;
-
-    @Schema(description = "커플 연동을 위한 고유 커플 코드",
-            example = "123e4567-e89b-12d3-a456-426614174000",
-            required = true,
-            type = "String")
-    private String coupleCode;
 }

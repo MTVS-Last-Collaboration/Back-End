@@ -5,7 +5,7 @@ import com.loveforest.loveforest.domain.chat.dto.ChatMessageResponseDTO;
 import com.loveforest.loveforest.domain.chat.entity.ChatMessage;
 import com.loveforest.loveforest.domain.chat.exception.ChatNotFoundException;
 import com.loveforest.loveforest.domain.chat.repository.ChatMessageRepository;
-import com.loveforest.loveforest.domain.couple.dto.AiResponseDTO;
+import com.loveforest.loveforest.domain.chat.dto.AiResponseDTO;
 import com.loveforest.loveforest.exception.common.InvalidInputException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;

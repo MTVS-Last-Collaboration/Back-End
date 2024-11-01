@@ -155,29 +155,6 @@ public class JwtTokenProvider {
         }
     }
 
-    /**
-     * 액세스 토큰의 유효성 및 만료 상태 검사 메서드
-     *
-     * @param accessToken 액세스 토큰
-     * @throws InvalidAccessTokenException 액세스 토큰이 유효하지 않거나 만료된 경우 예외 발생
-     * @explain 주어진 액세스 토큰이 유효한지 확인하고, 만료된 경우 예외를 던집니다.
-     */
-    public void validateAccessToken(String accessToken) {
-        log.info("액세스 토큰 유효성 및 만료 상태 검증 요청 - 토큰: {}", accessToken);
-
-        if (!validateToken(accessToken)) {
-            log.warn("액세스 토큰이 유효하지 않음 - 토큰: {}", accessToken);
-            throw new InvalidAccessTokenException();
-        }
-
-        if (isTokenExpired(accessToken)) {
-            log.warn("액세스 토큰이 만료됨 - 토큰: {}", accessToken);
-            throw new InvalidAccessTokenException();
-        }
-
-        log.debug("액세스 토큰이 유효함 - 토큰: {}", accessToken);
-    }
-
     private Claims extractClaims(String token) {
         return Jwts.parserBuilder()
                 .setSigningKey(secretKey)

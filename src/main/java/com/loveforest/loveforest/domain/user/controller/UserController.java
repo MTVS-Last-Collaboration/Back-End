@@ -116,7 +116,11 @@ public class UserController {
      */
     @Operation(summary = "로그아웃", description = "사용자가 로그아웃하며, Redis에 저장된 리프레시 토큰을 삭제합니다.")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "성공적으로 로그아웃되었습니다."),
+            @ApiResponse(responseCode = "200", description = "성공적으로 로그아웃되었습니다.", content = @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(type = "string"),
+                    examples = @ExampleObject(value = "\"로그아웃 성공\"")
+            )),
             @ApiResponse(responseCode = "400", description = "잘못된 요청입니다.", content = @Content(
                     mediaType = "application/json",
                     schema = @Schema(implementation = ErrorResponse.class),
@@ -133,11 +137,10 @@ public class UserController {
             ))
     })
     @PostMapping("/logout")
-    public ResponseEntity<String> logout(@RequestParam String email) {
-        log.info("로그아웃 요청 시작 - 이메일: {}", userService.maskEmail(email));
-        userService.logout(email);
-        log.info("로그아웃 성공 - 이메일: {}", userService.maskEmail(email));
-        return ResponseEntity.ok("로그아웃 성공");
+    public ResponseEntity<String> logout(@AuthenticationPrincipal LoginInfo loginInfo) {
+        userService.logout(loginInfo.getEmail());
+        log.info("로그아웃 성공 - 이메일: {}", userService.maskEmail(loginInfo.getEmail()));
+        return ResponseEntity.ok().body("로그아웃 성공");
     }
 
     /**

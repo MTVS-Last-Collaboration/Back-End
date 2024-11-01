@@ -1,5 +1,6 @@
 package com.loveforest.loveforest.domain.user.controller;
 
+import com.loveforest.loveforest.domain.auth.dto.LoginInfo;
 import com.loveforest.loveforest.domain.user.dto.LoginRequestDTO;
 import com.loveforest.loveforest.domain.user.dto.UserSignupRequestDTO;
 import com.loveforest.loveforest.domain.user.dto.UserSignupResponseDTO;
@@ -19,6 +20,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;

@@ -1,5 +1,6 @@
 package com.loveforest.loveforest.domain.couple.service;
 
+import com.loveforest.loveforest.domain.couple.dto.CoupleCodeResponseDTO;
 import com.loveforest.loveforest.domain.couple.entity.Couple;
 import com.loveforest.loveforest.domain.couple.exception.CoupleAlreadyExists;
 import com.loveforest.loveforest.domain.couple.exception.CoupleCodeAlreadyUsedException;
@@ -9,13 +10,14 @@ import com.loveforest.loveforest.domain.user.entity.User;
 import com.loveforest.loveforest.domain.user.exception.UserNotFoundException;
 import com.loveforest.loveforest.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.security.SecureRandom;
 import java.time.LocalDate;
 
-
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -79,5 +81,24 @@ public class CoupleService {
         targetCouple.addUser(user);
         userRepository.save(user);
         coupleRepository.save(targetCouple);
+        // 커플 연동 성공 로그
+        log.info("커플 연동 성공 - 사용자 ID: {}, 닉네임: {}, 타겟 커플 코드: {}, 기념일: {}",
+                user.getId(), user.getNickname(), coupleCode, anniversaryDate);
+    }
+
+    public CoupleCodeResponseDTO getMyCoupleCode(Long userId) {
+        // 요청한 사용자
+        User user = userRepository.findById(userId)
+                .orElseThrow(UserNotFoundException::new);
+
+        // 커플 정보가 있는지 확인
+        Couple couple = user.getCouple();
+        if (couple == null) {
+            throw new CoupleNotFoundException(); // 커플이 없을 경우 예외 처리
+        }
+
+        // 커플 코드 반환
+        return new CoupleCodeResponseDTO(couple.getCoupleCode());
+
     }
 }

@@ -1,6 +1,7 @@
 package com.loveforest.loveforest.domain.couple.controller;
 
 import com.loveforest.loveforest.domain.auth.dto.LoginInfo;
+import com.loveforest.loveforest.domain.couple.dto.CoupleCodeResponseDTO;
 import com.loveforest.loveforest.domain.couple.dto.CoupleJoinRequestDTO;
 import com.loveforest.loveforest.domain.couple.dto.CoupleJoinResponseDTO;
 import com.loveforest.loveforest.domain.couple.service.CoupleService;
@@ -14,10 +15,12 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/couple")
 @RequiredArgsConstructor
@@ -95,5 +98,30 @@ public class CoupleController {
         Long userId = loginInfo.getUserId();
         coupleService.joinCouple(userId, request.getCoupleCode());
         return ResponseEntity.ok(new CoupleJoinResponseDTO("커플 연동이 성공적으로 완료되었습니다."));
+    }
+
+
+    @Operation(summary = "나의 커플 코드 조회", description = "사용자의 커플 코드를 조회하는 API입니다. 로그인한 사용자가 속한 커플의 코드를 반환합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "커플 코드 조회 성공", content = @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(implementation = CoupleCodeResponseDTO.class),
+                    examples = @ExampleObject(
+                            value = "{\"coupleCode\": \"ABCDE\"}"
+                    )
+            )),
+            @ApiResponse(responseCode = "404", description = "커플을 찾을 수 없습니다.", content = @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(implementation = ErrorResponse.class),
+                    examples = @ExampleObject(
+                            value = "{\"status\": 404, \"errorType\": \"CoupleNotFound\", \"message\": \"해당 커플을 찾을 수 없습니다.\"}"
+                    )
+            ))
+    })
+    @GetMapping("/my-code")
+    public ResponseEntity<CoupleCodeResponseDTO> getMyCoupleCode(@AuthenticationPrincipal LoginInfo loginInfo) {
+        Long userId = loginInfo.getUserId();
+        CoupleCodeResponseDTO coupleCode = coupleService.getMyCoupleCode(userId);
+        return ResponseEntity.ok(coupleCode);
     }
 }

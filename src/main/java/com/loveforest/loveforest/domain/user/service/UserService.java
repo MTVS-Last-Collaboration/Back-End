@@ -185,4 +185,9 @@ public class UserService {
             throw new InvalidRefreshTokenException();
         }
     }
+
+    public String getCoupleCode(String email) {
+        User user = userRepository.findByEmail(email);
+        return user.getCouple().getCoupleCode();
+    }
 }

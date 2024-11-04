@@ -7,6 +7,7 @@ import com.loveforest.loveforest.domain.auth.jwt.refreshToken.RefreshTokenReposi
 import com.loveforest.loveforest.domain.couple.entity.Couple;
 import com.loveforest.loveforest.domain.couple.repository.CoupleRepository;
 import com.loveforest.loveforest.domain.couple.service.CoupleService;
+import com.loveforest.loveforest.domain.user.dto.MyInfoResponseDTO;
 import com.loveforest.loveforest.domain.user.dto.UserSignupRequestDTO;
 import com.loveforest.loveforest.domain.user.dto.UserSignupResponseDTO;
 import com.loveforest.loveforest.domain.user.entity.User;
@@ -16,6 +17,7 @@ import com.loveforest.loveforest.domain.user.exception.EmailAlreadyExistsExcepti
 import com.loveforest.loveforest.domain.user.exception.InvalidPasswordException;
 import com.loveforest.loveforest.domain.user.exception.UserNotFoundException;
 import com.loveforest.loveforest.domain.user.repository.UserRepository;
+import com.loveforest.loveforest.exception.CustomException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -183,5 +185,19 @@ public class UserService {
     public String getCoupleCode(String email) {
         User user = userRepository.findByEmail(email);
         return user.getCouple().getCoupleCode();
+    }
+
+    public MyInfoResponseDTO getMyInfo(LoginInfo loginInfo) {
+        // loginInfo에서 사용자 ID를 가져와 DB에서 사용자 정보를 조회합니다.
+        User user = userRepository.findById(loginInfo.getUserId())
+                .orElseThrow(UserNotFoundException::new);
+
+        // MyInfoResponseDTO에 사용자 정보를 매핑하여 반환합니다.
+        return new MyInfoResponseDTO(
+                user.getNickname(),
+                user.getGender(),
+                user.getAnniversaryDate(),
+                user.getCouple().getCoupleCode()
+        );
     }
 }

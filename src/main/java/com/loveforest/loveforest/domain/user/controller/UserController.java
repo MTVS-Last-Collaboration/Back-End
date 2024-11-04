@@ -1,10 +1,7 @@
 package com.loveforest.loveforest.domain.user.controller;
 
 import com.loveforest.loveforest.domain.auth.dto.LoginInfo;
-import com.loveforest.loveforest.domain.user.dto.LoginRequestDTO;
-import com.loveforest.loveforest.domain.user.dto.LoginResponseDTO;
-import com.loveforest.loveforest.domain.user.dto.UserSignupRequestDTO;
-import com.loveforest.loveforest.domain.user.dto.UserSignupResponseDTO;
+import com.loveforest.loveforest.domain.user.dto.*;
 import com.loveforest.loveforest.domain.user.service.UserService;
 import com.loveforest.loveforest.exception.ErrorResponse;
 import com.loveforest.loveforest.exception.common.UnauthorizedException;
@@ -174,4 +171,40 @@ public class UserController {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
+
+
+
+    /**
+     * 사용자 정보 조회
+     */
+    @Operation(summary = "사용자 정보 조회", description = "현재 로그인한 사용자의 정보를 조회합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "사용자 정보 조회 성공", content = @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(implementation = MyInfoResponseDTO.class),
+                    examples = @ExampleObject(
+                            value = "{\"nickname\": \"오승훈훈훈\", \"gender\": \"MALE\", \"anniversaryDate\": \"2023-01-01\", \"coupleCode\": \"COUPLE1234\"}"
+                    )
+            )),
+            @ApiResponse(responseCode = "401", description = "인증되지 않은 사용자", content = @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(implementation = ErrorResponse.class),
+                    examples = @ExampleObject(
+                            value = "{\"status\": 401, \"errorType\": \"Unauthorized\", \"message\": \"인증되지 않은 사용자입니다.\"}"
+                    )
+            )),
+            @ApiResponse(responseCode = "404", description = "사용자 정보 없음", content = @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(implementation = ErrorResponse.class),
+                    examples = @ExampleObject(
+                            value = "{\"status\": 404, \"errorType\": \"NotFound\", \"message\": \"사용자 정보를 찾을 수 없습니다.\"}"
+                    )
+            ))
+    })
+    @GetMapping("my-info")
+    public ResponseEntity<MyInfoResponseDTO> getMyInfo(@AuthenticationPrincipal LoginInfo loginInfo) {
+        MyInfoResponseDTO myInfoResponseDTO = userService.getMyInfo(loginInfo);
+        return ResponseEntity.ok(myInfoResponseDTO);
+    }
+
 }

@@ -24,15 +24,15 @@ public class Answer {
     private User author; // 답변 작성자
 
     @ManyToOne
-    @JoinColumn(name = "question_id", nullable = false)
-    private Question question; // 연관된 질문
+    @JoinColumn(name = "daily_topic_id", nullable = false)
+    private DailyTopic dailyTopic; // 연관된 질문
 
     @Column(nullable = false)
     private LocalDateTime createdDate = LocalDateTime.now(); // 생성 시간
 
-    public Answer(String content, User author, Question question) {
+    public Answer(String content, User author, DailyTopic dailyTopic) {
         this.content = content;
         this.author = author;
-        this.question = question;
+        this.dailyTopic = dailyTopic;
     }
 }

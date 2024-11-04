@@ -9,7 +9,7 @@ import java.time.LocalDate;
 @Entity
 @Getter
 @NoArgsConstructor
-public class Question {
+public class DailyTopic {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -21,7 +21,7 @@ public class Question {
     @Column(nullable = false, unique = true)
     private LocalDate date; // 질문 생성 날짜
 
-    public Question(String content, LocalDate date) {
+    public DailyTopic(String content, LocalDate date) {
         this.content = content;
         this.date = date;
     }

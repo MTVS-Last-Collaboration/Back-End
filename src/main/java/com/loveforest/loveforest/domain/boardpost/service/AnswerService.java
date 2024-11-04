@@ -3,7 +3,7 @@ package com.loveforest.loveforest.domain.boardpost.service;
 import com.loveforest.loveforest.domain.boardpost.dto.AnswerRequestDTO;
 import com.loveforest.loveforest.domain.boardpost.dto.AnswerResponseDTO;
 import com.loveforest.loveforest.domain.boardpost.entity.Answer;
-import com.loveforest.loveforest.domain.boardpost.entity.Question;
+import com.loveforest.loveforest.domain.boardpost.entity.DailyTopic;
 import com.loveforest.loveforest.domain.boardpost.repository.AnswerRepository;
 import com.loveforest.loveforest.domain.user.entity.User;
 import lombok.RequiredArgsConstructor;
@@ -19,9 +19,9 @@ public class AnswerService {
 
     private final AnswerRepository answerRepository;
 
-    public AnswerResponseDTO createAnswer(AnswerRequestDTO answerRequestDTO, String nickname, Question question) {
+    public AnswerResponseDTO createAnswer(AnswerRequestDTO answerRequestDTO, String nickname, DailyTopic dailyTopic) {
         // Answer 엔티티 생성
-        Answer answer = new Answer(answerRequestDTO.getContent(), new User(nickname), question);
+        Answer answer = new Answer(answerRequestDTO.getContent(), new User(nickname), dailyTopic);
         Answer savedAnswer = answerRepository.save(answer);
 
         // AnswerResponseDTO로 변환하여 반환
@@ -33,9 +33,9 @@ public class AnswerService {
         );
     }
 
-    public List<AnswerResponseDTO> getAnswersByQuestion(Question question) {
+    public List<AnswerResponseDTO> getAnswersByDailyTopic(DailyTopic dailyTopic) {
         // Answer 엔티티 리스트를 AnswerResponseDTO 리스트로 변환하여 반환
-        return answerRepository.findByQuestion(question).stream()
+        return answerRepository.findByDailyTopic(dailyTopic).stream()
                 .map(answer -> new AnswerResponseDTO(
                         answer.getId(),
                         answer.getContent(),

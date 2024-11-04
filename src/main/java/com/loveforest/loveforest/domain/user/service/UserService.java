@@ -40,11 +40,6 @@ public class UserService {
     private final CoupleRepository coupleRepository;
 
 
-    public String maskEmail(String email) {
-        String[] parts = email.split("@");
-        return parts[0].substring(0, Math.min(3, parts[0].length())) + "***@" + parts[1];
-    }
-
     /**
      * 회원가입 처리 메서드
      *
@@ -54,17 +49,17 @@ public class UserService {
      * @explain 회원가입 시 이메일 중복 확인 후 비밀번호를 암호화하여 새로운 사용자로 등록한다.
      */
     public UserSignupResponseDTO signUp(UserSignupRequestDTO request) {
-        String maskedEmail = maskEmail(request.getEmail());
-        log.info("회원가입 요청 - 이메일: {}", maskedEmail);
+        String email = request.getEmail();
+        log.info("회원가입 요청 - 이메일: {}", email);
 
         if (userRepository.existsByEmail(request.getEmail())) {
-            log.warn("중복된 이메일로 회원가입 시도 - 이메일: {}", maskedEmail);
+            log.warn("중복된 이메일로 회원가입 시도 - 이메일: {}", email);
             throw new EmailAlreadyExistsException();
         }
 
         // 비밀번호 암호화
         String encodedPassword = passwordEncoder.encode(request.getPassword());
-        log.debug("비밀번호 암호화 완료 - 이메일: {}", maskedEmail);
+        log.debug("비밀번호 암호화 완료 - 이메일: {}", email);
 
         // 새로운 커플 코드 생성
         String coupleCode = coupleService.generateCoupleCode();
@@ -84,7 +79,7 @@ public class UserService {
                 .anniversaryDate(request.getAnniversary())
                 .couple(couple)
                 .build();
-        log.info("새로운 사용자 생성 완료 - 이메일: {}", maskedEmail);
+        log.info("새로운 사용자 생성 완료 - 이메일: {}", email);
 
         // 사용자 정보 저장
         userRepository.save(user);
@@ -104,8 +99,7 @@ public class UserService {
      * @explain 사용자 로그인 시 이메일과 비밀번호를 확인한 후, 유효할 경우 액세스 토큰과 리프레시 토큰을 발급하여 반환합니다.
      */
     public Map<String, String> login(String email, String password) {
-        String maskedEmail = maskEmail(email);
-        log.info("로그인 시도 - 이메일: {}", maskedEmail);
+        log.info("로그인 시도 - 이메일: {}", email);
 
         // 1. 이메일 확인
         User user = userRepository.findByEmail(email)
@@ -116,7 +110,7 @@ public class UserService {
 
         // 2. 비밀번호 확인
         if (!passwordEncoder.matches(password, user.getPassword())) {
-            log.warn("비밀번호 불일치 - 이메일: {}", maskedEmail);
+            log.warn("비밀번호 불일치 - 이메일: {}", email);
             throw new InvalidPasswordException();
         }
 
@@ -128,11 +122,11 @@ public class UserService {
         // 액세스 토큰과 리프레시 토큰 발급
         String accessToken = jwtTokenProvider.createAccessToken(user.getEmail(), id, nickname, authorities, coupleId);
         String refreshToken = jwtTokenProvider.createRefreshToken(user.getEmail(), id, nickname, coupleId);
-        log.info("토큰 발급 완료 - 이메일: {}", maskedEmail);
+        log.info("토큰 발급 완료 - 이메일: {}", email);
 
         // 리프레시 토큰을 Redis에 저장
         refreshTokenRepository.saveRefreshToken(user.getEmail(), refreshToken);
-        log.debug("리프레시 토큰 저장 완료 - 이메일: {}", maskedEmail);
+        log.debug("리프레시 토큰 저장 완료 - 이메일: {}", email);
 
         // 결과를 Map으로 반환
         Map<String, String> tokens = new HashMap<>();

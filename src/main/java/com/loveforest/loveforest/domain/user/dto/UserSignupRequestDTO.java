@@ -55,7 +55,7 @@ public class UserSignupRequestDTO {
             example = "MALE",
             required = true,
             type = "String")
-    @NotBlank(message = "성별은 필수 입력값입니다.")
+    @NotNull(message = "성별은 필수 입력값입니다.")
     private Gender gender;
 
     @Schema(description = "기념일 날짜",

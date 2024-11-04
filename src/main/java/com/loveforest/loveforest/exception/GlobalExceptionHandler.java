@@ -9,6 +9,7 @@ import com.loveforest.loveforest.exception.common.UnauthorizedException;
 import com.loveforest.loveforest.domain.user.exception.UserNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -67,15 +68,18 @@ public class GlobalExceptionHandler {
         return buildErrorResponse(ex.getErrorCode().getStatus(), ex.getErrorCode().getErrorType(), ex.getErrorCode().getDescription(), ex.getErrorCode().getCode());
     }
 
-    // 유효성 검사 예외 처리
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleValidationExceptions(MethodArgumentNotValidException ex) {
+        // 필드 에러 메시지 수집
         StringBuilder message = new StringBuilder("유효성 검사 오류: ");
-        ex.getBindingResult().getFieldErrors().forEach(error ->
-                message.append(String.format("[%s: %s] ", error.getField(), error.getDefaultMessage()))
-        );
+        for (FieldError error : ex.getBindingResult().getFieldErrors()) {
+            message.append(String.format("[%s: %s] ", error.getField(), error.getDefaultMessage()));
+        }
+
         log.warn("유효성 검사 실패: {}", message);
-        return buildErrorResponse(HttpStatus.BAD_REQUEST, "유효성 검사 오류", message.toString(), ex.getDetailMessageCode());
+
+        // ErrorResponse 생성 및 반환
+        return buildErrorResponse(HttpStatus.BAD_REQUEST, "유효성 검사 오류", message.toString(), "LOVEFOREST-400");
     }
 
     // 일반적인 예외 처리

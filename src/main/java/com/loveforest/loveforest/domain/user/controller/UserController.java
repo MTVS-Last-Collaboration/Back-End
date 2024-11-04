@@ -2,8 +2,10 @@ package com.loveforest.loveforest.domain.user.controller;
 
 import com.loveforest.loveforest.domain.auth.dto.LoginInfo;
 import com.loveforest.loveforest.domain.user.dto.LoginRequestDTO;
+import com.loveforest.loveforest.domain.user.dto.LoginResponseDTO;
 import com.loveforest.loveforest.domain.user.dto.UserSignupRequestDTO;
 import com.loveforest.loveforest.domain.user.dto.UserSignupResponseDTO;
+import com.loveforest.loveforest.domain.user.entity.User;
 import com.loveforest.loveforest.domain.user.service.UserService;
 import com.loveforest.loveforest.exception.ErrorResponse;
 import com.loveforest.loveforest.exception.common.InvalidInputException;
@@ -91,7 +93,7 @@ public class UserController {
             ))
     })
     @PostMapping("/login")
-    public ResponseEntity<Void> login(@Valid @RequestBody LoginRequestDTO requestDTO) {
+    public ResponseEntity<LoginResponseDTO> login(@Valid @RequestBody LoginRequestDTO requestDTO) {
         try {
             // Map으로 토큰을 받기
             Map<String, String> tokens = userService.login(requestDTO.getEmail(), requestDTO.getPassword());
@@ -101,9 +103,12 @@ public class UserController {
             HttpHeaders headers = new HttpHeaders();
             headers.set("Authorization", "Bearer " + tokens.get("accessToken"));
             headers.set("Refresh-Token", tokens.get("refreshToken"));
+            String coupleCode = userService.getCoupleCode(requestDTO.getEmail());
+            LoginResponseDTO loginResponseDTO = new LoginResponseDTO();
+            loginResponseDTO.setCoupleCode(coupleCode);
 
             // 응답 시 헤더에 추가된 토큰을 반환
-            return ResponseEntity.ok().headers(headers).build();
+            return ResponseEntity.ok().headers(headers).body(loginResponseDTO);
         } catch (IllegalArgumentException e) {
             log.error("로그인 실패 - 유효하지 않은 회원: {}", userService.maskEmail(requestDTO.getEmail()));
             throw new UnauthorizedException();

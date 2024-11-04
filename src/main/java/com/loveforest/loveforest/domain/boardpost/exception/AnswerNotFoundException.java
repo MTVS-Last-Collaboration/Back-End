@@ -5,8 +5,8 @@ import com.loveforest.loveforest.exception.ErrorCode;
 import lombok.Getter;
 
 @Getter
-public class DailyTopicNotFoundException extends CustomException {
-    public DailyTopicNotFoundException() {
-        super(ErrorCode.DAILY_TOPIC_NOT_FOUND);
+public class AnswerNotFoundException extends CustomException {
+    public AnswerNotFoundException() {
+        super(ErrorCode.ANSWER_NOT_FOUND);
     }
 }

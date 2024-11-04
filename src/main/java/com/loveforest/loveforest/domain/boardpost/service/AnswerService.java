@@ -6,6 +6,7 @@ import com.loveforest.loveforest.domain.boardpost.entity.Answer;
 import com.loveforest.loveforest.domain.boardpost.entity.DailyTopic;
 import com.loveforest.loveforest.domain.boardpost.repository.AnswerRepository;
 import com.loveforest.loveforest.domain.user.entity.User;
+import com.loveforest.loveforest.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -18,10 +19,14 @@ import java.util.stream.Collectors;
 public class AnswerService {
 
     private final AnswerRepository answerRepository;
+    private final UserRepository userRepository;
 
     public AnswerResponseDTO createAnswer(AnswerRequestDTO answerRequestDTO, String nickname, DailyTopic dailyTopic) {
+
+        User author = userRepository.findByNickname(nickname)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
         // Answer 엔티티 생성
-        Answer answer = new Answer(answerRequestDTO.getContent(), new User(nickname), dailyTopic);
+        Answer answer = new Answer(answerRequestDTO.getContent(), author, dailyTopic);
         Answer savedAnswer = answerRepository.save(answer);
 
         // AnswerResponseDTO로 변환하여 반환

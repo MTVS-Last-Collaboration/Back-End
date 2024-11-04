@@ -4,6 +4,7 @@ import com.loveforest.loveforest.domain.auth.dto.LoginInfo;
 import com.loveforest.loveforest.domain.boardpost.dto.*;
 import com.loveforest.loveforest.domain.boardpost.entity.Answer;
 import com.loveforest.loveforest.domain.boardpost.entity.DailyTopic;
+import com.loveforest.loveforest.domain.boardpost.exception.DailyTopicNotFoundException;
 import com.loveforest.loveforest.domain.boardpost.service.AnswerService;
 import com.loveforest.loveforest.domain.boardpost.service.CommentService;
 import com.loveforest.loveforest.domain.boardpost.service.DailyTopicService;
@@ -38,7 +39,7 @@ public class BoardController {
      * Daily 토픽 생성
      * */
     @Operation(
-            summary = "Daily 토픽",
+            summary = "Daily 토픽 생성",
             description = "로그인한 사용자가 새로운 질문을 생성합니다. 질문은 하루에 하나씩만 존재할 수 있습니다."
     )
     @ApiResponses(value = {
@@ -93,7 +94,7 @@ public class BoardController {
             @AuthenticationPrincipal LoginInfo loginInfo,
             @Valid @RequestBody AnswerRequestDTO answerRequestDTO) {
         DailyTopic dailyTopic = dailyTopicService.getDailyTopicById(answerRequestDTO.getDailyTopicId())
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 질문입니다."));
+                .orElseThrow(DailyTopicNotFoundException::new);
 
         AnswerResponseDTO answerResponse = answerService.createAnswer(answerRequestDTO, loginInfo.getNickname(), dailyTopic);
         return ResponseEntity.ok(answerResponse);

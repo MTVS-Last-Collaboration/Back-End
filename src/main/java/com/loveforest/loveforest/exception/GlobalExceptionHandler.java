@@ -1,5 +1,7 @@
 package com.loveforest.loveforest.exception;
 
+import com.loveforest.loveforest.domain.boardpost.exception.AnswerNotFoundException;
+import com.loveforest.loveforest.domain.boardpost.exception.DailyTopicNotFoundException;
 import com.loveforest.loveforest.domain.chat.exception.ChatNotFoundException;
 import com.loveforest.loveforest.domain.couple.exception.CoupleAlreadyExists;
 import com.loveforest.loveforest.domain.user.exception.EmailAlreadyExistsException;
@@ -58,6 +60,17 @@ public class GlobalExceptionHandler {
     // 커플 관련 예외 처리
     @ExceptionHandler(CoupleAlreadyExists.class)
     public ResponseEntity<ErrorResponse> handleCoupleAlreadyExists(CoupleAlreadyExists ex) {
+        return buildErrorResponse(ex.getErrorCode().getStatus(), ex.getErrorCode().getErrorType(), ex.getErrorCode().getDescription(), ex.getErrorCode().getCode());
+    }
+
+    // 게시판 관련 예외 처리
+    @ExceptionHandler(DailyTopicNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleDailyTopicNotFoundException(DailyTopicNotFoundException ex) {
+        return buildErrorResponse(ex.getErrorCode().getStatus(), ex.getErrorCode().getErrorType(), ex.getErrorCode().getDescription(), ex.getErrorCode().getCode());
+    }
+
+    @ExceptionHandler(AnswerNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleAnswerNotFoundException(AnswerNotFoundException ex) {
         return buildErrorResponse(ex.getErrorCode().getStatus(), ex.getErrorCode().getErrorType(), ex.getErrorCode().getDescription(), ex.getErrorCode().getCode());
     }
 

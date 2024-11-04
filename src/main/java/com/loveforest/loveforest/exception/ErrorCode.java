@@ -35,7 +35,9 @@ public enum ErrorCode {
     // Board 관련 에러
     DAILY_TOPIC_NOT_FOUND(HttpStatus.NOT_FOUND, "DailyTopic Not Found", "존재하지 않는 일일 토픽입니다.", "TOPIC-001"),
     ANSWER_NOT_FOUND(HttpStatus.NOT_FOUND, "Answer Not Found", "존재하지 않는 일일 게시글입니다.", "TOPIC-002"),
-    COMMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "Comment Not Found", "댓글이 존재하지 않습니다.", "TOPIC-003");
+    COMMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "Comment Not Found", "댓글이 존재하지 않습니다.", "TOPIC-003"),
+    DAILY_TOPIC_ALREADY_EXIST(HttpStatus.CONFLICT, "Already DailyTopic Existed", "이미 해당 토픽이 존재합니다.", "TOPIC-004");
+
 
 
     private final HttpStatus status;

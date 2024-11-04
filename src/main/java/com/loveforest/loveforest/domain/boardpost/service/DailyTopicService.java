@@ -1,6 +1,7 @@
 package com.loveforest.loveforest.domain.boardpost.service;
 
 import com.loveforest.loveforest.domain.boardpost.entity.DailyTopic;
+import com.loveforest.loveforest.domain.boardpost.exception.DailyTopicAlreadyExistsException;
 import com.loveforest.loveforest.domain.boardpost.exception.DailyTopicNotFoundException;
 import com.loveforest.loveforest.domain.boardpost.repository.DailyTopicRepository;
 import lombok.RequiredArgsConstructor;
@@ -15,8 +16,14 @@ public class DailyTopicService {
 
     private final DailyTopicRepository dailyTopicRepository;
 
-    public DailyTopic createDailyTopic(String content) {
-        DailyTopic dailyTopic = new DailyTopic(content, LocalDate.now());
+    public DailyTopic createDailyTopic(String content, LocalDate date) {
+
+        // 중복 확인 로직 추가
+        if (dailyTopicRepository.existsByDate(date)) {
+            throw new DailyTopicAlreadyExistsException();
+        }
+
+        DailyTopic dailyTopic = new DailyTopic(content, date);
         return dailyTopicRepository.save(dailyTopic);
     }
 

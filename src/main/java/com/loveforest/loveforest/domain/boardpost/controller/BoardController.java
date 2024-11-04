@@ -50,9 +50,9 @@ public class BoardController {
     })
     @PostMapping
     public ResponseEntity<DailyTopicResponseDTO> createDailyTopic(
-            @Parameter(description = "오늘의 질문 내용", example = "오늘의 목표는 무엇인가요?") @RequestParam String content,
+            @Valid @RequestBody DailyTopicRequestDTO dailyTopicRequestDTO,
             @AuthenticationPrincipal LoginInfo loginInfo) {
-        DailyTopic dailyTopic = dailyTopicService.createDailyTopic(content);
+        DailyTopic dailyTopic = dailyTopicService.createDailyTopic(dailyTopicRequestDTO.getContent(), dailyTopicRequestDTO.getDate());
         DailyTopicResponseDTO dailyTopicIdResponse = new DailyTopicResponseDTO(dailyTopic);
         return ResponseEntity.ok(dailyTopicIdResponse);
     }

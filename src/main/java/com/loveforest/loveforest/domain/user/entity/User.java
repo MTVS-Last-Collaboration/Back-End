@@ -5,10 +5,7 @@ import com.loveforest.loveforest.domain.couple.entity.Couple;
 import com.loveforest.loveforest.domain.user.enums.Gender;
 import com.loveforest.loveforest.domain.user.enums.Authority;
 import jakarta.persistence.*;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import org.hibernate.annotations.ColumnDefault;
 
 import java.time.LocalDate;
@@ -85,6 +82,11 @@ public class User extends BaseTimeEntity {
         this.authority = authority != null ? authority : Authority.USER;
         this.anniversaryDate = anniversaryDate;
         this.couple = couple;
+    }
+
+    @Builder
+    public User(String nickname) {
+        this.nickname = nickname;
     }
 
     /** 닉네임 변경 메서드

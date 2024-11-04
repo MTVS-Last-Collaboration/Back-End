@@ -5,10 +5,8 @@ import com.loveforest.loveforest.domain.user.dto.LoginRequestDTO;
 import com.loveforest.loveforest.domain.user.dto.LoginResponseDTO;
 import com.loveforest.loveforest.domain.user.dto.UserSignupRequestDTO;
 import com.loveforest.loveforest.domain.user.dto.UserSignupResponseDTO;
-import com.loveforest.loveforest.domain.user.entity.User;
 import com.loveforest.loveforest.domain.user.service.UserService;
 import com.loveforest.loveforest.exception.ErrorResponse;
-import com.loveforest.loveforest.exception.common.InvalidInputException;
 import com.loveforest.loveforest.exception.common.UnauthorizedException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -60,14 +58,9 @@ public class UserController {
     @PostMapping("/signup")
     public ResponseEntity<UserSignupResponseDTO> signup(@Valid @RequestBody UserSignupRequestDTO request) {
         log.info("회원가입 요청 시작 - 이메일: {}", request.getEmail());
-        try {
-            UserSignupResponseDTO reponse = userService.signUp(request);
-            log.info("회원가입 성공 - 이메일: {}", request.getEmail());
-            return ResponseEntity.ok().body(reponse);
-        } catch (IllegalArgumentException e) {
-            log.error("회원가입 실패 - 유효하지 않은 입력: {}", e.getMessage());
-            throw new InvalidInputException();  // 메시지를 사용하지 않고 예외 던짐
-        }
+        UserSignupResponseDTO response = userService.signUp(request);
+        log.info("회원가입 성공 - 이메일: {}", request.getEmail());
+        return ResponseEntity.ok().body(response);
     }
 
 
@@ -97,7 +90,7 @@ public class UserController {
         try {
             // Map으로 토큰을 받기
             Map<String, String> tokens = userService.login(requestDTO.getEmail(), requestDTO.getPassword());
-            log.info("로그인 성공 - 이메일: {}", userService.maskEmail(requestDTO.getEmail()));
+            log.info("로그인 성공 - 이메일: {}", requestDTO.getEmail());
 
             // 헤더에 토큰 추가
             HttpHeaders headers = new HttpHeaders();
@@ -110,7 +103,7 @@ public class UserController {
             // 응답 시 헤더에 추가된 토큰을 반환
             return ResponseEntity.ok().headers(headers).body(loginResponseDTO);
         } catch (IllegalArgumentException e) {
-            log.error("로그인 실패 - 유효하지 않은 회원: {}", userService.maskEmail(requestDTO.getEmail()));
+            log.error("로그인 실패 - 유효하지 않은 회원: {}", requestDTO.getEmail());
             throw new UnauthorizedException();
         }
     }
@@ -144,7 +137,7 @@ public class UserController {
     @PostMapping("/logout")
     public ResponseEntity<String> logout(@AuthenticationPrincipal LoginInfo loginInfo) {
         userService.logout(loginInfo.getEmail());
-        log.info("로그아웃 성공 - 이메일: {}", userService.maskEmail(loginInfo.getEmail()));
+        log.info("로그아웃 성공 - 이메일: {}", loginInfo.getEmail());
         return ResponseEntity.ok().body("로그아웃 성공");
     }
 

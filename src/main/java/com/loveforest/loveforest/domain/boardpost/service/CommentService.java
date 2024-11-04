@@ -4,6 +4,7 @@ import com.loveforest.loveforest.domain.boardpost.dto.CommentResponseDTO;
 import com.loveforest.loveforest.domain.boardpost.entity.Answer;
 import com.loveforest.loveforest.domain.boardpost.entity.Comment;
 import com.loveforest.loveforest.domain.boardpost.exception.AnswerNotFoundException;
+import com.loveforest.loveforest.domain.boardpost.exception.CommentsNotFoundException;
 import com.loveforest.loveforest.domain.boardpost.repository.CommentRepository;
 import com.loveforest.loveforest.domain.user.entity.User;
 import com.loveforest.loveforest.domain.user.repository.UserRepository;
@@ -40,12 +41,17 @@ public class CommentService {
     }
 
     public List<CommentResponseDTO> getCommentsByAnswer(Answer answer) {
-        // Comment 엔티티 리스트를 CommentResponseDTO 리스트로 변환하여 반환
-        return commentRepository.findByAnswer(answer).stream()
+        List<Comment> comments = commentRepository.findByAnswer(answer);
+
+        if (comments.isEmpty()) {
+            throw new CommentsNotFoundException(); // 댓글이 없을 경우 예외 발생
+        }
+
+        return comments.stream()
                 .map(comment -> new CommentResponseDTO(
                         comment.getId(),
                         comment.getContent(),
-                        comment.getAuthor().getNickname(), // 작성자 닉네임
+                        comment.getAuthor().getNickname(),
                         comment.getCreatedDate()
                 ))
                 .collect(Collectors.toList());

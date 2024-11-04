@@ -4,6 +4,7 @@ import com.loveforest.loveforest.domain.auth.dto.LoginInfo;
 import com.loveforest.loveforest.domain.boardpost.dto.*;
 import com.loveforest.loveforest.domain.boardpost.entity.Answer;
 import com.loveforest.loveforest.domain.boardpost.entity.DailyTopic;
+import com.loveforest.loveforest.domain.boardpost.exception.AnswerNotFoundException;
 import com.loveforest.loveforest.domain.boardpost.exception.DailyTopicNotFoundException;
 import com.loveforest.loveforest.domain.boardpost.service.AnswerService;
 import com.loveforest.loveforest.domain.boardpost.service.CommentService;
@@ -113,7 +114,7 @@ public class BoardController {
     public ResponseEntity<List<AnswerResponseDTO>> getAnswersByDailyTopic(
             @PathVariable("dailyTopicId") Long dailyTopicId) {
         DailyTopic dailyTopic = dailyTopicService.getDailyTopicById(dailyTopicId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 질문입니다."));
+                .orElseThrow(DailyTopicNotFoundException::new);
         List<AnswerResponseDTO> answers = answerService.getAnswersByDailyTopic(dailyTopic);
         return ResponseEntity.ok(answers);
     }
@@ -131,7 +132,7 @@ public class BoardController {
             @AuthenticationPrincipal LoginInfo loginInfo,
             @Valid @RequestBody CommentRequestDTO commentRequestDTO) {
         Answer answer = answerService.getAnswerById(commentRequestDTO.getAnswerId())
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 답변입니다."));
+                .orElseThrow(AnswerNotFoundException::new);
 
         CommentResponseDTO commentResponse = commentService.createComment(
                 commentRequestDTO.getContent(),  // content
@@ -160,7 +161,7 @@ public class BoardController {
 
         // 답변을 조회하고 없으면 예외 처리
         Answer answer = answerService.getAnswerById(answerId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 답변입니다."));
+                .orElseThrow(AnswerNotFoundException::new);
 
         // 댓글 목록 조회
         List<CommentResponseDTO> comments = commentService.getCommentsByAnswer(answer);

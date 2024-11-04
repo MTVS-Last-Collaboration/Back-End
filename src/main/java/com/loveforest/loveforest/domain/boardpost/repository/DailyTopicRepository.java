@@ -8,4 +8,6 @@ import java.util.Optional;
 
 public interface DailyTopicRepository extends JpaRepository<DailyTopic, Long> {
     Optional<DailyTopic> findByDate(LocalDate date); // 특정 날짜의 질문 조회
+
+    boolean existsByDate(LocalDate today);
 }

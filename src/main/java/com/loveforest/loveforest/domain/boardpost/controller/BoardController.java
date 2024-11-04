@@ -78,8 +78,8 @@ public class BoardController {
 
         // 로그인한 사용자 정보 확인
         Long userId = loginInfo.getUserId();
-        Optional<DailyTopic> dailyTopicId = dailyTopicService.getDailyTopicByDate(date);
-        return dailyTopicId.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+        DailyTopic dailyTopic = dailyTopicService.getDailyTopicByDate(date);
+        return ResponseEntity.ok(dailyTopic);
     }
 
     /**

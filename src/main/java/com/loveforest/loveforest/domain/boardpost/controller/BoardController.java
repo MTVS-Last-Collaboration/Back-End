@@ -9,6 +9,7 @@ import com.loveforest.loveforest.domain.boardpost.exception.DailyTopicNotFoundEx
 import com.loveforest.loveforest.domain.boardpost.service.AnswerService;
 import com.loveforest.loveforest.domain.boardpost.service.CommentService;
 import com.loveforest.loveforest.domain.boardpost.service.DailyTopicService;
+import com.loveforest.loveforest.domain.user.exception.LoginRequiredException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -23,10 +24,9 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Optional;
 
 @RestController
-@RequestMapping("/api/board")
+@RequestMapping("/api/topic")
 @RequiredArgsConstructor
 @Tag(name = "게시판 API", description = "1일 1질문 게시판 API")
 public class BoardController {
@@ -57,6 +57,31 @@ public class BoardController {
         return ResponseEntity.ok(dailyTopicIdResponse);
     }
 
+    /**
+     * Daily 토픽 특정 날짜의 질문 조회
+     * */
+    @Operation(
+            summary = "모든 Daily 토픽 조회",
+            description = "로그인한 사용자가 모든 Daily 토픽을 조회합니다."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "질문 조회 성공"),
+            @ApiResponse(responseCode = "404", description = "해당 날짜에 질문이 존재하지 않음"),
+            @ApiResponse(responseCode = "401", description = "인증되지 않은 사용자가 접근할 수 없습니다.")
+    })
+    @GetMapping
+    public ResponseEntity<List<DailyTopicResponseDTO>> getDailyTopicByDate(@AuthenticationPrincipal LoginInfo loginInfo) {
+
+        // 로그인한 사용자 정보 확인
+        Long userId = loginInfo.getUserId();
+        if (userId == null) {
+            throw new LoginRequiredException();
+        }
+
+        List<DailyTopicResponseDTO> dailyTopicList = dailyTopicService.getAllDailyTopic();
+        return ResponseEntity.ok(dailyTopicList);
+    }
+
 
     /**
      * Daily 토픽 특정 날짜의 질문 조회
@@ -71,13 +96,17 @@ public class BoardController {
             @ApiResponse(responseCode = "401", description = "인증되지 않은 사용자가 접근할 수 없습니다.")
     })
     @GetMapping("/date/{date}")
-    public ResponseEntity<DailyTopic> getDailyTopicByDate(
+    public ResponseEntity<DailyTopic> getAllDailyTopicByDate(
             @Parameter(description = "조회할 날짜 (yyyy-MM-dd 형식)", example = "2023-01-01")
             @PathVariable("date") @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate date,
             @AuthenticationPrincipal LoginInfo loginInfo) {
 
         // 로그인한 사용자 정보 확인
         Long userId = loginInfo.getUserId();
+        if (userId == null) {
+            throw new LoginRequiredException();
+        }
+
         DailyTopic dailyTopic = dailyTopicService.getDailyTopicByDate(date);
         return ResponseEntity.ok(dailyTopic);
     }
@@ -94,6 +123,13 @@ public class BoardController {
     public ResponseEntity<AnswerResponseDTO> createAnswer(
             @AuthenticationPrincipal LoginInfo loginInfo,
             @Valid @RequestBody AnswerRequestDTO answerRequestDTO) {
+
+        // 로그인한 사용자 정보 확인
+        Long userId = loginInfo.getUserId();
+        if (userId == null) {
+            throw new LoginRequiredException();
+        }
+
         DailyTopic dailyTopic = dailyTopicService.getDailyTopicById(answerRequestDTO.getDailyTopicId())
                 .orElseThrow(DailyTopicNotFoundException::new);
 
@@ -112,7 +148,15 @@ public class BoardController {
     })
     @GetMapping("/{dailyTopicId}/answers")
     public ResponseEntity<List<AnswerResponseDTO>> getAnswersByDailyTopic(
-            @PathVariable("dailyTopicId") Long dailyTopicId) {
+            @PathVariable("dailyTopicId") Long dailyTopicId,
+            @AuthenticationPrincipal LoginInfo loginInfo) {
+
+        // 로그인한 사용자 정보 확인
+        Long userId = loginInfo.getUserId();
+        if (userId == null) {
+            throw new LoginRequiredException();
+        }
+
         DailyTopic dailyTopic = dailyTopicService.getDailyTopicById(dailyTopicId)
                 .orElseThrow(DailyTopicNotFoundException::new);
         List<AnswerResponseDTO> answers = answerService.getAnswersByDailyTopic(dailyTopic);
@@ -131,6 +175,13 @@ public class BoardController {
     public ResponseEntity<CommentResponseDTO> createComment(
             @AuthenticationPrincipal LoginInfo loginInfo,
             @Valid @RequestBody CommentRequestDTO commentRequestDTO) {
+
+        // 로그인한 사용자 정보 확인
+        Long userId = loginInfo.getUserId();
+        if (userId == null) {
+            throw new LoginRequiredException();
+        }
+
         Answer answer = answerService.getAnswerById(commentRequestDTO.getAnswerId())
                 .orElseThrow(AnswerNotFoundException::new);
 
@@ -156,8 +207,11 @@ public class BoardController {
             @PathVariable("answerId") Long answerId,
             @AuthenticationPrincipal LoginInfo loginInfo) { // 인증된 사용자 정보 추가
 
-        // 인증된 사용자인지 확인
+        // 로그인한 사용자 정보 확인
         Long userId = loginInfo.getUserId();
+        if (userId == null) {
+            throw new LoginRequiredException();
+        }
 
         // 답변을 조회하고 없으면 예외 처리
         Answer answer = answerService.getAnswerById(answerId)

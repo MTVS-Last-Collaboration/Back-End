@@ -2,6 +2,7 @@ package com.loveforest.loveforest.config;
 
 import com.loveforest.loveforest.domain.auth.jwt.JwtTokenFilter;
 import com.loveforest.loveforest.domain.auth.jwt.JwtTokenProvider;
+import com.loveforest.loveforest.domain.auth.utils.CustomAuthenticationEntryPoint;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -28,6 +29,7 @@ public class SecurityConfig {
     private final JwtTokenProvider jwtTokenProvider;
     private final CorsConfig corsConfig;
     private final SecurityWhiteList securityWhiteList;
+    private final CustomAuthenticationEntryPoint customAuthenticationEntryPoint; // 추가
 
     /**
      * SecurityFilterChain 빈을 정의하여 Spring Security의 보안 필터 체인을 구성하는 메서드
@@ -50,6 +52,8 @@ public class SecurityConfig {
                         .requestMatchers(mvc.pattern("/api/chat/**")).permitAll()  // "/api/users/**"는 인증 필요
                         .requestMatchers(this.createMvcRequestMatcherForWhiteList(mvc)).permitAll() // 화이트리스트는 인증 없이 접근 가능
                         .anyRequest().authenticated()) // 그 외 모든 요청은 인증 필요
+                .exceptionHandling(exceptionHandling ->
+                        exceptionHandling.authenticationEntryPoint(customAuthenticationEntryPoint)) // CustomAuthenticationEntryPoint 설정 추가
                 .addFilterBefore(new JwtTokenFilter(jwtTokenProvider), UsernamePasswordAuthenticationFilter.class);  // JWT 필터 추가
 
         return http.build();

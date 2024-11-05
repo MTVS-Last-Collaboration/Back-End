@@ -1,5 +1,6 @@
 package com.loveforest.loveforest.domain.boardpost.service;
 
+import com.loveforest.loveforest.domain.boardpost.dto.DailyTopicResponseDTO;
 import com.loveforest.loveforest.domain.boardpost.entity.DailyTopic;
 import com.loveforest.loveforest.domain.boardpost.exception.DailyTopicAlreadyExistsException;
 import com.loveforest.loveforest.domain.boardpost.exception.DailyTopicNotFoundException;
@@ -8,7 +9,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -34,5 +38,17 @@ public class DailyTopicService {
 
     public Optional<DailyTopic> getDailyTopicById(Long dailyTopicId) {
         return dailyTopicRepository.findById(dailyTopicId);
+    }
+
+    public List<DailyTopicResponseDTO> getAllDailyTopic() {
+        List<DailyTopic> dailyTopicList = dailyTopicRepository.findAll();
+
+        return dailyTopicList.stream()
+                .map(dailyTopic -> new DailyTopicResponseDTO(
+                        dailyTopic.getId(),
+                        dailyTopic.getContent(),
+                        dailyTopic.getDate()
+                ))
+                .toList();
     }
 }

@@ -6,6 +6,7 @@ import com.loveforest.loveforest.domain.chat.exception.ChatNotFoundException;
 import com.loveforest.loveforest.domain.couple.exception.CoupleAlreadyExists;
 import com.loveforest.loveforest.domain.user.exception.EmailAlreadyExistsException;
 import com.loveforest.loveforest.domain.user.exception.InvalidPasswordException;
+import com.loveforest.loveforest.domain.user.exception.LoginRequiredException;
 import com.loveforest.loveforest.exception.common.InvalidInputException;
 import com.loveforest.loveforest.exception.common.UnauthorizedException;
 import com.loveforest.loveforest.domain.user.exception.UserNotFoundException;
@@ -57,6 +58,11 @@ public class GlobalExceptionHandler {
         return buildErrorResponse(ex.getErrorCode().getStatus(), ex.getErrorCode().getErrorType(), ex.getErrorCode().getDescription(), ex.getErrorCode().getCode());
     }
 
+    @ExceptionHandler(LoginRequiredException.class)
+    public ResponseEntity<ErrorResponse> handleLoginRequiredException(LoginRequiredException ex) {
+        return buildErrorResponse(ex.getErrorCode().getStatus(), ex.getErrorCode().getErrorType(), ex.getErrorCode().getDescription(), ex.getErrorCode().getCode());
+    }
+
     // 커플 관련 예외 처리
     @ExceptionHandler(CoupleAlreadyExists.class)
     public ResponseEntity<ErrorResponse> handleCoupleAlreadyExists(CoupleAlreadyExists ex) {
@@ -101,6 +107,8 @@ public class GlobalExceptionHandler {
         log.error("예상치 못한 예외 발생: ", ex);
         return buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "서버 오류", "서버에 문제가 발생했습니다." , "LOVEFOREST-000");
     }
+
+
 
     // 공통적으로 ErrorResponse를 생성하는 메서드
     private ResponseEntity<ErrorResponse> buildErrorResponse(HttpStatus status, String errorType, String message, String Code) {

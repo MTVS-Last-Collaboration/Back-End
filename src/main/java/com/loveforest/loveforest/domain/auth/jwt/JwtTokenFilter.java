@@ -1,8 +1,7 @@
 package com.loveforest.loveforest.domain.auth.jwt;
 
 import com.loveforest.loveforest.domain.auth.dto.LoginInfo;
-import com.loveforest.loveforest.domain.auth.jwt.exception.InvalidAccessTokenException;
-import com.loveforest.loveforest.domain.user.enums.Authority;
+import com.loveforest.loveforest.domain.user.exception.LoginRequiredException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.ServletRequest;
@@ -17,7 +16,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.GenericFilterBean;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -47,6 +45,7 @@ public class JwtTokenFilter extends GenericFilterBean {
                 SecurityContextHolder.getContext().setAuthentication(auth);
             } catch (Exception e) {
                 log.warn("JWT 토큰 인증 실패: {}", e.getMessage());
+                SecurityContextHolder.clearContext();
             }
         }
 

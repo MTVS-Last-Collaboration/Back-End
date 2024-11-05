@@ -5,8 +5,8 @@ import com.loveforest.loveforest.exception.ErrorCode;
 import lombok.Getter;
 
 @Getter
-public class InvalidPasswordException extends CustomException {
-    public InvalidPasswordException() {
-        super(ErrorCode.INVALID_PASSWORD);
+public class LoginRequiredException extends CustomException {
+    public LoginRequiredException() {
+        super(ErrorCode.LOGIN_REQUIRED);
     }
 }

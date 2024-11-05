@@ -13,7 +13,7 @@ public class ChatMessageDTO {
     @Schema(description = "메시지 ID", example = "1")
     private Long id;
 
-    @Schema(description = "발신자 ID", example = "123")
+    @Schema(description = "발신자 ID", example = "1")
     private Long senderId;
 
     @Schema(description = "사용자가 보낸 메시지", example = "안녕하세요!")

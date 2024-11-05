@@ -48,7 +48,7 @@ public class ChatService {
         chatMessageRepository.save(chatMessage); // DB에 저장
 
         // AI 서버의 응답만을 포함한 DTO 반환
-        return new ChatMessageResponseDTO(aiResponse);
+        return new ChatMessageResponseDTO(senderId, coupleId ,aiResponse);
     }
 
 

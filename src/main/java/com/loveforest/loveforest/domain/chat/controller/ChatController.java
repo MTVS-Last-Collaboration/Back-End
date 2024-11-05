@@ -1,11 +1,13 @@
 package com.loveforest.loveforest.domain.chat.controller;
 
 import com.loveforest.loveforest.domain.auth.dto.LoginInfo;
+import com.loveforest.loveforest.domain.chat.dto.ChatMessageDTO;
 import com.loveforest.loveforest.domain.chat.dto.ChatMessageRequestDTO;
 import com.loveforest.loveforest.domain.chat.dto.ChatMessageResponseDTO;
 import com.loveforest.loveforest.domain.chat.entity.ChatMessage;
 import com.loveforest.loveforest.domain.chat.service.ChatService;
 import com.loveforest.loveforest.domain.user.entity.User;
+import com.loveforest.loveforest.domain.user.exception.LoginRequiredException;
 import com.loveforest.loveforest.domain.user.repository.UserRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -20,6 +22,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/chat")
@@ -56,12 +59,10 @@ public class ChatController {
             ))
     })
     @PostMapping("/send")
-    public ResponseEntity<ChatMessageResponseDTO> sendMessage(/*@AuthenticationPrincipal LoginInfo loginInfo,*/ @RequestBody ChatMessageRequestDTO request) {
-        // 사용자 정보를 이용하여 메시지 처리
-        System.out.println(request);
-        User user1 = userRepository.findByEmail("1@example.com");
+    public ResponseEntity<ChatMessageResponseDTO> sendMessage(@AuthenticationPrincipal LoginInfo loginInfo, @RequestBody ChatMessageRequestDTO request) {
 
-        ChatMessageResponseDTO responseDTO = chatService.processMessage(user1.getId(), user1.getCouple().getId(), request.getMessages());
+
+        ChatMessageResponseDTO responseDTO = chatService.processMessage(loginInfo.getUserId(), loginInfo.getCoupleId(), request.getMessages());
         return ResponseEntity.ok(responseDTO);
     }
 
@@ -75,7 +76,7 @@ public class ChatController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "대화 이력이 성공적으로 조회되었습니다.", content = @Content(
                     mediaType = "application/json",
-                    schema = @Schema(implementation = ChatMessage.class)
+                    schema = @Schema(implementation = ChatMessageDTO.class)
             )),
             @ApiResponse(responseCode = "401", description = "인증되지 않은 사용자입니다.", content = @Content(
                     mediaType = "application/json",
@@ -91,8 +92,13 @@ public class ChatController {
             ))
     })
     @GetMapping("/history")
-    public ResponseEntity<List<ChatMessage>> getChatHistory(@AuthenticationPrincipal LoginInfo loginInfo) {
+    public ResponseEntity<List<ChatMessageDTO>> getChatHistory(@AuthenticationPrincipal LoginInfo loginInfo) {
+
         List<ChatMessage> history = chatService.getChatHistory(loginInfo.getCoupleId());
-        return ResponseEntity.ok(history);
+        List<ChatMessageDTO> historyDTO = history.stream()
+                .map(ChatMessageDTO::fromEntity)
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(historyDTO);
     }
 }

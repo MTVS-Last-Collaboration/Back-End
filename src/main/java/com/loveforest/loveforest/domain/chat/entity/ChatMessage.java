@@ -1,11 +1,13 @@
 package com.loveforest.loveforest.domain.chat.entity;
 
 import jakarta.persistence.*;
+import lombok.Getter;
 
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "chat_message")
+@Getter
 public class ChatMessage {
 
     @Id
@@ -38,6 +40,4 @@ public class ChatMessage {
         this.timestamp = LocalDateTime.now();
     }
 
-    // Getters and Setters
-    // ...
 }

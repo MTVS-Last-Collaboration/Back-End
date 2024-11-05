@@ -49,7 +49,7 @@ public class SecurityConfig {
                         sessionManagement.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // 세션 사용 안 함
                 .authorizeHttpRequests((request) -> request
                         .requestMatchers(mvc.pattern("/api/users/**")).permitAll()  // "/api/users/**"는 인증 필요
-                        .requestMatchers(mvc.pattern("/api/chat/**")).permitAll()  // "/api/users/**"는 인증 필요
+//                        .requestMatchers(mvc.pattern("/api/chat/**")).permitAll()  // "/api/users/**"는 인증 필요
                         .requestMatchers(this.createMvcRequestMatcherForWhiteList(mvc)).permitAll() // 화이트리스트는 인증 없이 접근 가능
                         .anyRequest().authenticated()) // 그 외 모든 요청은 인증 필요
                 .exceptionHandling(exceptionHandling ->

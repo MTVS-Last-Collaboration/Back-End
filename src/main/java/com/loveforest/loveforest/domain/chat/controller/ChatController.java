@@ -59,12 +59,10 @@ public class ChatController {
             ))
     })
     @PostMapping("/send")
-    public ResponseEntity<ChatMessageResponseDTO> sendMessage(/*@AuthenticationPrincipal LoginInfo loginInfo,*/ @RequestBody ChatMessageRequestDTO request) {
-        // 사용자 정보를 이용하여 메시지 처리
-        System.out.println(request);
-        User user1 = userRepository.findByEmail("1@example.com");
+    public ResponseEntity<ChatMessageResponseDTO> sendMessage(@AuthenticationPrincipal LoginInfo loginInfo, @RequestBody ChatMessageRequestDTO request) {
 
-        ChatMessageResponseDTO responseDTO = chatService.processMessage(user1.getId(), user1.getCouple().getId(), request.getMessages());
+
+        ChatMessageResponseDTO responseDTO = chatService.processMessage(loginInfo.getUserId(), loginInfo.getCoupleId(), request.getMessages());
         return ResponseEntity.ok(responseDTO);
     }
 
@@ -95,11 +93,6 @@ public class ChatController {
     })
     @GetMapping("/history")
     public ResponseEntity<List<ChatMessageDTO>> getChatHistory(@AuthenticationPrincipal LoginInfo loginInfo) {
-        // 로그인한 사용자 정보 확인
-        Long userId = loginInfo.getUserId();
-        if (userId == null) {
-            throw new LoginRequiredException();
-        }
 
         List<ChatMessage> history = chatService.getChatHistory(loginInfo.getCoupleId());
         List<ChatMessageDTO> historyDTO = history.stream()

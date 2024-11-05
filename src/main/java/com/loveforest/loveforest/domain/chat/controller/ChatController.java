@@ -1,11 +1,13 @@
 package com.loveforest.loveforest.domain.chat.controller;
 
 import com.loveforest.loveforest.domain.auth.dto.LoginInfo;
+import com.loveforest.loveforest.domain.chat.dto.ChatMessageDTO;
 import com.loveforest.loveforest.domain.chat.dto.ChatMessageRequestDTO;
 import com.loveforest.loveforest.domain.chat.dto.ChatMessageResponseDTO;
 import com.loveforest.loveforest.domain.chat.entity.ChatMessage;
 import com.loveforest.loveforest.domain.chat.service.ChatService;
 import com.loveforest.loveforest.domain.user.entity.User;
+import com.loveforest.loveforest.domain.user.exception.LoginRequiredException;
 import com.loveforest.loveforest.domain.user.repository.UserRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -20,6 +22,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/chat")
@@ -75,7 +78,7 @@ public class ChatController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "대화 이력이 성공적으로 조회되었습니다.", content = @Content(
                     mediaType = "application/json",
-                    schema = @Schema(implementation = ChatMessage.class)
+                    schema = @Schema(implementation = ChatMessageDTO.class)
             )),
             @ApiResponse(responseCode = "401", description = "인증되지 않은 사용자입니다.", content = @Content(
                     mediaType = "application/json",
@@ -91,8 +94,18 @@ public class ChatController {
             ))
     })
     @GetMapping("/history")
-    public ResponseEntity<List<ChatMessage>> getChatHistory(@AuthenticationPrincipal LoginInfo loginInfo) {
+    public ResponseEntity<List<ChatMessageDTO>> getChatHistory(@AuthenticationPrincipal LoginInfo loginInfo) {
+        // 로그인한 사용자 정보 확인
+        Long userId = loginInfo.getUserId();
+        if (userId == null) {
+            throw new LoginRequiredException();
+        }
+
         List<ChatMessage> history = chatService.getChatHistory(loginInfo.getCoupleId());
-        return ResponseEntity.ok(history);
+        List<ChatMessageDTO> historyDTO = history.stream()
+                .map(ChatMessageDTO::fromEntity)
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(historyDTO);
     }
 }

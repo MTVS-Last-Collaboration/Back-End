@@ -63,6 +63,8 @@ dependencies {
     // 프로메테우스
     implementation 'io.micrometer:micrometer-registry-prometheus:1.13.3'
 
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
+
 
 
 }

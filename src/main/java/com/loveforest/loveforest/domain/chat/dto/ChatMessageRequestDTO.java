@@ -11,9 +11,14 @@ import lombok.Setter;
 @AllArgsConstructor
 @NoArgsConstructor
 public class ChatMessageRequestDTO {
+    @Schema(description = "발신자의 ID", example = "1")
+    private Long senderId; // 발신자 ID
 
     @Schema(description = "메시지 내용", example = "안녕하세요!")
     private String messages; // 메시지 내용
+
+    @Schema(description = "커플의 ID", example = "1")
+    private Long coupleId; // 발신자 ID
 
     @Schema(description = "반려몽 레벨", example = "1~4")
     private Long petLevel; // 반려몽 레벨

@@ -31,7 +31,6 @@ import java.util.stream.Collectors;
 public class ChatController {
 
     private final ChatService chatService;
-    private final UserRepository userRepository;
 
     /**
      * 메시지 전송 API
@@ -43,7 +42,7 @@ public class ChatController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "메시지가 성공적으로 처리되었습니다.", content = @Content(
                     mediaType = "application/json",
-                    schema = @Schema(implementation = ChatMessage.class)
+                    schema = @Schema(implementation = ChatMessageResponseDTO.class)
             )),
             @ApiResponse(responseCode = "401", description = "인증되지 않은 사용자입니다.", content = @Content(
                     mediaType = "application/json",

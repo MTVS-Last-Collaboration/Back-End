@@ -5,6 +5,7 @@ import com.loveforest.loveforest.domain.couple.dto.CoupleCodeResponseDTO;
 import com.loveforest.loveforest.domain.couple.dto.CoupleJoinRequestDTO;
 import com.loveforest.loveforest.domain.couple.dto.CoupleJoinResponseDTO;
 import com.loveforest.loveforest.domain.couple.service.CoupleService;
+import com.loveforest.loveforest.domain.user.exception.LoginRequiredException;
 import com.loveforest.loveforest.exception.ErrorResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -95,7 +96,11 @@ public class CoupleController {
     })
     @PostMapping("/join")
     public ResponseEntity<CoupleJoinResponseDTO> joinCouple(@AuthenticationPrincipal LoginInfo loginInfo, @Valid @RequestBody CoupleJoinRequestDTO request) {
+        // 로그인한 사용자 정보 확인
         Long userId = loginInfo.getUserId();
+        if (userId == null) {
+            throw new LoginRequiredException();
+        }
         coupleService.joinCouple(userId, request.getCoupleCode());
         return ResponseEntity.ok(new CoupleJoinResponseDTO("커플 연동이 성공적으로 완료되었습니다."));
     }
@@ -120,7 +125,11 @@ public class CoupleController {
     })
     @GetMapping("/my-code")
     public ResponseEntity<CoupleCodeResponseDTO> getMyCoupleCode(@AuthenticationPrincipal LoginInfo loginInfo) {
+        // 로그인한 사용자 정보 확인
         Long userId = loginInfo.getUserId();
+        if (userId == null) {
+            throw new LoginRequiredException();
+        }
         CoupleCodeResponseDTO coupleCode = coupleService.getMyCoupleCode(userId);
         return ResponseEntity.ok(coupleCode);
     }

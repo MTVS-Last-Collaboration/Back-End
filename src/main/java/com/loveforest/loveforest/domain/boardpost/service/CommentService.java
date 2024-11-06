@@ -1,6 +1,7 @@
 package com.loveforest.loveforest.domain.boardpost.service;
 
 import com.loveforest.loveforest.domain.boardpost.dto.CommentResponseDTO;
+import com.loveforest.loveforest.domain.boardpost.dto.LikeResponseDTO;
 import com.loveforest.loveforest.domain.boardpost.entity.Answer;
 import com.loveforest.loveforest.domain.boardpost.entity.Comment;
 import com.loveforest.loveforest.domain.boardpost.entity.CommentLike;
@@ -65,7 +66,7 @@ public class CommentService {
 
     // 댓글에 대한 좋아요 추가
     @Transactional
-    public void likeComment(Long commentId, Long userId) {
+    public LikeResponseDTO likeComment(Long commentId, Long userId) {
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new IllegalArgumentException("댓글을 찾을 수 없습니다."));
 
@@ -79,11 +80,13 @@ public class CommentService {
         CommentLike commentLike = new CommentLike(comment, user);
         commentLikeRepository.save(commentLike);
         comment.incrementLike();
+
+        return new LikeResponseDTO(comment.getId(), comment.getLikeCount(), true);
     }
 
     // 댓글에 대한 좋아요 취소
     @Transactional
-    public void unlikeComment(Long commentId, Long userId) {
+    public LikeResponseDTO unlikeComment(Long commentId, Long userId) {
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new IllegalArgumentException("댓글을 찾을 수 없습니다."));
 
@@ -92,6 +95,7 @@ public class CommentService {
 
         commentLikeRepository.delete(commentLike);
         comment.decrementLike();
+        return new LikeResponseDTO(comment.getId(), comment.getLikeCount(), false);
     }
 
     // 중복 좋아요 확인

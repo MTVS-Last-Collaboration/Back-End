@@ -2,6 +2,7 @@ package com.loveforest.loveforest.domain.boardpost.service;
 
 import com.loveforest.loveforest.domain.boardpost.dto.AnswerRequestDTO;
 import com.loveforest.loveforest.domain.boardpost.dto.AnswerResponseDTO;
+import com.loveforest.loveforest.domain.boardpost.dto.LikeResponseDTO;
 import com.loveforest.loveforest.domain.boardpost.entity.Answer;
 import com.loveforest.loveforest.domain.boardpost.entity.AnswerLike;
 import com.loveforest.loveforest.domain.boardpost.entity.DailyTopic;
@@ -63,7 +64,7 @@ public class AnswerService {
 
     // 답변에 대한 좋아요 추가
     @Transactional
-    public void likeAnswer(Long answerId, Long userId) {
+    public LikeResponseDTO likeAnswer(Long answerId, Long userId) {
         Answer answer = answerRepository.findById(answerId)
                 .orElseThrow(AnswerNotFoundException::new);
 
@@ -77,11 +78,13 @@ public class AnswerService {
         AnswerLike answerLike = new AnswerLike(answer, user);
         answerLikeRepository.save(answerLike);
         answer.incrementLike();
+
+        return new LikeResponseDTO(answer.getId(), answer.getLikeCount(), false);
     }
 
     // 답변에 대한 좋아요 취소
     @Transactional
-    public void unlikeAnswer(Long answerId, Long userId) {
+    public LikeResponseDTO unlikeAnswer(Long answerId, Long userId) {
         Answer answer = answerRepository.findById(answerId)
                 .orElseThrow(AnswerNotFoundException::new);
 
@@ -90,6 +93,7 @@ public class AnswerService {
 
         answerLikeRepository.delete(answerLike);
         answer.decrementLike();
+        return new LikeResponseDTO(answer.getId(), answer.getLikeCount(), false);
     }
 
     // 중복 좋아요 확인

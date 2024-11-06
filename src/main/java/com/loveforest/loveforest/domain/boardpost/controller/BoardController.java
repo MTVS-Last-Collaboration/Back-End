@@ -233,7 +233,7 @@ public class BoardController {
             @ApiResponse(responseCode = "409", description = "중복 좋아요"),
             @ApiResponse(responseCode = "401", description = "인증되지 않은 사용자")
     })
-    public ResponseEntity<Void> likeAnswer(
+    public ResponseEntity<LikeResponseDTO> likeAnswer(
             @Parameter(description = "좋아요를 추가할 답변의 ID", example = "1")
             @PathVariable("answerId") Long answerId,
             @AuthenticationPrincipal LoginInfo loginInfo) {
@@ -244,8 +244,8 @@ public class BoardController {
         }
 
         // 좋아요 중복 여부 확인 및 예외 처리
-        answerService.likeAnswer(answerId, userId);
-        return ResponseEntity.ok().build();
+        LikeResponseDTO response = answerService.likeAnswer(answerId, userId);
+        return ResponseEntity.ok(response);
     }
 
     /**
@@ -258,7 +258,7 @@ public class BoardController {
             @ApiResponse(responseCode = "404", description = "좋아요가 추가되지 않은 답변"),
             @ApiResponse(responseCode = "401", description = "인증되지 않은 사용자")
     })
-    public ResponseEntity<Void> unlikeAnswer(
+    public ResponseEntity<LikeResponseDTO> unlikeAnswer(
             @Parameter(description = "좋아요를 취소할 답변의 ID", example = "1")
             @PathVariable("answerId") Long answerId,
             @AuthenticationPrincipal LoginInfo loginInfo) {
@@ -268,8 +268,8 @@ public class BoardController {
             throw new LoginRequiredException();
         }
 
-        answerService.unlikeAnswer(answerId, userId);
-        return ResponseEntity.ok().build();
+        LikeResponseDTO response = answerService.unlikeAnswer(answerId, userId);
+        return ResponseEntity.ok(response);
     }
 
     /**
@@ -283,7 +283,7 @@ public class BoardController {
             @ApiResponse(responseCode = "409", description = "중복 좋아요 - 이미 좋아요를 추가한 경우"),
             @ApiResponse(responseCode = "401", description = "인증되지 않은 사용자")
     })
-    public ResponseEntity<Void> likeComment(
+    public ResponseEntity<LikeResponseDTO> likeComment(
             @Parameter(description = "좋아요를 추가할 댓글의 ID", example = "1")
             @PathVariable("commentId") Long commentId,
             @AuthenticationPrincipal LoginInfo loginInfo) {
@@ -293,8 +293,8 @@ public class BoardController {
             throw new LoginRequiredException();
         }
 
-        commentService.likeComment(commentId, userId);
-        return ResponseEntity.ok().build();
+        LikeResponseDTO response = commentService.likeComment(commentId, userId);
+        return ResponseEntity.ok(response);
     }
 
     /**
@@ -307,7 +307,7 @@ public class BoardController {
             @ApiResponse(responseCode = "404", description = "좋아요가 추가되지 않은 댓글"),
             @ApiResponse(responseCode = "401", description = "인증되지 않은 사용자")
     })
-    public ResponseEntity<Void> unlikeComment(
+    public ResponseEntity<LikeResponseDTO> unlikeComment(
             @Parameter(description = "좋아요를 취소할 댓글의 ID", example = "1")
             @PathVariable("commentId") Long commentId,
             @AuthenticationPrincipal LoginInfo loginInfo) {
@@ -317,7 +317,7 @@ public class BoardController {
             throw new LoginRequiredException();
         }
 
-        commentService.unlikeComment(commentId, userId);
-        return ResponseEntity.ok().build();
+        LikeResponseDTO response = commentService.unlikeComment(commentId, userId);
+        return ResponseEntity.ok(response);
     }
 }

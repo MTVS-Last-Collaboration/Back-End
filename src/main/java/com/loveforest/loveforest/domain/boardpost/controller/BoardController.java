@@ -72,12 +72,6 @@ public class BoardController {
     @GetMapping
     public ResponseEntity<List<DailyTopicResponseDTO>> getDailyTopicByDate(@AuthenticationPrincipal LoginInfo loginInfo) {
 
-        // 로그인한 사용자 정보 확인
-        Long userId = loginInfo.getUserId();
-        if (userId == null) {
-            throw new LoginRequiredException();
-        }
-
         List<DailyTopicResponseDTO> dailyTopicList = dailyTopicService.getAllDailyTopic();
         return ResponseEntity.ok(dailyTopicList);
     }
@@ -101,12 +95,6 @@ public class BoardController {
             @PathVariable("date") @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate date,
             @AuthenticationPrincipal LoginInfo loginInfo) {
 
-        // 로그인한 사용자 정보 확인
-        Long userId = loginInfo.getUserId();
-        if (userId == null) {
-            throw new LoginRequiredException();
-        }
-
         DailyTopic dailyTopic = dailyTopicService.getDailyTopicByDate(date);
         return ResponseEntity.ok(dailyTopic);
     }
@@ -123,12 +111,6 @@ public class BoardController {
     public ResponseEntity<AnswerResponseDTO> createAnswer(
             @AuthenticationPrincipal LoginInfo loginInfo,
             @Valid @RequestBody AnswerRequestDTO answerRequestDTO) {
-
-        // 로그인한 사용자 정보 확인
-        Long userId = loginInfo.getUserId();
-        if (userId == null) {
-            throw new LoginRequiredException();
-        }
 
         DailyTopic dailyTopic = dailyTopicService.getDailyTopicById(answerRequestDTO.getDailyTopicId())
                 .orElseThrow(DailyTopicNotFoundException::new);
@@ -151,12 +133,6 @@ public class BoardController {
             @PathVariable("dailyTopicId") Long dailyTopicId,
             @AuthenticationPrincipal LoginInfo loginInfo) {
 
-        // 로그인한 사용자 정보 확인
-        Long userId = loginInfo.getUserId();
-        if (userId == null) {
-            throw new LoginRequiredException();
-        }
-
         DailyTopic dailyTopic = dailyTopicService.getDailyTopicById(dailyTopicId)
                 .orElseThrow(DailyTopicNotFoundException::new);
         List<AnswerResponseDTO> answers = answerService.getAnswersByDailyTopic(dailyTopic);
@@ -175,12 +151,6 @@ public class BoardController {
     public ResponseEntity<CommentResponseDTO> createComment(
             @AuthenticationPrincipal LoginInfo loginInfo,
             @Valid @RequestBody CommentRequestDTO commentRequestDTO) {
-
-        // 로그인한 사용자 정보 확인
-        Long userId = loginInfo.getUserId();
-        if (userId == null) {
-            throw new LoginRequiredException();
-        }
 
         Answer answer = answerService.getAnswerById(commentRequestDTO.getAnswerId())
                 .orElseThrow(AnswerNotFoundException::new);
@@ -207,12 +177,6 @@ public class BoardController {
             @PathVariable("answerId") Long answerId,
             @AuthenticationPrincipal LoginInfo loginInfo) { // 인증된 사용자 정보 추가
 
-        // 로그인한 사용자 정보 확인
-        Long userId = loginInfo.getUserId();
-        if (userId == null) {
-            throw new LoginRequiredException();
-        }
-
         // 답변을 조회하고 없으면 예외 처리
         Answer answer = answerService.getAnswerById(answerId)
                 .orElseThrow(AnswerNotFoundException::new);
@@ -238,13 +202,8 @@ public class BoardController {
             @PathVariable("answerId") Long answerId,
             @AuthenticationPrincipal LoginInfo loginInfo) {
 
-        Long userId = loginInfo.getUserId();
-        if (userId == null) {
-            throw new LoginRequiredException();
-        }
-
         // 좋아요 중복 여부 확인 및 예외 처리
-        LikeResponseDTO response = answerService.likeAnswer(answerId, userId);
+        LikeResponseDTO response = answerService.likeAnswer(answerId, loginInfo.getUserId());
         return ResponseEntity.ok(response);
     }
 
@@ -263,12 +222,7 @@ public class BoardController {
             @PathVariable("answerId") Long answerId,
             @AuthenticationPrincipal LoginInfo loginInfo) {
 
-        Long userId = loginInfo.getUserId();
-        if (userId == null) {
-            throw new LoginRequiredException();
-        }
-
-        LikeResponseDTO response = answerService.unlikeAnswer(answerId, userId);
+        LikeResponseDTO response = answerService.unlikeAnswer(answerId, loginInfo.getUserId());
         return ResponseEntity.ok(response);
     }
 
@@ -288,12 +242,7 @@ public class BoardController {
             @PathVariable("commentId") Long commentId,
             @AuthenticationPrincipal LoginInfo loginInfo) {
 
-        Long userId = loginInfo.getUserId();
-        if (userId == null) {
-            throw new LoginRequiredException();
-        }
-
-        LikeResponseDTO response = commentService.likeComment(commentId, userId);
+        LikeResponseDTO response = commentService.likeComment(commentId, loginInfo.getUserId());
         return ResponseEntity.ok(response);
     }
 
@@ -312,12 +261,7 @@ public class BoardController {
             @PathVariable("commentId") Long commentId,
             @AuthenticationPrincipal LoginInfo loginInfo) {
 
-        Long userId = loginInfo.getUserId();
-        if (userId == null) {
-            throw new LoginRequiredException();
-        }
-
-        LikeResponseDTO response = commentService.unlikeComment(commentId, userId);
+        LikeResponseDTO response = commentService.unlikeComment(commentId, loginInfo.getUserId());
         return ResponseEntity.ok(response);
     }
 }

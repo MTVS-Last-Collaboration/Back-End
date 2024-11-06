@@ -1,5 +1,6 @@
 package com.loveforest.loveforest.domain.calendar.controller;
 
+import com.loveforest.loveforest.domain.auth.dto.LoginInfo;
 import com.loveforest.loveforest.domain.calendar.dto.CalendarEventRequestDTO;
 import com.loveforest.loveforest.domain.calendar.dto.CalendarEventResponseDTO;
 import com.loveforest.loveforest.domain.calendar.service.CalendarService;
@@ -12,6 +13,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -31,7 +33,10 @@ public class CalendarController {
                     @ApiResponse(
                             responseCode = "200",
                             description = "이벤트가 성공적으로 추가되었습니다.",
-                            content = @Content(mediaType = "application/json")
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    schema = @Schema(implementation = CalendarEventResponseDTO.class)
+                            )
                     ),
                     @ApiResponse(
                             responseCode = "400",
@@ -47,8 +52,9 @@ public class CalendarController {
             }
     )
     @PostMapping("/event")
-    public ResponseEntity<CalendarEventResponseDTO> addEvent(@RequestBody CalendarEventRequestDTO requestDTO) {
-        CalendarEventResponseDTO responseDTO = calendarService.addEvent(requestDTO);
+    public ResponseEntity<CalendarEventResponseDTO> addEvent(@AuthenticationPrincipal LoginInfo loginInfo, @RequestBody CalendarEventRequestDTO requestDTO) {
+        Long coupleId = loginInfo.getCoupleId();
+        CalendarEventResponseDTO responseDTO = calendarService.addEvent(coupleId, requestDTO);
         return ResponseEntity.ok(responseDTO);
     }
 
@@ -78,8 +84,9 @@ public class CalendarController {
                     )
             }
     )
-    @GetMapping("/events/{coupleId}")
-    public ResponseEntity<List<CalendarEventResponseDTO>> getEvents(@PathVariable Long coupleId) {
+    @GetMapping("/events")
+    public ResponseEntity<List<CalendarEventResponseDTO>> getEvents(@AuthenticationPrincipal LoginInfo loginInfo) {
+        Long coupleId = loginInfo.getCoupleId();
         List<CalendarEventResponseDTO> events = calendarService.getEvents(coupleId);
         return ResponseEntity.ok(events);
     }
@@ -108,7 +115,7 @@ public class CalendarController {
             }
     )
     @PutMapping("/event/{eventId}")
-    public ResponseEntity<CalendarEventResponseDTO> updateEvent(@PathVariable Long eventId, @RequestBody CalendarEventRequestDTO requestDTO) {
+    public ResponseEntity<CalendarEventResponseDTO> updateEvent(@AuthenticationPrincipal LoginInfo loginInfo, @PathVariable("eventId") Long eventId, @RequestBody CalendarEventRequestDTO requestDTO) {
         CalendarEventResponseDTO responseDTO = calendarService.updateEvent(eventId, requestDTO);
         return ResponseEntity.ok(responseDTO);
     }

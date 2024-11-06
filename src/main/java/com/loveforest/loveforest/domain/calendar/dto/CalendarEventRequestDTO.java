@@ -11,9 +11,6 @@ import java.time.LocalDate;
 @Schema(description = "캘린더 이벤트 요청 DTO")
 public class CalendarEventRequestDTO {
 
-    @Schema(description = "커플 ID", example = "1", required = true)
-    private Long coupleId;
-
     @Schema(description = "이벤트 이름", example = "기념일", required = true)
     private String eventName;
 

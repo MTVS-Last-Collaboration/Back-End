@@ -3,12 +3,18 @@ package com.loveforest.loveforest.domain.boardpost.service;
 import com.loveforest.loveforest.domain.boardpost.dto.AnswerRequestDTO;
 import com.loveforest.loveforest.domain.boardpost.dto.AnswerResponseDTO;
 import com.loveforest.loveforest.domain.boardpost.entity.Answer;
+import com.loveforest.loveforest.domain.boardpost.entity.AnswerLike;
 import com.loveforest.loveforest.domain.boardpost.entity.DailyTopic;
+import com.loveforest.loveforest.domain.boardpost.exception.AlreadyLikedException;
+import com.loveforest.loveforest.domain.boardpost.exception.AnswerNotFoundException;
+import com.loveforest.loveforest.domain.boardpost.exception.NotLikedException;
+import com.loveforest.loveforest.domain.boardpost.repository.AnswerLikeRepository;
 import com.loveforest.loveforest.domain.boardpost.repository.AnswerRepository;
 import com.loveforest.loveforest.domain.user.entity.User;
 import com.loveforest.loveforest.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -20,6 +26,7 @@ public class AnswerService {
 
     private final AnswerRepository answerRepository;
     private final UserRepository userRepository;
+    private final AnswerLikeRepository answerLikeRepository;
 
     public AnswerResponseDTO createAnswer(AnswerRequestDTO answerRequestDTO, String nickname, DailyTopic dailyTopic) {
 
@@ -52,5 +59,41 @@ public class AnswerService {
 
     public Optional<Answer> getAnswerById(Long answerId) {
         return answerRepository.findById(answerId);
+    }
+
+    // 답변에 대한 좋아요 추가
+    @Transactional
+    public void likeAnswer(Long answerId, Long userId) {
+        Answer answer = answerRepository.findById(answerId)
+                .orElseThrow(AnswerNotFoundException::new);
+
+        if (isAnswerLikedByUser(answerId, userId)) {
+            throw new AlreadyLikedException();
+        }
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+
+        AnswerLike answerLike = new AnswerLike(answer, user);
+        answerLikeRepository.save(answerLike);
+        answer.incrementLike();
+    }
+
+    // 답변에 대한 좋아요 취소
+    @Transactional
+    public void unlikeAnswer(Long answerId, Long userId) {
+        Answer answer = answerRepository.findById(answerId)
+                .orElseThrow(AnswerNotFoundException::new);
+
+        AnswerLike answerLike = answerLikeRepository.findByAnswerIdAndUserId(answerId, userId)
+                .orElseThrow(NotLikedException::new);
+
+        answerLikeRepository.delete(answerLike);
+        answer.decrementLike();
+    }
+
+    // 중복 좋아요 확인
+    public boolean isAnswerLikedByUser(Long answerId, Long userId) {
+        return answerLikeRepository.existsByAnswerIdAndUserId(answerId, userId);
     }
 }

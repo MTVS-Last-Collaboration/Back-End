@@ -30,9 +30,22 @@ public class Answer {
     @Column(nullable = false)
     private LocalDateTime createdDate = LocalDateTime.now(); // 생성 시간
 
+    @Column(nullable = false)
+    private int likeCount = 0; // 좋아요 수 초기값 설정
+
     public Answer(String content, User author, DailyTopic dailyTopic) {
         this.content = content;
         this.author = author;
         this.dailyTopic = dailyTopic;
+    }
+
+    public void incrementLike() {
+        this.likeCount++;
+    }
+
+    public void decrementLike() {
+        if (this.likeCount > 0) {
+            this.likeCount--;
+        }
     }
 }

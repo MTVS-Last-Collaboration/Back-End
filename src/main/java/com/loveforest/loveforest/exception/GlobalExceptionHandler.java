@@ -1,7 +1,9 @@
 package com.loveforest.loveforest.exception;
 
+import com.loveforest.loveforest.domain.boardpost.exception.AlreadyLikedException;
 import com.loveforest.loveforest.domain.boardpost.exception.AnswerNotFoundException;
 import com.loveforest.loveforest.domain.boardpost.exception.DailyTopicNotFoundException;
+import com.loveforest.loveforest.domain.boardpost.exception.NotLikedException;
 import com.loveforest.loveforest.domain.chat.exception.ChatNotFoundException;
 import com.loveforest.loveforest.domain.couple.exception.CoupleAlreadyExists;
 import com.loveforest.loveforest.domain.user.exception.EmailAlreadyExistsException;
@@ -77,6 +79,16 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(AnswerNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleAnswerNotFoundException(AnswerNotFoundException ex) {
+        return buildErrorResponse(ex.getErrorCode().getStatus(), ex.getErrorCode().getErrorType(), ex.getErrorCode().getDescription(), ex.getErrorCode().getCode());
+    }
+
+    @ExceptionHandler(AlreadyLikedException.class)
+    public ResponseEntity<ErrorResponse> handleAlreadyLikedException(AlreadyLikedException ex) {
+        return buildErrorResponse(ex.getErrorCode().getStatus(), ex.getErrorCode().getErrorType(), ex.getErrorCode().getDescription(), ex.getErrorCode().getCode());
+    }
+
+    @ExceptionHandler(NotLikedException.class)
+    public ResponseEntity<ErrorResponse> handleNotLikedException(NotLikedException ex) {
         return buildErrorResponse(ex.getErrorCode().getStatus(), ex.getErrorCode().getErrorType(), ex.getErrorCode().getDescription(), ex.getErrorCode().getCode());
     }
 

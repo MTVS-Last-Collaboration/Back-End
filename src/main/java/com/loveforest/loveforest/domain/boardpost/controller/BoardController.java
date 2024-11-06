@@ -221,4 +221,103 @@ public class BoardController {
         List<CommentResponseDTO> comments = commentService.getCommentsByAnswer(answer);
         return ResponseEntity.ok(comments);
     }
+
+    /**
+     * 답변 좋아요
+     */
+    @PostMapping("/answer/{answerId}/like")
+    @Operation(summary = "답변 좋아요", description = "특정 답변에 좋아요를 추가합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "좋아요 추가 성공"),
+            @ApiResponse(responseCode = "404", description = "해당 답변을 찾을 수 없음"),
+            @ApiResponse(responseCode = "409", description = "중복 좋아요"),
+            @ApiResponse(responseCode = "401", description = "인증되지 않은 사용자")
+    })
+    public ResponseEntity<Void> likeAnswer(
+            @Parameter(description = "좋아요를 추가할 답변의 ID", example = "1")
+            @PathVariable("answerId") Long answerId,
+            @AuthenticationPrincipal LoginInfo loginInfo) {
+
+        Long userId = loginInfo.getUserId();
+        if (userId == null) {
+            throw new LoginRequiredException();
+        }
+
+        // 좋아요 중복 여부 확인 및 예외 처리
+        answerService.likeAnswer(answerId, userId);
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * 답변 좋아요 취소
+     */
+    @PostMapping("/answer/{answerId}/unlike")
+    @Operation(summary = "답변 좋아요 취소", description = "특정 답변에 추가된 좋아요를 취소합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "좋아요 취소 성공"),
+            @ApiResponse(responseCode = "404", description = "좋아요가 추가되지 않은 답변"),
+            @ApiResponse(responseCode = "401", description = "인증되지 않은 사용자")
+    })
+    public ResponseEntity<Void> unlikeAnswer(
+            @Parameter(description = "좋아요를 취소할 답변의 ID", example = "1")
+            @PathVariable("answerId") Long answerId,
+            @AuthenticationPrincipal LoginInfo loginInfo) {
+
+        Long userId = loginInfo.getUserId();
+        if (userId == null) {
+            throw new LoginRequiredException();
+        }
+
+        answerService.unlikeAnswer(answerId, userId);
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * 댓글 좋아요
+     */
+    @PostMapping("/comment/{commentId}/like")
+    @Operation(summary = "댓글 좋아요", description = "특정 댓글에 좋아요를 추가합니다. 동일한 사용자가 중복하여 좋아요를 추가할 수 없습니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "좋아요 추가 성공"),
+            @ApiResponse(responseCode = "404", description = "해당 댓글을 찾을 수 없음"),
+            @ApiResponse(responseCode = "409", description = "중복 좋아요 - 이미 좋아요를 추가한 경우"),
+            @ApiResponse(responseCode = "401", description = "인증되지 않은 사용자")
+    })
+    public ResponseEntity<Void> likeComment(
+            @Parameter(description = "좋아요를 추가할 댓글의 ID", example = "1")
+            @PathVariable("commentId") Long commentId,
+            @AuthenticationPrincipal LoginInfo loginInfo) {
+
+        Long userId = loginInfo.getUserId();
+        if (userId == null) {
+            throw new LoginRequiredException();
+        }
+
+        commentService.likeComment(commentId, userId);
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * 댓글 좋아요 취소
+     */
+    @PostMapping("/comment/{commentId}/unlike")
+    @Operation(summary = "댓글 좋아요 취소", description = "특정 댓글에 추가된 좋아요를 취소합니다. 좋아요가 추가된 상태에서만 취소가 가능합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "좋아요 취소 성공"),
+            @ApiResponse(responseCode = "404", description = "좋아요가 추가되지 않은 댓글"),
+            @ApiResponse(responseCode = "401", description = "인증되지 않은 사용자")
+    })
+    public ResponseEntity<Void> unlikeComment(
+            @Parameter(description = "좋아요를 취소할 댓글의 ID", example = "1")
+            @PathVariable("commentId") Long commentId,
+            @AuthenticationPrincipal LoginInfo loginInfo) {
+
+        Long userId = loginInfo.getUserId();
+        if (userId == null) {
+            throw new LoginRequiredException();
+        }
+
+        commentService.unlikeComment(commentId, userId);
+        return ResponseEntity.ok().build();
+    }
 }

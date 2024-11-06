@@ -37,7 +37,10 @@ public enum ErrorCode {
     DAILY_TOPIC_NOT_FOUND(HttpStatus.NOT_FOUND, "DailyTopic Not Found", "존재하지 않는 일일 토픽입니다.", "TOPIC-001"),
     ANSWER_NOT_FOUND(HttpStatus.NOT_FOUND, "Answer Not Found", "존재하지 않는 일일 게시글입니다.", "TOPIC-002"),
     COMMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "Comment Not Found", "댓글이 존재하지 않습니다.", "TOPIC-003"),
-    DAILY_TOPIC_ALREADY_EXIST(HttpStatus.CONFLICT, "Already DailyTopic Existed", "이미 해당 토픽이 존재합니다.", "TOPIC-004");
+    DAILY_TOPIC_ALREADY_EXIST(HttpStatus.CONFLICT, "Already DailyTopic Existed", "이미 해당 토픽이 존재합니다.", "TOPIC-004"),
+    LIKE_ALREADY_EXIST(HttpStatus.CONFLICT, "Already Like Existed", "이미 좋아요를 눌렀습니다.", "TOPIC-005"),
+    LIKE_NOT_FOUND(HttpStatus.NOT_FOUND, "Like Not Found", "좋아요가 추가되지 않은 답변입니다.", "TOPIC-006"),;
+
 
 
 

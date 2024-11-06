@@ -26,7 +26,7 @@ public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint 
             throws IOException, ServletException {
 
         // 서버 로그에 인증 오류 기록
-        logger.warn("Unauthorized access attempt: URI - {}, Message - {}", request.getRequestURI(), authException.getMessage());
+        logger.warn("인증되지 않은 접근 시도 : URI - {}, Message - {}", request.getRequestURI(), authException.getMessage());
 
         // 응답 설정
         response.setStatus(HttpServletResponse.SC_FORBIDDEN);

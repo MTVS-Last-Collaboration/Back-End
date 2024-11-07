@@ -25,6 +25,10 @@ public class Pet {
     @JoinColumn(name = "couple_id", nullable = false)
     private Couple couple;
 
+    public Pet(Couple couple) {
+        this.couple = couple;
+    }
+
     public void addExperience(int exp) {
         this.experience += exp;
     }

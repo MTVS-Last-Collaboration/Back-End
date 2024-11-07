@@ -6,6 +6,7 @@ import com.loveforest.loveforest.domain.couple.exception.CoupleAlreadyExists;
 import com.loveforest.loveforest.domain.couple.exception.CoupleCodeAlreadyUsedException;
 import com.loveforest.loveforest.domain.couple.exception.CoupleNotFoundException;
 import com.loveforest.loveforest.domain.couple.repository.CoupleRepository;
+import com.loveforest.loveforest.domain.pet.service.PetService;
 import com.loveforest.loveforest.domain.user.entity.User;
 import com.loveforest.loveforest.domain.user.exception.UserNotFoundException;
 import com.loveforest.loveforest.domain.user.repository.UserRepository;
@@ -25,6 +26,7 @@ public class CoupleService {
 
     private final CoupleRepository coupleRepository;
     private final UserRepository userRepository;
+    private final PetService petService; // PetService 추가
 
 
        public String generateCoupleCode() {
@@ -80,6 +82,14 @@ public class CoupleService {
         // 커플에 사용자 추가 및 저장
         targetCouple.addUser(user);
         userRepository.save(user);
+
+        // 커플에 대한 Pet 생성
+        if (targetCouple.getUsers().size() == 2) {
+            petService.createPetForCouple(targetCouple);
+        }
+
+
+
         coupleRepository.save(targetCouple);
         // 커플 연동 성공 로그
         log.info("커플 연동 성공 - 사용자 ID: {}, 닉네임: {}, 타겟 커플 코드: {}, 기념일: {}",

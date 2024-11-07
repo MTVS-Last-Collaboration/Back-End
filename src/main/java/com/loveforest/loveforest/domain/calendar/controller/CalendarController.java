@@ -4,6 +4,7 @@ import com.loveforest.loveforest.domain.auth.dto.LoginInfo;
 import com.loveforest.loveforest.domain.calendar.dto.CalendarEventRequestDTO;
 import com.loveforest.loveforest.domain.calendar.dto.CalendarEventResponseDTO;
 import com.loveforest.loveforest.domain.calendar.service.CalendarService;
+import com.loveforest.loveforest.domain.user.exception.LoginRequiredException;
 import com.loveforest.loveforest.exception.ErrorResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -55,6 +56,9 @@ public class CalendarController {
     )
     @PostMapping("/event")
     public ResponseEntity<CalendarEventResponseDTO> addEvent(@AuthenticationPrincipal LoginInfo loginInfo, @RequestBody CalendarEventRequestDTO requestDTO) {
+        if (loginInfo == null) {
+            throw new LoginRequiredException();
+        }
         log.info("이벤트 추가 요청 시작 - 사용자 ID: {}, 커플 ID: {}", loginInfo.getUserId(), loginInfo.getCoupleId());
 
         Long coupleId = loginInfo.getCoupleId();

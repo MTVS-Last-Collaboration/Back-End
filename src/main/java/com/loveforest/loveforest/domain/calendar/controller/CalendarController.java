@@ -170,7 +170,7 @@ public class CalendarController {
             }
     )
     @DeleteMapping("/event/{eventId}")
-    public ResponseEntity<Void> deleteEvent(@AuthenticationPrincipal LoginInfo loginInfo, @PathVariable Long eventId) {
+    public ResponseEntity<Void> deleteEvent(@AuthenticationPrincipal LoginInfo loginInfo, @PathVariable("eventId") Long eventId) {
 
         if (loginInfo == null) {
             throw new LoginRequiredException();

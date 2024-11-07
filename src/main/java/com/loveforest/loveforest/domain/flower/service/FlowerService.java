@@ -57,11 +57,10 @@ public class FlowerService {
             throw new MoodAnalysisException();
         }
 
-        flower.incrementMoodCount();
-
-        // 기분 상태가 '상' 또는 '중'인 경우 포인트 추가 및 기분 카운트 조건 확인
+        // 기분 상태가 '상' 또는 '중'인 경우에만 moodCount 증가
         if ("상".equals(mood) || "중".equals(mood)) {
-            flower.addPoints(10);
+            flower.incrementMoodCount();  // moodCount 증가
+            flower.addPoints(10);         // 포인트 추가
             if (flower.getMoodCount() >= 30) {
                 throw new MaxMoodCountReachedException();
             }

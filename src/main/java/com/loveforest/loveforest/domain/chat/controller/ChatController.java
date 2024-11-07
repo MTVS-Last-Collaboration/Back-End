@@ -17,6 +17,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -24,6 +25,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/chat")
 @RequiredArgsConstructor
@@ -59,9 +61,11 @@ public class ChatController {
     })
     @PostMapping("/send")
     public ResponseEntity<ChatMessageResponseDTO> sendMessage(@AuthenticationPrincipal LoginInfo loginInfo, @RequestBody ChatMessageRequestDTO request) {
-
+        log.info("메시지 전송 요청 시작 - 사용자 ID: {}, 커플 ID: {}, 메시지 내용: {}", loginInfo.getUserId(), loginInfo.getCoupleId(), request.getMessages());
 
         ChatMessageResponseDTO responseDTO = chatService.processMessage(loginInfo.getUserId(), loginInfo.getCoupleId(), request.getMessages());
+
+        log.info("메시지 전송 처리 성공 - 사용자 ID: {}, 커플 ID: {}, AI 메시지 내용: {}", loginInfo.getUserId(), loginInfo.getCoupleId(), responseDTO.getAiResponse());
         return ResponseEntity.ok(responseDTO);
     }
 
@@ -93,11 +97,14 @@ public class ChatController {
     @GetMapping("/history")
     public ResponseEntity<List<ChatMessageDTO>> getChatHistory(@AuthenticationPrincipal LoginInfo loginInfo) {
 
+        log.info("대화 이력 조회 요청 시작 - 사용자 ID: {}, 커플 ID: {}", loginInfo.getUserId(), loginInfo.getCoupleId());
+
         List<ChatMessage> history = chatService.getChatHistory(loginInfo.getCoupleId());
         List<ChatMessageDTO> historyDTO = history.stream()
                 .map(ChatMessageDTO::fromEntity)
                 .collect(Collectors.toList());
 
+        log.info("대화 이력 조회 성공 - 사용자 ID: {}, 커플 ID: {}, 조회된 메시지 수: {}", loginInfo.getUserId(), loginInfo.getCoupleId(), historyDTO.size());
         return ResponseEntity.ok(historyDTO);
     }
 }

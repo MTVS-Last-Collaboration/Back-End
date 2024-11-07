@@ -12,12 +12,14 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/calendar")
 @RequiredArgsConstructor
@@ -53,8 +55,12 @@ public class CalendarController {
     )
     @PostMapping("/event")
     public ResponseEntity<CalendarEventResponseDTO> addEvent(@AuthenticationPrincipal LoginInfo loginInfo, @RequestBody CalendarEventRequestDTO requestDTO) {
+        log.info("이벤트 추가 요청 시작 - 사용자 ID: {}, 커플 ID: {}", loginInfo.getUserId(), loginInfo.getCoupleId());
+
         Long coupleId = loginInfo.getCoupleId();
         CalendarEventResponseDTO responseDTO = calendarService.addEvent(coupleId, requestDTO);
+
+        log.info("이벤트 추가 성공 - 이벤트 ID: {}, 제목: {}", responseDTO.getEventId(), responseDTO.getEventName());
         return ResponseEntity.ok(responseDTO);
     }
 
@@ -86,8 +92,12 @@ public class CalendarController {
     )
     @GetMapping("/events")
     public ResponseEntity<List<CalendarEventResponseDTO>> getEvents(@AuthenticationPrincipal LoginInfo loginInfo) {
+        log.info("이벤트 목록 조회 요청 시작 - 사용자 ID: {}, 커플 ID: {}", loginInfo.getUserId(), loginInfo.getCoupleId());
+
         Long coupleId = loginInfo.getCoupleId();
         List<CalendarEventResponseDTO> events = calendarService.getEvents(coupleId);
+
+        log.info("이벤트 목록 조회 성공 - 커플 ID: {}, 조회된 이벤트 수: {}", coupleId, events.size());
         return ResponseEntity.ok(events);
     }
 
@@ -115,8 +125,11 @@ public class CalendarController {
             }
     )
     @PutMapping("/event/{eventId}")
-    public ResponseEntity<CalendarEventResponseDTO> updateEvent(@AuthenticationPrincipal LoginInfo loginInfo, @PathVariable("eventId") Long eventId, @RequestBody CalendarEventRequestDTO requestDTO) {
+    public ResponseEntity<CalendarEventResponseDTO> updateEvent(@AuthenticationPrincipal LoginInfo loginInfo, @PathVariable("eventId") Long eventId, @RequestBody CalendarEventRequestDTO requestDTO) { log.info("이벤트 수정 요청 시작 - 사용자 ID: {}, 이벤트 ID: {}", loginInfo.getUserId(), eventId);
+
         CalendarEventResponseDTO responseDTO = calendarService.updateEvent(eventId, requestDTO);
+
+        log.info("이벤트 수정 성공 - 이벤트 ID: {}, 새로운 제목: {}", responseDTO.getEventId(), responseDTO.getEventName());
         return ResponseEntity.ok(responseDTO);
     }
 
@@ -145,7 +158,11 @@ public class CalendarController {
     )
     @DeleteMapping("/event/{eventId}")
     public ResponseEntity<Void> deleteEvent(@PathVariable Long eventId) {
+        log.info("이벤트 삭제 요청 시작 - 이벤트 ID: {}", eventId);
+
         calendarService.deleteEvent(eventId);
+
+        log.info("이벤트 삭제 성공 - 이벤트 ID: {}", eventId);
         return ResponseEntity.noContent().build();
     }
 }

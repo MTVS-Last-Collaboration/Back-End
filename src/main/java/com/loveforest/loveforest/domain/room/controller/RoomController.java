@@ -12,7 +12,6 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -95,7 +94,7 @@ public class RoomController {
             }
     )
     @GetMapping("/{coupleId}")
-    public ResponseEntity<RoomResponseDTO> getRoom(@AuthenticationPrincipal LoginInfo loginInfo, @PathVariable Long coupleId) {
+    public ResponseEntity<RoomResponseDTO> getRoom(@AuthenticationPrincipal LoginInfo loginInfo, @PathVariable("coupleId") Long coupleId) {
         if (loginInfo == null) {
             throw new LoginRequiredException();
         }
@@ -129,7 +128,7 @@ public class RoomController {
     @PutMapping("/furniture/{furnitureLayoutId}/move")
     public ResponseEntity<String> moveFurniture(
             @AuthenticationPrincipal LoginInfo loginInfo,
-            @PathVariable Long furnitureLayoutId,
+            @PathVariable("furnitureLayoutId") Long furnitureLayoutId,
             @RequestBody RoomFurnitureUpdateRequestDTO request) {
         if (loginInfo == null) {
             throw new LoginRequiredException();
@@ -164,7 +163,7 @@ public class RoomController {
     @DeleteMapping("/furniture/{furnitureLayoutId}")
     public ResponseEntity<String> deleteFurniture(
             @AuthenticationPrincipal LoginInfo loginInfo,
-            @PathVariable Long furnitureLayoutId) {
+            @PathVariable("furnitureLayoutId") Long furnitureLayoutId) {
         if (loginInfo == null) {
             throw new LoginRequiredException();
         }

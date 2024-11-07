@@ -39,4 +39,9 @@ public class Room {
         furnitureLayouts.add(layout);
         layout.setRoom(this); // 양방향 설정
     }
+
+    public void removeFurnitureLayout(FurnitureLayout layout) {
+        furnitureLayouts.remove(layout);
+        layout.setRoom(null);  // 양방향 관계 해제
+    }
 }

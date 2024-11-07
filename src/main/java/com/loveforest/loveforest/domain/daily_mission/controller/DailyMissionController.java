@@ -98,25 +98,6 @@ public class DailyMissionController {
                             )
                     ),
                     @ApiResponse(
-                            responseCode = "400",
-                            description = "이전 미션이 완료되지 않음",
-                            content = @Content(
-                                    mediaType = "application/json",
-                                    schema = @Schema(implementation = ErrorResponse.class),
-                                    examples = @io.swagger.v3.oas.annotations.media.ExampleObject(
-                                            value = """
-                                            {
-                                              "timestamp": "2024-11-08T10:00:00",
-                                              "status": 400,
-                                              "errorType": "Previous Mission Incomplete",
-                                              "message": "이전 미션을 먼저 완료해주세요.",
-                                              "code": "MISSION-002"
-                                            }
-                                            """
-                                    )
-                            )
-                    ),
-                    @ApiResponse(
                             responseCode = "409",
                             description = "이미 답변한 미션",
                             content = @Content(

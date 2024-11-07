@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/pet")
 @RequiredArgsConstructor
@@ -40,8 +42,13 @@ public class PetController {
     @GetMapping
     public ResponseEntity<PetResponseDTO> getPetStatus(@AuthenticationPrincipal LoginInfo loginInfo) {
 
+        log.info("펫 상태 조회 요청 시작 - 사용자 ID: {}", loginInfo.getUserId());
+
         Couple couple = coupleService.getCoupleByUserId(loginInfo.getUserId());
+        log.info("커플 정보 조회 완료 - 커플 ID: {}", couple.getId());
+
         PetResponseDTO petStatus = petService.getPetStatus(couple);
+        log.info("펫 상태 조회 성공 - 레벨: {}, 경험치: {}", petStatus.getLevel(), petStatus.getExperience());
 
         return ResponseEntity.ok(petStatus);
     }
@@ -60,9 +67,16 @@ public class PetController {
     @PostMapping("/add-exp")
     public ResponseEntity<PetResponseDTO> addPetExperience(@AuthenticationPrincipal LoginInfo loginInfo) {
 
+        log.info("펫 경험치 추가 요청 시작 - 사용자 ID: {}", loginInfo.getUserId());
+
         Couple couple = coupleService.getCoupleByUserId(loginInfo.getUserId());
+        log.info("커플 정보 조회 완료 - 커플 ID: {}", couple.getId());
+
         petService.addExperience(couple, 10); // 경험치 10 추가
+        log.info("경험치 10 추가 완료");
+
         PetResponseDTO updatedPetStatus = petService.getPetStatus(couple);
+        log.info("경험치 추가 후 펫 상태 - 레벨: {}, 경험치: {}", updatedPetStatus.getLevel(), updatedPetStatus.getExperience());
 
         return ResponseEntity.ok(updatedPetStatus);
     }

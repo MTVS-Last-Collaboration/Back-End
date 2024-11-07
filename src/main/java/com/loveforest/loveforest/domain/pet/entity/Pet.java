@@ -21,12 +21,19 @@ public class Pet {
     @Column(nullable = false)
     private int experience = 0;
 
+    @Column(name = "name", length = 20)
+    private String name = "동글이";  // 기본 이름 설정
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "couple_id", nullable = false)
     private Couple couple;
 
     public Pet(Couple couple) {
         this.couple = couple;
+    }
+
+    public void updateName(String name) {
+        this.name = name;
     }
 
     public void addExperience(int exp) {

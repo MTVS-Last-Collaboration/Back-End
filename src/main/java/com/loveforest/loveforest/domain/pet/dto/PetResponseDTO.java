@@ -9,6 +9,9 @@ import lombok.Getter;
 @Schema(description = "Pet의 현재 상태를 나타내는 응답 DTO")
 public class PetResponseDTO {
 
+    @Schema(description = "팻 이름", example = "몽이")
+    private String name;
+
     @Schema(description = "현재 Pet의 레벨", example = "5", minimum = "1", maximum = "20")
     private int level;
 

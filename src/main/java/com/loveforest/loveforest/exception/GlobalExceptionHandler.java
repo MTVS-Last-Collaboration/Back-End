@@ -6,6 +6,9 @@ import com.loveforest.loveforest.domain.boardpost.exception.DailyTopicNotFoundEx
 import com.loveforest.loveforest.domain.boardpost.exception.NotLikedException;
 import com.loveforest.loveforest.domain.chat.exception.ChatNotFoundException;
 import com.loveforest.loveforest.domain.couple.exception.CoupleAlreadyExists;
+import com.loveforest.loveforest.domain.flower.exception.AiServerException;
+import com.loveforest.loveforest.domain.flower.exception.MaxMoodCountReachedException;
+import com.loveforest.loveforest.domain.flower.exception.MoodAnalysisException;
 import com.loveforest.loveforest.domain.pet.exception.MaxLevelReachedException;
 import com.loveforest.loveforest.domain.pet.exception.PetNotFoundException;
 import com.loveforest.loveforest.domain.user.exception.EmailAlreadyExistsException;
@@ -103,6 +106,31 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MaxLevelReachedException.class)
     public ResponseEntity<ErrorResponse> handleMaxLevelReachedException(MaxLevelReachedException ex) {
         return buildErrorResponse(ex.getErrorCode().getStatus(), ex.getErrorCode().getErrorType(), ex.getErrorCode().getDescription(), ex.getErrorCode().getCode());
+    }
+
+
+    // Flower 관련 예외 처리
+    @ExceptionHandler(AiServerException.class)
+    public ResponseEntity<ErrorResponse> handleAiServerException(AiServerException ex) {
+        return buildErrorResponse(ex.getErrorCode().getStatus(), ex.getErrorCode().getErrorType(),
+                ex.getErrorCode().getDescription(), ex.getErrorCode().getCode());
+    }
+
+    @ExceptionHandler(MoodAnalysisException.class)
+    public ResponseEntity<ErrorResponse> handleMoodAnalysisException(MoodAnalysisException ex) {
+        return buildErrorResponse(ex.getErrorCode().getStatus(), ex.getErrorCode().getErrorType(),
+                ex.getErrorCode().getDescription(), ex.getErrorCode().getCode());
+    }
+
+    @ExceptionHandler(MaxMoodCountReachedException.class)
+    public ResponseEntity<ErrorResponse> handleMaxMoodCountReachedException(MaxMoodCountReachedException ex) {
+        log.warn("최대 기분 카운트 도달: {}", ex.getMessage());
+        return buildErrorResponse(
+                ex.getErrorCode().getStatus(),
+                ex.getErrorCode().getErrorType(),
+                ex.getErrorCode().getDescription(),
+                ex.getErrorCode().getCode()
+        );
     }
 
     // 커스텀 예외 처리 (기타 공통 예외 처리)

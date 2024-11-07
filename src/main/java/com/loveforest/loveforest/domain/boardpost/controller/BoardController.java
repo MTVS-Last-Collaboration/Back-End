@@ -186,7 +186,7 @@ public class BoardController {
 
 
     /**
-     * 답변에 대한 댓글 조회
+     * 게시글에 대한 댓글 조회
      * */
     @Operation(summary = "게시글에 대한 댓글 조회", description = "특정 게시글에 달린 댓글 목록을 조회합니다.")
     @ApiResponses(value = {
@@ -210,7 +210,7 @@ public class BoardController {
     }
 
     /**
-     * 답변 좋아요
+     * 게시글 좋아요
      */
     @PostMapping("/answer/{answerId}/like")
     @Operation(summary = "게시글 좋아요", description = "특정 게시글에 좋아요를 추가합니다.")
@@ -234,7 +234,7 @@ public class BoardController {
     }
 
     /**
-     * 답변 좋아요 취소
+     * 게시글 좋아요 취소
      */
     @PostMapping("/answer/{answerId}/unlike")
     @Operation(summary = "게시글 좋아요 취소", description = "특정 게시글에 추가된 좋아요를 취소합니다.")

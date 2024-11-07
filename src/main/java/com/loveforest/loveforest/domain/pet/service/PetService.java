@@ -7,4 +7,5 @@ public interface PetService {
     PetResponseDTO getPetStatus(Couple couple);
     void addExperience(Couple couple, int exp);
     void createPetForCouple(Couple couple);
+    PetResponseDTO updatePetName(Long coupleId, String newName);
 }

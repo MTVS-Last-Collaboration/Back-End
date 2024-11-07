@@ -3,21 +3,24 @@ package com.loveforest.loveforest.domain.pet.controller;
 import com.loveforest.loveforest.domain.auth.dto.LoginInfo;
 import com.loveforest.loveforest.domain.couple.entity.Couple;
 import com.loveforest.loveforest.domain.couple.service.CoupleService;
+import com.loveforest.loveforest.domain.pet.dto.PetNameUpdateRequestDTO;
 import com.loveforest.loveforest.domain.pet.dto.PetResponseDTO;
 import com.loveforest.loveforest.domain.pet.service.PetService;
 import com.loveforest.loveforest.domain.user.exception.LoginRequiredException;
+import com.loveforest.loveforest.exception.ErrorResponse;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @Slf4j
 @RestController
@@ -86,5 +89,51 @@ public class PetController {
         log.info("경험치 추가 후 펫 상태 - 레벨: {}, 경험치: {}", updatedPetStatus.getLevel(), updatedPetStatus.getExperience());
 
         return ResponseEntity.ok(updatedPetStatus);
+    }
+
+    @Operation(
+            summary = "팻 이름 변경",
+            description = "커플의 팻 이름을 변경합니다.",
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "이름 변경 성공",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    schema = @Schema(implementation = PetResponseDTO.class),
+                                    examples = @ExampleObject(
+                                            value = "{\"name\": \"몽이\", \"level\": 5, \"experience\": 50}"
+                                    )
+                            )
+                    ),
+                    @ApiResponse(
+                            responseCode = "404",
+                            description = "팻을 찾을 수 없습니다.",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    schema = @Schema(implementation = ErrorResponse.class),
+                                    examples = @ExampleObject(
+                                            value = "{\"status\": 404, \"errorType\": \"Not Found\", \"message\": \"팻을 찾을 수 없습니다.\"}"
+                                    )
+                            )
+                    )
+            }
+    )
+    @PutMapping("/name")
+    public ResponseEntity<PetResponseDTO> updatePetName(
+            @AuthenticationPrincipal LoginInfo loginInfo,
+            @Valid @RequestBody PetNameUpdateRequestDTO request) {
+
+        if (loginInfo == null) {
+            throw new LoginRequiredException();
+        }
+
+        log.info("팻 이름 변경 요청 - 커플 ID: {}, 새 이름: {}", loginInfo.getCoupleId(), request.getName());
+
+        PetResponseDTO updatedPet = petService.updatePetName(loginInfo.getCoupleId(), request.getName());
+
+        log.info("팻 이름 변경 완료 - 새 이름: {}", updatedPet.getName());
+
+        return ResponseEntity.ok(updatedPet);
     }
 }

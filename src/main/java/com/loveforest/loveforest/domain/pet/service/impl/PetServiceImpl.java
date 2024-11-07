@@ -44,4 +44,11 @@ public class PetServiceImpl implements PetService {
 
         petRepository.save(pet);
     }
+
+    @Override
+    @Transactional
+    public void createPetForCouple(Couple couple) {
+        Pet pet = new Pet(couple);
+        petRepository.save(pet);
+    }
 }

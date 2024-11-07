@@ -43,4 +43,11 @@ public class FurnitureLayout {
     public void setRoom(Room room) {
         this.room = room;
     }
+
+    // 위치와 회전 각도 설정 메서드 추가
+    public void setPosition(int positionX, int positionY, int rotation) {
+        this.positionX = positionX;
+        this.positionY = positionY;
+        this.rotation = rotation;
+    }
 }

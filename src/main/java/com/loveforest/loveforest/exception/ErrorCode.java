@@ -29,6 +29,9 @@ public enum ErrorCode {
 
     // Room 관련 에러
     ROOM_NOT_FOUND(HttpStatus.NOT_FOUND, "Room Not Found", "해당 커플에 대한 방을 찾을 수 없습니다.", "ROOM-001"),
+    FURNITURE_NOT_FOUND(HttpStatus.NOT_FOUND, "Furniture Not Found", "해당 가구를 찾을 수 없습니다.", "ROOM-002"),
+    FURNITURE_OVERLAP(HttpStatus.CONFLICT, "Furniture Overlap", "해당 위치에 이미 다른 가구가 배치되어 있습니다.", "ROOM-003"),
+    FURNITURE_LAYOUT_NOT_FOUND(HttpStatus.NOT_FOUND, "Furniture Layout Not Found", "해당 가구 배치를 찾을 수 없습니다.", "ROOM-004"),
 
     // Chat 관련 에러
     CHAT_NOT_FOUND(HttpStatus.NOT_FOUND, "Chat Not Found", "대화 이력이 존재하지 않습니다.", "CHAT-001"),

@@ -25,4 +25,10 @@ public class RoomDecorationRequestDTO {
 
     @Schema(description = "회전 각도", example = "90", required = true)
     private int rotation;
+
+    @Schema(description = "가구의 너비", example = "50", required = true)
+    private int width;
+
+    @Schema(description = "가구의 높이", example = "30", required = true)
+    private int height;
 }

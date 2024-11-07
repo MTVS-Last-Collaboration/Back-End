@@ -17,6 +17,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -25,6 +26,7 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDate;
 import java.util.List;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/topic")
 @RequiredArgsConstructor
@@ -52,8 +54,12 @@ public class BoardController {
     public ResponseEntity<DailyTopicResponseDTO> createDailyTopic(
             @Valid @RequestBody DailyTopicRequestDTO dailyTopicRequestDTO,
             @AuthenticationPrincipal LoginInfo loginInfo) {
+        log.info("Daily 토픽 생성 요청 - 사용자 ID: {}", loginInfo.getUserId());
+
         DailyTopic dailyTopic = dailyTopicService.createDailyTopic(dailyTopicRequestDTO.getContent(), dailyTopicRequestDTO.getDate());
         DailyTopicResponseDTO dailyTopicIdResponse = new DailyTopicResponseDTO(dailyTopic);
+
+        log.info("Daily 토픽 생성 성공 - 토픽 ID: {}", dailyTopicIdResponse.getId());
         return ResponseEntity.ok(dailyTopicIdResponse);
     }
 
@@ -71,8 +77,11 @@ public class BoardController {
     })
     @GetMapping
     public ResponseEntity<List<DailyTopicResponseDTO>> getDailyTopicByDate(@AuthenticationPrincipal LoginInfo loginInfo) {
+        log.info("모든 Daily 토픽 조회 요청 - 사용자 ID: {}", loginInfo.getUserId());
 
         List<DailyTopicResponseDTO> dailyTopicList = dailyTopicService.getAllDailyTopic();
+
+        log.info("모든 Daily 토픽 조회 성공 - 조회된 토픽 수: {}", dailyTopicList.size());
         return ResponseEntity.ok(dailyTopicList);
     }
 
@@ -95,7 +104,11 @@ public class BoardController {
             @PathVariable("date") @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate date,
             @AuthenticationPrincipal LoginInfo loginInfo) {
 
+        log.info("특정 날짜의 Daily 토픽 조회 요청 - 사용자 ID: {}, 날짜: {}", loginInfo.getUserId(), date);
+
         DailyTopic dailyTopic = dailyTopicService.getDailyTopicByDate(date);
+
+        log.info("특정 날짜의 Daily 토픽 조회 성공 - 토픽 ID: {}", dailyTopic.getId());
         return ResponseEntity.ok(dailyTopic);
     }
 
@@ -112,10 +125,14 @@ public class BoardController {
             @AuthenticationPrincipal LoginInfo loginInfo,
             @Valid @RequestBody AnswerRequestDTO answerRequestDTO) {
 
+        log.info("답변 생성 요청 - 사용자 ID: {}, 질문 ID: {}", loginInfo.getUserId(), answerRequestDTO.getDailyTopicId());
+
         DailyTopic dailyTopic = dailyTopicService.getDailyTopicById(answerRequestDTO.getDailyTopicId())
                 .orElseThrow(DailyTopicNotFoundException::new);
 
         AnswerResponseDTO answerResponse = answerService.createAnswer(answerRequestDTO, loginInfo.getNickname(), dailyTopic);
+
+        log.info("답변 생성 성공 - 답변 ID: {}", answerResponse.getId());
         return ResponseEntity.ok(answerResponse);
     }
 
@@ -133,9 +150,13 @@ public class BoardController {
             @PathVariable("dailyTopicId") Long dailyTopicId,
             @AuthenticationPrincipal LoginInfo loginInfo) {
 
+        log.info("답변 조회 요청 - 질문 ID: {}", dailyTopicId);
+
         DailyTopic dailyTopic = dailyTopicService.getDailyTopicById(dailyTopicId)
                 .orElseThrow(DailyTopicNotFoundException::new);
         List<AnswerResponseDTO> answers = answerService.getAnswersByDailyTopic(dailyTopic);
+
+        log.info("답변 조회 성공 - 질문 ID: {}, 조회된 답변 수: {}", dailyTopicId, answers.size());
         return ResponseEntity.ok(answers);
     }
 
@@ -152,14 +173,14 @@ public class BoardController {
             @AuthenticationPrincipal LoginInfo loginInfo,
             @Valid @RequestBody CommentRequestDTO commentRequestDTO) {
 
+        log.info("댓글 생성 요청 - 사용자 ID: {}, 답변 ID: {}", loginInfo.getUserId(), commentRequestDTO.getAnswerId());
+
         Answer answer = answerService.getAnswerById(commentRequestDTO.getAnswerId())
                 .orElseThrow(AnswerNotFoundException::new);
 
-        CommentResponseDTO commentResponse = commentService.createComment(
-                commentRequestDTO.getContent(),  // content
-                loginInfo.getNickname(),         // 작성자 닉네임
-                answer                           // 연관된 답변 객체
-        );
+        CommentResponseDTO commentResponse = commentService.createComment(commentRequestDTO.getContent(), loginInfo.getNickname(), answer);
+
+        log.info("댓글 생성 성공 - 댓글 ID: {}", commentResponse.getId());
         return ResponseEntity.ok(commentResponse);
     }
 
@@ -177,12 +198,14 @@ public class BoardController {
             @PathVariable("answerId") Long answerId,
             @AuthenticationPrincipal LoginInfo loginInfo) { // 인증된 사용자 정보 추가
 
-        // 답변을 조회하고 없으면 예외 처리
+        log.info("댓글 조회 요청 - 답변 ID: {}", answerId);
+
         Answer answer = answerService.getAnswerById(answerId)
                 .orElseThrow(AnswerNotFoundException::new);
 
-        // 댓글 목록 조회
         List<CommentResponseDTO> comments = commentService.getCommentsByAnswer(answer);
+
+        log.info("댓글 조회 성공 - 답변 ID: {}, 조회된 댓글 수: {}", answerId, comments.size());
         return ResponseEntity.ok(comments);
     }
 
@@ -202,8 +225,11 @@ public class BoardController {
             @PathVariable("answerId") Long answerId,
             @AuthenticationPrincipal LoginInfo loginInfo) {
 
-        // 좋아요 중복 여부 확인 및 예외 처리
+        log.info("답변 좋아요 요청 - 사용자 ID: {}, 답변 ID: {}", loginInfo.getUserId(), answerId);
+
         LikeResponseDTO response = answerService.likeAnswer(answerId, loginInfo.getUserId());
+
+        log.info("답변 좋아요 추가 성공 - 답변 ID: {}, 좋아요 상태: {}", answerId, response.isLiked());
         return ResponseEntity.ok(response);
     }
 
@@ -222,7 +248,11 @@ public class BoardController {
             @PathVariable("answerId") Long answerId,
             @AuthenticationPrincipal LoginInfo loginInfo) {
 
+        log.info("답변 좋아요 취소 요청 - 사용자 ID: {}, 답변 ID: {}", loginInfo.getUserId(), answerId);
+
         LikeResponseDTO response = answerService.unlikeAnswer(answerId, loginInfo.getUserId());
+
+        log.info("답변 좋아요 취소 성공 - 답변 ID: {}, 좋아요 상태: {}", answerId, response.isLiked());
         return ResponseEntity.ok(response);
     }
 
@@ -242,7 +272,11 @@ public class BoardController {
             @PathVariable("commentId") Long commentId,
             @AuthenticationPrincipal LoginInfo loginInfo) {
 
+        log.info("댓글 좋아요 요청 - 사용자 ID: {}, 댓글 ID: {}", loginInfo.getUserId(), commentId);
+
         LikeResponseDTO response = commentService.likeComment(commentId, loginInfo.getUserId());
+
+        log.info("댓글 좋아요 추가 성공 - 댓글 ID: {}, 좋아요 상태: {}", commentId, response.isLiked());
         return ResponseEntity.ok(response);
     }
 
@@ -261,7 +295,11 @@ public class BoardController {
             @PathVariable("commentId") Long commentId,
             @AuthenticationPrincipal LoginInfo loginInfo) {
 
+        log.info("댓글 좋아요 취소 요청 - 사용자 ID: {}, 댓글 ID: {}", loginInfo.getUserId(), commentId);
+
         LikeResponseDTO response = commentService.unlikeComment(commentId, loginInfo.getUserId());
+
+        log.info("댓글 좋아요 취소 성공 - 댓글 ID: {}, 좋아요 상태: {}", commentId, response.isLiked());
         return ResponseEntity.ok(response);
     }
 }

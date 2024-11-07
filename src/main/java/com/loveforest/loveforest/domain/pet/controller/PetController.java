@@ -5,6 +5,7 @@ import com.loveforest.loveforest.domain.couple.entity.Couple;
 import com.loveforest.loveforest.domain.couple.service.CoupleService;
 import com.loveforest.loveforest.domain.pet.dto.PetResponseDTO;
 import com.loveforest.loveforest.domain.pet.service.PetService;
+import com.loveforest.loveforest.domain.user.exception.LoginRequiredException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -41,6 +42,9 @@ public class PetController {
     })
     @GetMapping
     public ResponseEntity<PetResponseDTO> getPetStatus(@AuthenticationPrincipal LoginInfo loginInfo) {
+        if (loginInfo == null) {
+            throw new LoginRequiredException();
+        }
 
         log.info("펫 상태 조회 요청 시작 - 사용자 ID: {}", loginInfo.getUserId());
 
@@ -66,6 +70,9 @@ public class PetController {
     })
     @PostMapping("/add-exp")
     public ResponseEntity<PetResponseDTO> addPetExperience(@AuthenticationPrincipal LoginInfo loginInfo) {
+        if (loginInfo == null) {
+            throw new LoginRequiredException();
+        }
 
         log.info("펫 경험치 추가 요청 시작 - 사용자 ID: {}", loginInfo.getUserId());
 

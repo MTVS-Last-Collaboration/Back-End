@@ -65,7 +65,10 @@ public class CoupleController {
     })
     @PostMapping("/join")
     public ResponseEntity<CoupleJoinResponseDTO> joinCouple(@AuthenticationPrincipal LoginInfo loginInfo, @Valid @RequestBody CoupleJoinRequestDTO request) {
-        // 로그인한 사용자 정보 확인
+
+        if (loginInfo == null) {
+            throw new LoginRequiredException();
+        }
 
         coupleService.joinCouple(loginInfo.getUserId(), request.getCoupleCode());
         return ResponseEntity.ok(new CoupleJoinResponseDTO("커플 연동이 성공적으로 완료되었습니다."));
@@ -91,6 +94,9 @@ public class CoupleController {
     })
     @GetMapping("/my-code")
     public ResponseEntity<CoupleCodeResponseDTO> getMyCoupleCode(@AuthenticationPrincipal LoginInfo loginInfo) {
+        if (loginInfo == null) {
+            throw new LoginRequiredException();
+        }
 
         CoupleCodeResponseDTO coupleCode = coupleService.getMyCoupleCode(loginInfo.getUserId());
         return ResponseEntity.ok(coupleCode);

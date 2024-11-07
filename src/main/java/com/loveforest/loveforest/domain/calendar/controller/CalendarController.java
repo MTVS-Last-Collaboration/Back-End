@@ -96,6 +96,10 @@ public class CalendarController {
     )
     @GetMapping("/events")
     public ResponseEntity<List<CalendarEventResponseDTO>> getEvents(@AuthenticationPrincipal LoginInfo loginInfo) {
+        if (loginInfo == null) {
+            throw new LoginRequiredException();
+        }
+
         log.info("이벤트 목록 조회 요청 시작 - 사용자 ID: {}, 커플 ID: {}", loginInfo.getUserId(), loginInfo.getCoupleId());
 
         Long coupleId = loginInfo.getCoupleId();
@@ -129,7 +133,12 @@ public class CalendarController {
             }
     )
     @PutMapping("/event/{eventId}")
-    public ResponseEntity<CalendarEventResponseDTO> updateEvent(@AuthenticationPrincipal LoginInfo loginInfo, @PathVariable("eventId") Long eventId, @RequestBody CalendarEventRequestDTO requestDTO) { log.info("이벤트 수정 요청 시작 - 사용자 ID: {}, 이벤트 ID: {}", loginInfo.getUserId(), eventId);
+    public ResponseEntity<CalendarEventResponseDTO> updateEvent(@AuthenticationPrincipal LoginInfo loginInfo, @PathVariable("eventId") Long eventId, @RequestBody CalendarEventRequestDTO requestDTO) {
+        if (loginInfo == null) {
+            throw new LoginRequiredException();
+        }
+
+        log.info("이벤트 수정 요청 시작 - 사용자 ID: {}, 이벤트 ID: {}", loginInfo.getUserId(), eventId);
 
         CalendarEventResponseDTO responseDTO = calendarService.updateEvent(eventId, requestDTO);
 
@@ -161,7 +170,12 @@ public class CalendarController {
             }
     )
     @DeleteMapping("/event/{eventId}")
-    public ResponseEntity<Void> deleteEvent(@PathVariable Long eventId) {
+    public ResponseEntity<Void> deleteEvent(@AuthenticationPrincipal LoginInfo loginInfo, @PathVariable Long eventId) {
+
+        if (loginInfo == null) {
+            throw new LoginRequiredException();
+        }
+
         log.info("이벤트 삭제 요청 시작 - 이벤트 ID: {}", eventId);
 
         calendarService.deleteEvent(eventId);

@@ -54,6 +54,9 @@ public class BoardController {
     public ResponseEntity<DailyTopicResponseDTO> createDailyTopic(
             @Valid @RequestBody DailyTopicRequestDTO dailyTopicRequestDTO,
             @AuthenticationPrincipal LoginInfo loginInfo) {
+        if (loginInfo == null) {
+            throw new LoginRequiredException();
+        }
         log.info("Daily 토픽 생성 요청 - 사용자 ID: {}", loginInfo.getUserId());
 
         DailyTopic dailyTopic = dailyTopicService.createDailyTopic(dailyTopicRequestDTO.getContent(), dailyTopicRequestDTO.getDate());
@@ -77,6 +80,9 @@ public class BoardController {
     })
     @GetMapping
     public ResponseEntity<List<DailyTopicResponseDTO>> getDailyTopicByDate(@AuthenticationPrincipal LoginInfo loginInfo) {
+        if (loginInfo == null) {
+            throw new LoginRequiredException();
+        }
         log.info("모든 Daily 토픽 조회 요청 - 사용자 ID: {}", loginInfo.getUserId());
 
         List<DailyTopicResponseDTO> dailyTopicList = dailyTopicService.getAllDailyTopic();
@@ -103,6 +109,9 @@ public class BoardController {
             @Parameter(description = "조회할 날짜 (yyyy-MM-dd 형식)", example = "2023-01-01")
             @PathVariable("date") @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate date,
             @AuthenticationPrincipal LoginInfo loginInfo) {
+        if (loginInfo == null) {
+            throw new LoginRequiredException();
+        }
 
         log.info("특정 날짜의 Daily 토픽 조회 요청 - 사용자 ID: {}, 날짜: {}", loginInfo.getUserId(), date);
 
@@ -124,6 +133,9 @@ public class BoardController {
     public ResponseEntity<AnswerResponseDTO> createAnswer(
             @AuthenticationPrincipal LoginInfo loginInfo,
             @Valid @RequestBody AnswerRequestDTO answerRequestDTO) {
+        if (loginInfo == null) {
+            throw new LoginRequiredException();
+        }
 
         log.info("게시글 생성 요청 - 사용자 ID: {}, 토픽 ID: {}", loginInfo.getUserId(), answerRequestDTO.getDailyTopicId());
 
@@ -149,6 +161,9 @@ public class BoardController {
     public ResponseEntity<List<AnswerResponseDTO>> getAnswersByDailyTopic(
             @PathVariable("dailyTopicId") Long dailyTopicId,
             @AuthenticationPrincipal LoginInfo loginInfo) {
+        if (loginInfo == null) {
+            throw new LoginRequiredException();
+        }
 
         log.info("게시글 조회 요청 - 토픽 ID: {}", dailyTopicId);
 
@@ -172,6 +187,9 @@ public class BoardController {
     public ResponseEntity<CommentResponseDTO> createComment(
             @AuthenticationPrincipal LoginInfo loginInfo,
             @Valid @RequestBody CommentRequestDTO commentRequestDTO) {
+        if (loginInfo == null) {
+            throw new LoginRequiredException();
+        }
 
         log.info("댓글 생성 요청 - 사용자 ID: {}, 게시글 ID: {}", loginInfo.getUserId(), commentRequestDTO.getAnswerId());
 
@@ -197,6 +215,9 @@ public class BoardController {
     public ResponseEntity<List<CommentResponseDTO>> getCommentsByAnswer(
             @PathVariable("answerId") Long answerId,
             @AuthenticationPrincipal LoginInfo loginInfo) { // 인증된 사용자 정보 추가
+        if (loginInfo == null) {
+            throw new LoginRequiredException();
+        }
 
         log.info("댓글 조회 요청 - 게시글 ID: {}", answerId);
 
@@ -224,6 +245,9 @@ public class BoardController {
             @Parameter(description = "좋아요를 추가할 게시글의 ID", example = "1")
             @PathVariable("answerId") Long answerId,
             @AuthenticationPrincipal LoginInfo loginInfo) {
+        if (loginInfo == null) {
+            throw new LoginRequiredException();
+        }
 
         log.info("게시글 좋아요 요청 - 사용자 ID: {}, 게시글 ID: {}", loginInfo.getUserId(), answerId);
 
@@ -247,6 +271,9 @@ public class BoardController {
             @Parameter(description = "좋아요를 취소할 게시글의 ID", example = "1")
             @PathVariable("answerId") Long answerId,
             @AuthenticationPrincipal LoginInfo loginInfo) {
+        if (loginInfo == null) {
+            throw new LoginRequiredException();
+        }
 
         log.info("게시글 좋아요 취소 요청 - 사용자 ID: {}, 게시글 ID: {}", loginInfo.getUserId(), answerId);
 
@@ -271,6 +298,9 @@ public class BoardController {
             @Parameter(description = "좋아요를 추가할 댓글의 ID", example = "1")
             @PathVariable("commentId") Long commentId,
             @AuthenticationPrincipal LoginInfo loginInfo) {
+        if (loginInfo == null) {
+            throw new LoginRequiredException();
+        }
 
         log.info("댓글 좋아요 요청 - 사용자 ID: {}, 댓글 ID: {}", loginInfo.getUserId(), commentId);
 
@@ -294,6 +324,9 @@ public class BoardController {
             @Parameter(description = "좋아요를 취소할 댓글의 ID", example = "1")
             @PathVariable("commentId") Long commentId,
             @AuthenticationPrincipal LoginInfo loginInfo) {
+        if (loginInfo == null) {
+            throw new LoginRequiredException();
+        }
 
         log.info("댓글 좋아요 취소 요청 - 사용자 ID: {}, 댓글 ID: {}", loginInfo.getUserId(), commentId);
 

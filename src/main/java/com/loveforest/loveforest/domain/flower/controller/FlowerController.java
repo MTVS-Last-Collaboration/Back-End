@@ -4,6 +4,7 @@ import com.loveforest.loveforest.domain.auth.dto.LoginInfo;
 import com.loveforest.loveforest.domain.flower.dto.FlowerMoodResponseDTO;
 import com.loveforest.loveforest.domain.flower.dto.FlowerRequestDTO;
 import com.loveforest.loveforest.domain.flower.service.FlowerService;
+import com.loveforest.loveforest.domain.user.exception.LoginRequiredException;
 import com.loveforest.loveforest.exception.ErrorResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -59,6 +60,9 @@ public class FlowerController {
     public ResponseEntity<FlowerMoodResponseDTO> analyzeMood(
             @AuthenticationPrincipal LoginInfo loginInfo,
             @RequestBody String base64VoiceMessage) {
+        if (loginInfo == null) {
+            throw new LoginRequiredException();
+        }
 
         log.info("음성 분석 요청 시작 - 사용자 ID: {}", loginInfo.getUserId());
         FlowerMoodResponseDTO response = flowerService.analyzeMood(loginInfo.getUserId(), base64VoiceMessage);
@@ -92,6 +96,9 @@ public class FlowerController {
     public ResponseEntity<Void> setFlowerName(
             @AuthenticationPrincipal LoginInfo loginInfo,
             @RequestBody FlowerRequestDTO request) {
+        if (loginInfo == null) {
+            throw new LoginRequiredException();
+        }
 
         log.info("꽃 이름 설정 요청 - 사용자 ID: {}, 새로운 이름: {}", loginInfo.getUserId(), request.getName());
         flowerService.setFlowerName(loginInfo.getUserId(), request.getName());
@@ -123,6 +130,10 @@ public class FlowerController {
     })
     @PostMapping("/new-seed")
     public ResponseEntity<Void> startNewSeed(@AuthenticationPrincipal LoginInfo loginInfo) {
+        if (loginInfo == null) {
+            throw new LoginRequiredException();
+        }
+
         log.info("새로운 씨앗 시작 요청 - 사용자 ID: {}", loginInfo.getUserId());
         flowerService.startNewSeed(loginInfo.getUserId());
         log.info("새로운 씨앗 시작 성공 - 사용자 ID: {}", loginInfo.getUserId());

@@ -1,8 +1,10 @@
 package com.loveforest.loveforest.domain.room.controller;
 
+import com.loveforest.loveforest.domain.auth.dto.LoginInfo;
 import com.loveforest.loveforest.domain.room.dto.RoomDecorationRequestDTO;
 import com.loveforest.loveforest.domain.room.dto.RoomResponseDTO;
 import com.loveforest.loveforest.domain.room.service.RoomService;
+import com.loveforest.loveforest.domain.user.exception.LoginRequiredException;
 import com.loveforest.loveforest.exception.ErrorResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -13,6 +15,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -57,7 +60,10 @@ public class RoomController {
             }
     )
     @PostMapping("/decorate")
-    public ResponseEntity<String> decorateRoom(@RequestBody RoomDecorationRequestDTO request) {
+    public ResponseEntity<String> decorateRoom(@AuthenticationPrincipal LoginInfo loginInfo, @RequestBody RoomDecorationRequestDTO request) {
+        if (loginInfo == null) {
+            throw new LoginRequiredException();
+        }
         roomService.decorateRoom(request);
         return ResponseEntity.ok("가구 배치가 완료되었습니다.");
     }
@@ -88,7 +94,10 @@ public class RoomController {
             }
     )
     @GetMapping("/{coupleId}")
-    public ResponseEntity<RoomResponseDTO> getRoom(@PathVariable Long coupleId) {
+    public ResponseEntity<RoomResponseDTO> getRoom(@AuthenticationPrincipal LoginInfo loginInfo, @PathVariable Long coupleId) {
+        if (loginInfo == null) {
+            throw new LoginRequiredException();
+        }
         RoomResponseDTO response = roomService.getRoomByCoupleId(coupleId);
         return ResponseEntity.ok(response);
     }

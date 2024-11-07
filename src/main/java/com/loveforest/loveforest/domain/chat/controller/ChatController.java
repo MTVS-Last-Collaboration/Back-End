@@ -61,6 +61,11 @@ public class ChatController {
     })
     @PostMapping("/send")
     public ResponseEntity<ChatMessageResponseDTO> sendMessage(@AuthenticationPrincipal LoginInfo loginInfo, @RequestBody ChatMessageRequestDTO request) {
+
+        if (loginInfo == null) {
+            throw new LoginRequiredException();
+        }
+
         log.info("메시지 전송 요청 시작 - 사용자 ID: {}, 커플 ID: {}, 메시지 내용: {}", loginInfo.getUserId(), loginInfo.getCoupleId(), request.getMessages());
 
         ChatMessageResponseDTO responseDTO = chatService.processMessage(loginInfo.getUserId(), loginInfo.getCoupleId(), request.getMessages());
@@ -96,6 +101,9 @@ public class ChatController {
     })
     @GetMapping("/history")
     public ResponseEntity<List<ChatMessageDTO>> getChatHistory(@AuthenticationPrincipal LoginInfo loginInfo) {
+        if (loginInfo == null) {
+            throw new LoginRequiredException();
+        }
 
         log.info("대화 이력 조회 요청 시작 - 사용자 ID: {}, 커플 ID: {}", loginInfo.getUserId(), loginInfo.getCoupleId());
 

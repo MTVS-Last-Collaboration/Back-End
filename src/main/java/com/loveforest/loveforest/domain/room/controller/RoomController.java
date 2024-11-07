@@ -2,6 +2,7 @@ package com.loveforest.loveforest.domain.room.controller;
 
 import com.loveforest.loveforest.domain.auth.dto.LoginInfo;
 import com.loveforest.loveforest.domain.room.dto.RoomDecorationRequestDTO;
+import com.loveforest.loveforest.domain.room.dto.RoomFurnitureUpdateRequestDTO;
 import com.loveforest.loveforest.domain.room.dto.RoomResponseDTO;
 import com.loveforest.loveforest.domain.room.service.RoomService;
 import com.loveforest.loveforest.domain.user.exception.LoginRequiredException;
@@ -100,5 +101,74 @@ public class RoomController {
         }
         RoomResponseDTO response = roomService.getRoomByCoupleId(coupleId);
         return ResponseEntity.ok(response);
+    }
+
+    /**
+     * 방 가구 위치 이동 API
+     */
+    @Operation(
+            summary = "가구 위치 이동",
+            description = "특정 커플의 방에 배치된 가구의 위치와 회전 각도를 수정합니다.",
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "가구 위치 이동 성공",
+                            content = @Content(mediaType = "application/json")
+                    ),
+                    @ApiResponse(
+                            responseCode = "404",
+                            description = "가구를 찾을 수 없습니다.",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    schema = @Schema(implementation = ErrorResponse.class),
+                                    examples = @ExampleObject(value = "{\"status\": 404, \"errorType\": \"NotFound\", \"message\": \"가구를 찾을 수 없습니다.\"}")
+                            )
+                    )
+            }
+    )
+    @PutMapping("/furniture/{furnitureLayoutId}/move")
+    public ResponseEntity<String> moveFurniture(
+            @AuthenticationPrincipal LoginInfo loginInfo,
+            @PathVariable Long furnitureLayoutId,
+            @RequestBody RoomFurnitureUpdateRequestDTO request) {
+        if (loginInfo == null) {
+            throw new LoginRequiredException();
+        }
+        roomService.moveFurniture(furnitureLayoutId, request);
+        return ResponseEntity.ok("가구 위치가 성공적으로 수정되었습니다.");
+    }
+
+    /**
+     * 방 가구 삭제 API
+     */
+    @Operation(
+            summary = "가구 삭제",
+            description = "방에 배치된 가구를 삭제합니다.",
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "가구 삭제 성공",
+                            content = @Content(mediaType = "application/json")
+                    ),
+                    @ApiResponse(
+                            responseCode = "404",
+                            description = "가구를 찾을 수 없습니다.",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    schema = @Schema(implementation = ErrorResponse.class),
+                                    examples = @ExampleObject(value = "{\"status\": 404, \"errorType\": \"NotFound\", \"message\": \"가구를 찾을 수 없습니다.\"}")
+                            )
+                    )
+            }
+    )
+    @DeleteMapping("/furniture/{furnitureLayoutId}")
+    public ResponseEntity<String> deleteFurniture(
+            @AuthenticationPrincipal LoginInfo loginInfo,
+            @PathVariable Long furnitureLayoutId) {
+        if (loginInfo == null) {
+            throw new LoginRequiredException();
+        }
+        roomService.deleteFurniture(furnitureLayoutId);
+        return ResponseEntity.ok("가구가 성공적으로 삭제되었습니다.");
     }
 }

@@ -23,10 +23,20 @@ public class Furniture {
     @Column(name = "price", nullable = false)
     private int price; // 가구의 가격
 
+    @Column(name = "width", nullable = false)
+    private int width; // 가구의 너비
+
+    @Column(name = "height", nullable = false)
+    private int height; // 가구의 높이
+
+
+
     // 생성자
-    public Furniture(String name, String type, int price) {
+    public Furniture(String name, String type, int price, int width, int height) {
         this.name = name;
         this.type = type;
         this.price = price;
+        this.width = width;
+        this.height = height;
     }
 }

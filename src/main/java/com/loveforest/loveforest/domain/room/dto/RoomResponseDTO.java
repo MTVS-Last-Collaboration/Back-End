@@ -38,5 +38,11 @@ public class RoomResponseDTO {
 
         @Schema(description = "회전 각도", example = "90")
         private int rotation;
+
+        @Schema(description = "가구의 너비", example = "50")
+        private int width;
+
+        @Schema(description = "가구의 높이", example = "30")
+        private int height;
     }
 }

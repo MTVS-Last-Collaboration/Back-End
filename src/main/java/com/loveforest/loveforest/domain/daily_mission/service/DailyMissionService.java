@@ -127,9 +127,6 @@ public class DailyMissionService {
         log.debug("미션 답변 저장 시작 - 커플 ID: {}, 사용자 ID: {}", coupleId, userId);
         LocalDate today = LocalDate.now();
 
-        // 이전 미션 완료 여부 확인
-        checkPreviousMissionCompletion(coupleId, today);
-
         DailyMission mission = dailyMissionRepository.findByCouple_IdAndMissionDate(coupleId, today)
                 .orElseThrow(() -> {
                     log.warn("미션을 찾을 수 없음 - 커플 ID: {}", coupleId);
@@ -147,17 +144,6 @@ public class DailyMissionService {
 
         mission.updateAnswer(mood, answer, isPartner1);
         log.info("미션 답변 저장 완료 - 커플 ID: {}", coupleId);
-    }
-
-    private void checkPreviousMissionCompletion(Long coupleId, LocalDate today) {
-        LocalDate yesterday = today.minusDays(1);
-        dailyMissionRepository.findByCouple_IdAndMissionDate(coupleId, yesterday)
-                .ifPresent(previousMission -> {
-                    if (!previousMission.isCompleted()) {
-                        log.warn("이전 미션 미완료 - 커플 ID: {}", coupleId);
-                        throw new PreviousMissionIncompleteException();
-                    }
-                });
     }
 
     // 첫 번째 파트너인지 확인하는 메서드

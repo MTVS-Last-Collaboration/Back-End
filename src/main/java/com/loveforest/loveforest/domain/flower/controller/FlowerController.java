@@ -58,10 +58,10 @@ public class FlowerController {
     @PostMapping("/analyze-mood")
     public ResponseEntity<FlowerMoodResponseDTO> analyzeMood(
             @AuthenticationPrincipal LoginInfo loginInfo,
-            @RequestBody byte[] voiceMessage) {
+            @RequestBody String base64VoiceMessage) {
 
         log.info("음성 분석 요청 시작 - 사용자 ID: {}", loginInfo.getUserId());
-        FlowerMoodResponseDTO response = flowerService.analyzeMood(loginInfo.getUserId(), voiceMessage);
+        FlowerMoodResponseDTO response = flowerService.analyzeMood(loginInfo.getUserId(), base64VoiceMessage);
         log.info("음성 분석 성공 - 기분 상태: {}", response.getMood());
         return ResponseEntity.ok(response);
     }

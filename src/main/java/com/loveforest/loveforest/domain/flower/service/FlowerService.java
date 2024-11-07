@@ -30,7 +30,7 @@ public class FlowerService {
     private String serverUrl;
 
     @Transactional
-    public FlowerMoodResponseDTO analyzeMood(Long userId, byte[] voiceMessage) {
+    public FlowerMoodResponseDTO analyzeMood(Long userId, String base64VoiceMessage) {
         User user = userRepository.findById(userId)
                 .orElseThrow(UserNotFoundException::new);
 
@@ -44,7 +44,7 @@ public class FlowerService {
         String mood;
         try {
             mood = webClient.post()
-                    .bodyValue(voiceMessage)
+                    .bodyValue(base64VoiceMessage)
                     .retrieve()
                     .bodyToMono(String.class)
                     .onErrorMap(WebClientResponseException.class, ex -> {

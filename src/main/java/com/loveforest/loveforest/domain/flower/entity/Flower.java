@@ -25,9 +25,6 @@ public class Flower {
     @JoinColumn(name = "user_id", nullable = false)
     private User user; // 각 사용자의 꽃
 
-    @Column(nullable = false)
-    private int points = 0; // 커플 포인트
-
     public Flower(String name, User user) {
         this.name = name;
         this.user = user;
@@ -45,7 +42,4 @@ public class Flower {
         this.name = newName;
     }
 
-    public void addPoints(int points) {
-        this.points += points;
-    }
 }

@@ -30,7 +30,7 @@ public class PetController {
     /**
      * 커플의 팻 상태 조회
      */
-    @Operation(summary = "Get Pet Status", description = "커플의 팻 상태를 조회합니다. " +
+    @Operation(summary = "펫 상태 조회", description = "커플의 팻 상태를 조회합니다. " +
             "레벨과 경험치 정보를 반환합니다.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "팻 상태 조회 성공"),
@@ -49,7 +49,7 @@ public class PetController {
     /**
      * 팻 경험치 추가 (1일 1문답 완료 시 호출)
      */
-    @Operation(summary = "Add Experience to Pet", description = "커플이 1일 1문답을 완료하여 팻에 경험치를 추가합니다. " +
+    @Operation(summary = "펫 경험치 추가", description = "커플이 1일 1문답을 완료하여 팻에 경험치를 추가합니다. " +
             "팻이 경험치 100을 채우면 자동으로 레벨이 상승합니다. 최대 레벨에 도달한 경우 오류가 발생합니다.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "경험치 추가 성공"),

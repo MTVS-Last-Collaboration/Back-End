@@ -21,7 +21,7 @@ public class PetServiceImpl implements PetService {
     public PetResponseDTO getPetStatus(Couple couple) {
         Pet pet = petRepository.findByCoupleId(couple.getId())
                 .orElseThrow(PetNotFoundException::new);
-        return new PetResponseDTO(pet.getLevel(), pet.getExperience());
+        return new PetResponseDTO(pet.getName(), pet.getLevel(), pet.getExperience());
     }
 
     @Override
@@ -50,5 +50,17 @@ public class PetServiceImpl implements PetService {
     public void createPetForCouple(Couple couple) {
         Pet pet = new Pet(couple);
         petRepository.save(pet);
+    }
+
+    @Override
+    @Transactional
+    public PetResponseDTO updatePetName(Long coupleId, String newName) {
+        Pet pet = petRepository.findByCoupleId(coupleId)
+                .orElseThrow(PetNotFoundException::new);
+
+        pet.updateName(newName);
+        petRepository.save(pet);
+
+        return new PetResponseDTO(pet.getName(), pet.getLevel(), pet.getExperience());
     }
 }

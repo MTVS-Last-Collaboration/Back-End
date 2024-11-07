@@ -46,7 +46,9 @@ public enum ErrorCode {
     MAX_LEVEL_REACHED(HttpStatus.BAD_REQUEST, "Max Level Reached", "팻의 최대 레벨에 도달했습니다.", "PET-002"),
 
     // Flower 관련 에러
-    MAX_MOOD_COUNT_REACHED(HttpStatus.BAD_REQUEST, "Max Mood Count Reached", "꽃의 최대 기분 카운트를 초과했습니다.", "FLOWER-001");
+    MAX_MOOD_COUNT_REACHED(HttpStatus.BAD_REQUEST, "Max Mood Count Reached", "꽃의 최대 기분 카운트를 초과했습니다.", "FLOWER-001"),
+    AI_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "AI Server Error", "AI 서버에서 오류가 발생했습니다.", "FLOWER-002"),
+    MOOD_ANALYSIS_FAILED(HttpStatus.BAD_REQUEST, "Mood Analysis Failed", "기분 상태를 분석할 수 없습니다.", "FLOWER-003");
 
 
 

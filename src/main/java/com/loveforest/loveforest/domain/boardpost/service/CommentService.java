@@ -44,6 +44,7 @@ public class CommentService {
                 savedComment.getAnswer().getId(),
                 savedComment.getContent(),
                 authorNickname,
+                savedComment.getLikeCount(),
                 savedComment.getCreatedDate()
         );
     }
@@ -61,6 +62,7 @@ public class CommentService {
                         answer.getId(),
                         comment.getContent(),
                         comment.getAuthor().getNickname(),
+                        comment.getLikeCount(),
                         comment.getCreatedDate()
                 ))
                 .collect(Collectors.toList());

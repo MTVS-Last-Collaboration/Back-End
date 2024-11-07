@@ -42,6 +42,7 @@ public class AnswerService {
                 savedAnswer.getId(),
                 savedAnswer.getContent(),
                 savedAnswer.getAuthor().getNickname(),
+                savedAnswer.getLikeCount(),
                 savedAnswer.getCreatedDate()
         );
     }
@@ -53,6 +54,7 @@ public class AnswerService {
                         answer.getId(),
                         answer.getContent(),
                         answer.getAuthor().getNickname(), // 작성자 닉네임
+                        answer.getLikeCount(),
                         answer.getCreatedDate()
                 ))
                 .collect(Collectors.toList());

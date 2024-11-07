@@ -17,28 +17,21 @@ import com.loveforest.loveforest.domain.room.repository.FurnitureLayoutRepositor
 import com.loveforest.loveforest.domain.room.repository.FurnitureRepository;
 import com.loveforest.loveforest.domain.room.repository.RoomRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+@Slf4j
 @RequiredArgsConstructor
 @Service
 public class RoomService {
 
     private final RoomRepository roomRepository;
-    private final CoupleRepository coupleRepository;
     private final FurnitureRepository furnitureRepository;
     private final FurnitureLayoutRepository furnitureLayoutRepository;
 
-
-
-    public void createRoom(Long coupleId) {
-        Couple couple = coupleRepository.findById(coupleId)
-                .orElseThrow(() -> new IllegalArgumentException("해당 커플을 찾을 수 없습니다."));
-        Room room = new Room(couple);
-        roomRepository.save(room);
-    }
 
     @Transactional
     public void decorateRoom(RoomDecorationRequestDTO request) {
@@ -101,9 +94,16 @@ public class RoomService {
 
     @Transactional
     public void deleteFurniture(Long furnitureLayoutId) {
+        // 가구 레이아웃 존재 여부 확인
         FurnitureLayout layout = furnitureLayoutRepository.findById(furnitureLayoutId)
                 .orElseThrow(FurnitureLayoutNotFoundException::new);
 
+        // Room에서도 해당 가구 레이아웃 제거 (영속성 전파를 위해)
+        Room room = layout.getRoom();
+        room.removeFurnitureLayout(layout);
+
+        // 저장소에서 가구 레이아웃 삭제
         furnitureLayoutRepository.delete(layout);
+        roomRepository.save(room);  // Room 엔티티 업데이트
     }
 }

@@ -51,7 +51,12 @@ public enum ErrorCode {
     // Flower 관련 에러
     MAX_MOOD_COUNT_REACHED(HttpStatus.BAD_REQUEST, "Max Mood Count Reached", "꽃의 최대 기분 카운트를 초과했습니다.", "FLOWER-001"),
     AI_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "AI Server Error", "AI 서버에서 오류가 발생했습니다.", "FLOWER-002"),
-    MOOD_ANALYSIS_FAILED(HttpStatus.BAD_REQUEST, "Mood Analysis Failed", "기분 상태를 분석할 수 없습니다.", "FLOWER-003");
+    MOOD_ANALYSIS_FAILED(HttpStatus.BAD_REQUEST, "Mood Analysis Failed", "기분 상태를 분석할 수 없습니다.", "FLOWER-003"),
+
+    // Mission 관련 에러 추가
+    MISSION_NOT_FOUND(HttpStatus.NOT_FOUND, "Mission Not Found", "해당 미션을 찾을 수 없습니다.", "MISSION-001"),
+    MISSION_ALREADY_ANSWERED(HttpStatus.CONFLICT, "Mission Already Answered", "이미 답변한 미션입니다.", "MISSION-002"),
+    PREVIOUS_MISSION_INCOMPLETE(HttpStatus.BAD_REQUEST, "Previous Mission Incomplete", "이전 미션이 완료되지 않았습니다.", "MISSION-003");
 
 
 

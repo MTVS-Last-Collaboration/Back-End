@@ -99,6 +99,25 @@ public class CoupleService {
 
         // 커플 코드 반환
         return new CoupleCodeResponseDTO(couple.getCoupleCode());
+    }
 
+    /**
+     * 사용자 ID로 커플 조회
+     *
+     * @param userId 사용자 ID
+     * @return 사용자와 연동된 커플 객체 반환
+     */
+    @Transactional(readOnly = true)
+    public Couple getCoupleByUserId(Long userId) {
+        // 사용자 조회
+        User user = userRepository.findById(userId)
+                .orElseThrow(UserNotFoundException::new);
+
+        // 커플 정보 확인
+        Couple couple = user.getCouple();
+        if (couple == null) {
+            throw new CoupleNotFoundException();
+        }
+        return couple;
     }
 }

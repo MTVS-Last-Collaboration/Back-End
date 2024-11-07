@@ -39,7 +39,11 @@ public enum ErrorCode {
     COMMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "Comment Not Found", "댓글이 존재하지 않습니다.", "TOPIC-003"),
     DAILY_TOPIC_ALREADY_EXIST(HttpStatus.CONFLICT, "Already DailyTopic Existed", "이미 해당 토픽이 존재합니다.", "TOPIC-004"),
     LIKE_ALREADY_EXIST(HttpStatus.CONFLICT, "Already Like Existed", "이미 좋아요를 눌렀습니다.", "TOPIC-005"),
-    LIKE_NOT_FOUND(HttpStatus.NOT_FOUND, "Like Not Found", "좋아요가 추가되지 않은 답변입니다.", "TOPIC-006"),;
+    LIKE_NOT_FOUND(HttpStatus.NOT_FOUND, "Like Not Found", "좋아요가 추가되지 않은 답변입니다.", "TOPIC-006"),
+
+    // Pet 관련 에러
+    PET_NOT_FOUND(HttpStatus.NOT_FOUND, "Pet Not Found", "해당 커플에 연동된 팻을 찾을 수 없습니다.", "PET-001"),
+    MAX_LEVEL_REACHED(HttpStatus.BAD_REQUEST, "Max Level Reached", "팻의 최대 레벨에 도달했습니다.", "PET-002");
 
 
 

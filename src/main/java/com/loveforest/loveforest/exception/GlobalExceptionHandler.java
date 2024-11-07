@@ -6,6 +6,8 @@ import com.loveforest.loveforest.domain.boardpost.exception.DailyTopicNotFoundEx
 import com.loveforest.loveforest.domain.boardpost.exception.NotLikedException;
 import com.loveforest.loveforest.domain.chat.exception.ChatNotFoundException;
 import com.loveforest.loveforest.domain.couple.exception.CoupleAlreadyExists;
+import com.loveforest.loveforest.domain.pet.exception.MaxLevelReachedException;
+import com.loveforest.loveforest.domain.pet.exception.PetNotFoundException;
 import com.loveforest.loveforest.domain.user.exception.EmailAlreadyExistsException;
 import com.loveforest.loveforest.domain.user.exception.InvalidPasswordException;
 import com.loveforest.loveforest.domain.user.exception.LoginRequiredException;
@@ -89,6 +91,17 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(NotLikedException.class)
     public ResponseEntity<ErrorResponse> handleNotLikedException(NotLikedException ex) {
+        return buildErrorResponse(ex.getErrorCode().getStatus(), ex.getErrorCode().getErrorType(), ex.getErrorCode().getDescription(), ex.getErrorCode().getCode());
+    }
+
+    // 펫 관련 예외 처리
+    @ExceptionHandler(PetNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handlePetNotFoundException(PetNotFoundException ex) {
+        return buildErrorResponse(ex.getErrorCode().getStatus(), ex.getErrorCode().getErrorType(), ex.getErrorCode().getDescription(), ex.getErrorCode().getCode());
+    }
+
+    @ExceptionHandler(MaxLevelReachedException.class)
+    public ResponseEntity<ErrorResponse> handleMaxLevelReachedException(MaxLevelReachedException ex) {
         return buildErrorResponse(ex.getErrorCode().getStatus(), ex.getErrorCode().getErrorType(), ex.getErrorCode().getDescription(), ex.getErrorCode().getCode());
     }
 

@@ -15,6 +15,10 @@ public class CommentResponseDTO {
     @Schema(description = "댓글 ID", example = "1")
     private Long id;
 
+    @Schema(description = "게시글 ID", example = "1")
+    private Long answerId;
+
+
     @Schema(description = "댓글 내용", example = "저도 그렇게 생각합니다!")
     private String content;
 

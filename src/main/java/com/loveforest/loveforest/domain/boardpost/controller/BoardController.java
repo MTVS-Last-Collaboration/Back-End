@@ -94,7 +94,7 @@ public class BoardController {
             description = "로그인한 사용자가 특정 날짜에 등록된 질문을 조회합니다. 날짜별로 질문을 확인할 수 있습니다."
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "질문 조회 성공"),
+            @ApiResponse(responseCode = "200", description = "토픽 조회 성공"),
             @ApiResponse(responseCode = "404", description = "해당 날짜에 질문이 존재하지 않음"),
             @ApiResponse(responseCode = "401", description = "인증되지 않은 사용자가 접근할 수 없습니다.")
     })
@@ -113,67 +113,67 @@ public class BoardController {
     }
 
     /**
-     * Daily 토픽에 대한 답변 생성
+     * Daily 토픽에 대한 게시글 생성
      * */
-    @Operation(summary = "Daily 토픽에 대한 답변 생성", description = "1일 1질문에 대한 답변을 작성합니다.")
+    @Operation(summary = "Daily 토픽에 대한 게시글 생성", description = "1일 1질문에 대한 게시글을 작성합니다.")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "답변 생성 성공"),
-            @ApiResponse(responseCode = "404", description = "해당 질문이 존재하지 않음")
+            @ApiResponse(responseCode = "200", description = "게시글 생성 성공"),
+            @ApiResponse(responseCode = "404", description = "해당 토픽이 존재하지 않음")
     })
     @PostMapping("/answer/create")
     public ResponseEntity<AnswerResponseDTO> createAnswer(
             @AuthenticationPrincipal LoginInfo loginInfo,
             @Valid @RequestBody AnswerRequestDTO answerRequestDTO) {
 
-        log.info("답변 생성 요청 - 사용자 ID: {}, 질문 ID: {}", loginInfo.getUserId(), answerRequestDTO.getDailyTopicId());
+        log.info("게시글 생성 요청 - 사용자 ID: {}, 토픽 ID: {}", loginInfo.getUserId(), answerRequestDTO.getDailyTopicId());
 
         DailyTopic dailyTopic = dailyTopicService.getDailyTopicById(answerRequestDTO.getDailyTopicId())
                 .orElseThrow(DailyTopicNotFoundException::new);
 
         AnswerResponseDTO answerResponse = answerService.createAnswer(answerRequestDTO, loginInfo.getNickname(), dailyTopic);
 
-        log.info("답변 생성 성공 - 답변 ID: {}", answerResponse.getId());
+        log.info("게시글 생성 성공 - 게시글 ID: {}", answerResponse.getId());
         return ResponseEntity.ok(answerResponse);
     }
 
 
     /**
-     * 답변 조회
+     * 게시글 조회
      * */
-    @Operation(summary = "Daily 토픽에 대한 답변 조회", description = "1일 1질문에 대해 작성된 답변 목록을 조회합니다.")
+    @Operation(summary = "Daily 토픽에 대한 게시글 조회", description = "1일 1토픽에 대해 작성된 게시글 목록을 조회합니다.")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "답변 조회 성공"),
-            @ApiResponse(responseCode = "404", description = "해당 질문이 존재하지 않음")
+            @ApiResponse(responseCode = "200", description = "게시글 조회 성공"),
+            @ApiResponse(responseCode = "404", description = "해당 토픽이 존재하지 않음")
     })
     @GetMapping("/{dailyTopicId}/answers")
     public ResponseEntity<List<AnswerResponseDTO>> getAnswersByDailyTopic(
             @PathVariable("dailyTopicId") Long dailyTopicId,
             @AuthenticationPrincipal LoginInfo loginInfo) {
 
-        log.info("답변 조회 요청 - 질문 ID: {}", dailyTopicId);
+        log.info("게시글 조회 요청 - 토픽 ID: {}", dailyTopicId);
 
         DailyTopic dailyTopic = dailyTopicService.getDailyTopicById(dailyTopicId)
                 .orElseThrow(DailyTopicNotFoundException::new);
         List<AnswerResponseDTO> answers = answerService.getAnswersByDailyTopic(dailyTopic);
 
-        log.info("답변 조회 성공 - 질문 ID: {}, 조회된 답변 수: {}", dailyTopicId, answers.size());
+        log.info("게시글 조회 성공 - 토픽 ID: {}, 조회된 게시글 수: {}", dailyTopicId, answers.size());
         return ResponseEntity.ok(answers);
     }
 
     /**
      * 댓글 생성
      * */
-    @Operation(summary = "댓글 생성", description = "특정 답변에 댓글을 작성합니다.")
+    @Operation(summary = "댓글 생성", description = "특정 게시글에 댓글을 작성합니다.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "댓글 생성 성공"),
-            @ApiResponse(responseCode = "404", description = "해당 답변이 존재하지 않음")
+            @ApiResponse(responseCode = "404", description = "해당 게시글이 존재하지 않음")
     })
     @PostMapping("/comment/create")
     public ResponseEntity<CommentResponseDTO> createComment(
             @AuthenticationPrincipal LoginInfo loginInfo,
             @Valid @RequestBody CommentRequestDTO commentRequestDTO) {
 
-        log.info("댓글 생성 요청 - 사용자 ID: {}, 답변 ID: {}", loginInfo.getUserId(), commentRequestDTO.getAnswerId());
+        log.info("댓글 생성 요청 - 사용자 ID: {}, 게시글 ID: {}", loginInfo.getUserId(), commentRequestDTO.getAnswerId());
 
         Answer answer = answerService.getAnswerById(commentRequestDTO.getAnswerId())
                 .orElseThrow(AnswerNotFoundException::new);
@@ -188,24 +188,24 @@ public class BoardController {
     /**
      * 답변에 대한 댓글 조회
      * */
-    @Operation(summary = "답변에 대한 댓글 조회", description = "특정 답변에 달린 댓글 목록을 조회합니다.")
+    @Operation(summary = "게시글에 대한 댓글 조회", description = "특정 게시글에 달린 댓글 목록을 조회합니다.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "댓글 조회 성공"),
-            @ApiResponse(responseCode = "404", description = "해당 답변이 존재하지 않음")
+            @ApiResponse(responseCode = "404", description = "해당 게시글이 존재하지 않음")
     })
     @GetMapping("/{answerId}/comments")
     public ResponseEntity<List<CommentResponseDTO>> getCommentsByAnswer(
             @PathVariable("answerId") Long answerId,
             @AuthenticationPrincipal LoginInfo loginInfo) { // 인증된 사용자 정보 추가
 
-        log.info("댓글 조회 요청 - 답변 ID: {}", answerId);
+        log.info("댓글 조회 요청 - 게시글 ID: {}", answerId);
 
         Answer answer = answerService.getAnswerById(answerId)
                 .orElseThrow(AnswerNotFoundException::new);
 
         List<CommentResponseDTO> comments = commentService.getCommentsByAnswer(answer);
 
-        log.info("댓글 조회 성공 - 답변 ID: {}, 조회된 댓글 수: {}", answerId, comments.size());
+        log.info("댓글 조회 성공 - 게시글 ID: {}, 조회된 댓글 수: {}", answerId, comments.size());
         return ResponseEntity.ok(comments);
     }
 
@@ -213,23 +213,23 @@ public class BoardController {
      * 답변 좋아요
      */
     @PostMapping("/answer/{answerId}/like")
-    @Operation(summary = "답변 좋아요", description = "특정 답변에 좋아요를 추가합니다.")
+    @Operation(summary = "게시글 좋아요", description = "특정 게시글에 좋아요를 추가합니다.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "좋아요 추가 성공"),
-            @ApiResponse(responseCode = "404", description = "해당 답변을 찾을 수 없음"),
+            @ApiResponse(responseCode = "404", description = "해당 게시글을 찾을 수 없음"),
             @ApiResponse(responseCode = "409", description = "중복 좋아요"),
             @ApiResponse(responseCode = "401", description = "인증되지 않은 사용자")
     })
     public ResponseEntity<LikeResponseDTO> likeAnswer(
-            @Parameter(description = "좋아요를 추가할 답변의 ID", example = "1")
+            @Parameter(description = "좋아요를 추가할 게시글의 ID", example = "1")
             @PathVariable("answerId") Long answerId,
             @AuthenticationPrincipal LoginInfo loginInfo) {
 
-        log.info("답변 좋아요 요청 - 사용자 ID: {}, 답변 ID: {}", loginInfo.getUserId(), answerId);
+        log.info("게시글 좋아요 요청 - 사용자 ID: {}, 게시글 ID: {}", loginInfo.getUserId(), answerId);
 
         LikeResponseDTO response = answerService.likeAnswer(answerId, loginInfo.getUserId());
 
-        log.info("답변 좋아요 추가 성공 - 답변 ID: {}, 좋아요 상태: {}", answerId, response.isLiked());
+        log.info("게시글 좋아요 추가 성공 - 게시글 ID: {}, 좋아요 상태: {}", answerId, response.isLiked());
         return ResponseEntity.ok(response);
     }
 
@@ -237,22 +237,22 @@ public class BoardController {
      * 답변 좋아요 취소
      */
     @PostMapping("/answer/{answerId}/unlike")
-    @Operation(summary = "답변 좋아요 취소", description = "특정 답변에 추가된 좋아요를 취소합니다.")
+    @Operation(summary = "게시글 좋아요 취소", description = "특정 게시글에 추가된 좋아요를 취소합니다.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "좋아요 취소 성공"),
-            @ApiResponse(responseCode = "404", description = "좋아요가 추가되지 않은 답변"),
+            @ApiResponse(responseCode = "404", description = "좋아요가 추가되지 않은 게시글"),
             @ApiResponse(responseCode = "401", description = "인증되지 않은 사용자")
     })
     public ResponseEntity<LikeResponseDTO> unlikeAnswer(
-            @Parameter(description = "좋아요를 취소할 답변의 ID", example = "1")
+            @Parameter(description = "좋아요를 취소할 게시글의 ID", example = "1")
             @PathVariable("answerId") Long answerId,
             @AuthenticationPrincipal LoginInfo loginInfo) {
 
-        log.info("답변 좋아요 취소 요청 - 사용자 ID: {}, 답변 ID: {}", loginInfo.getUserId(), answerId);
+        log.info("게시글 좋아요 취소 요청 - 사용자 ID: {}, 게시글 ID: {}", loginInfo.getUserId(), answerId);
 
         LikeResponseDTO response = answerService.unlikeAnswer(answerId, loginInfo.getUserId());
 
-        log.info("답변 좋아요 취소 성공 - 답변 ID: {}, 좋아요 상태: {}", answerId, response.isLiked());
+        log.info("게시글 좋아요 취소 성공 - 게시글 ID: {}, 좋아요 상태: {}", answerId, response.isLiked());
         return ResponseEntity.ok(response);
     }
 

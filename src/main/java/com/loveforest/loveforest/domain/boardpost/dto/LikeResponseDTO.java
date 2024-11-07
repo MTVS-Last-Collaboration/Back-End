@@ -7,7 +7,7 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public class LikeResponseDTO {
-    @Schema(description = "답변 또는 댓글 ID", example = "1")
+    @Schema(description = "게시글 또는 댓글 ID", example = "1")
     private final Long id;          // 대상 ID (답변 또는 댓글 ID)
 
     @Schema(description = "현재 좋아요 수", example = "1")

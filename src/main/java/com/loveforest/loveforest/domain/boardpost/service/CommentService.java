@@ -41,6 +41,7 @@ public class CommentService {
         // 저장된 Comment 엔티티를 CommentResponseDTO로 변환하여 반환
         return new CommentResponseDTO(
                 savedComment.getId(),
+                savedComment.getAnswer().getId(),
                 savedComment.getContent(),
                 authorNickname,
                 savedComment.getCreatedDate()
@@ -57,6 +58,7 @@ public class CommentService {
         return comments.stream()
                 .map(comment -> new CommentResponseDTO(
                         comment.getId(),
+                        answer.getId(),
                         comment.getContent(),
                         comment.getAuthor().getNickname(),
                         comment.getCreatedDate()

@@ -2,6 +2,7 @@ package com.loveforest.loveforest.domain.daily_mission.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 
 import java.time.LocalDate;
@@ -9,6 +10,7 @@ import java.time.LocalDate;
 @Schema(description = "데일리 미션 응답 DTO")
 @Getter
 @AllArgsConstructor
+@Builder
 public class DailyMissionResponseDTO {
     @Schema(description = "미션 번호", example = "1")
     private Integer missionNumber;

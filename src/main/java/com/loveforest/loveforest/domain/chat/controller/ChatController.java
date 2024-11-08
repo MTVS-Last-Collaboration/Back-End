@@ -1,6 +1,7 @@
 package com.loveforest.loveforest.domain.chat.controller;
 
 import com.loveforest.loveforest.domain.auth.dto.LoginInfo;
+import com.loveforest.loveforest.domain.chat.dto.ChatMessageCRequestDTO;
 import com.loveforest.loveforest.domain.chat.dto.ChatMessageDTO;
 import com.loveforest.loveforest.domain.chat.dto.ChatMessageRequestDTO;
 import com.loveforest.loveforest.domain.chat.dto.ChatMessageResponseDTO;
@@ -60,7 +61,7 @@ public class ChatController {
             ))
     })
     @PostMapping("/send")
-    public ResponseEntity<ChatMessageResponseDTO> sendMessage(@AuthenticationPrincipal LoginInfo loginInfo, @RequestBody ChatMessageRequestDTO request) {
+    public ResponseEntity<ChatMessageResponseDTO> sendMessage(@AuthenticationPrincipal LoginInfo loginInfo, @RequestBody ChatMessageCRequestDTO request) {
 
         if (loginInfo == null) {
             throw new LoginRequiredException();
@@ -68,7 +69,7 @@ public class ChatController {
 
         log.info("메시지 전송 요청 시작 - 사용자 ID: {}, 커플 ID: {}, 메시지 내용: {}", loginInfo.getUserId(), loginInfo.getCoupleId(), request.getMessages());
 
-        ChatMessageResponseDTO responseDTO = chatService.processMessage(loginInfo.getUserId(), loginInfo.getCoupleId(), request.getMessages());
+        ChatMessageResponseDTO responseDTO = chatService.processMessage(loginInfo.getUserId(), loginInfo.getCoupleId(), request.getMessages(), request.getPetLevel());
 
         log.info("메시지 전송 처리 성공 - 사용자 ID: {}, 커플 ID: {}, AI 메시지 내용: {}", loginInfo.getUserId(), loginInfo.getCoupleId(), responseDTO.getAiResponse());
         return ResponseEntity.ok(responseDTO);

@@ -28,6 +28,21 @@ public class DailyMissionController {
     private final DailyMissionService dailyMissionService;
 
     @Operation(
+            summary = "수동으로 일주일치 미션 생성",
+            description = "AI 서버에서 일주일치 미션을 받아와 생성합니다."
+    )
+    @PostMapping("/generate-weekly")
+    public ResponseEntity<String> generateWeeklyMissions(@AuthenticationPrincipal LoginInfo loginInfo) {
+        if (loginInfo == null) {
+            throw new LoginRequiredException();
+        }
+
+        log.info("일주일치 미션 수동 생성 요청 - 요청자 ID: {}", loginInfo.getUserId());
+        dailyMissionService.generateWeeklyMissionsManually();
+        return ResponseEntity.ok("일주일치 미션이 성공적으로 생성되었습니다.");
+    }
+
+    @Operation(
             summary = "현재 미션 조회", description = "오늘의 미션을 조회합니다. 이전 미션이 완료되지 않은 경우 이전 미션이 반환됩니다.",
             responses = {
                     @ApiResponse(

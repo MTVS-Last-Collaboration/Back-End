@@ -32,7 +32,7 @@ public class ChatService {
         this.aiServerUrl = aiServerUrl;
     }
 
-    public ChatMessageResponseDTO processMessage(Long senderId, Long coupleId, String message) {
+    public ChatMessageResponseDTO processMessage(Long senderId, Long coupleId, String message, Long petLevel) {
 
         // 예외 처리: 만약 메시지가 비어있거나 null이라면 예외 발생
         if (message == null || message.trim().isEmpty()) {
@@ -40,7 +40,7 @@ public class ChatService {
         }
 
         // AI 서버에 메시지 전송
-        String aiResponse = callAiServer(senderId, message, coupleId); // senderId도 포함
+        String aiResponse = callAiServer(senderId, message, coupleId, petLevel); // senderId도 포함
         System.out.println("AI 서버 응답" + aiResponse);
 
         // DB에 메시지 저장
@@ -52,20 +52,19 @@ public class ChatService {
     }
 
 
-    private String callAiServer(Long senderId, String message, Long coupleId) {
-        Long petLevel = 1L;
+    private String callAiServer(Long senderId, String message, Long coupleId, Long petLevel) {
         ChatMessageRequestDTO requestDTO = new ChatMessageRequestDTO(senderId, message, coupleId, petLevel);
-        log.info("Sending POST request to AI server at URL: {} with payload: {}", aiServerUrl, requestDTO);
+        log.info("Sending POST request to AI server at URL: {} with payload: {}", aiServerUrl + "/chatbot", requestDTO);
 
         // AI 서버에 요청 보내기
         AiResponseDTO aiResponseDTO = restTemplate.postForObject(aiServerUrl + "/chatbot", requestDTO, AiResponseDTO.class);
 
-        if (aiResponseDTO == null || aiResponseDTO.getResponse() == null || aiResponseDTO.getResponse().getAnswer() == null) {
+        if (aiResponseDTO == null || aiResponseDTO.getResponse() == null) {
             log.error("AI 서버 응답이 유효하지 않습니다.");
             throw new IllegalStateException("AI 서버 응답이 유효하지 않습니다.");
         }
 
-        return aiResponseDTO.getResponse().getAnswer(); // 실제 응답 메시지 반환
+        return aiResponseDTO.getResponse(); // 실제 응답 메시지 반환
     }
 
 

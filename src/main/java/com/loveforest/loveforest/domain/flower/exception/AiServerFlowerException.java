@@ -5,8 +5,8 @@ import com.loveforest.loveforest.exception.ErrorCode;
 import lombok.Getter;
 
 @Getter
-public class AiServerException extends CustomException {
-    public AiServerException() {
-        super(ErrorCode.AI_SERVER_ERROR); // ErrorCode에 AI_SERVER_ERROR 추가 필요
+public class AiServerFlowerException extends CustomException {
+    public AiServerFlowerException() {
+        super(ErrorCode.AI_SERVER_ERROR_FLOWER); // ErrorCode에 AI_SERVER_ERROR 추가 필요
     }
 }

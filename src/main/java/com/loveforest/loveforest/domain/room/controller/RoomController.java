@@ -97,12 +97,12 @@ public class RoomController {
                     )
             }
     )
-    @GetMapping("/{coupleId}")
-    public ResponseEntity<RoomResponseDTO> getRoom(@AuthenticationPrincipal LoginInfo loginInfo, @PathVariable("coupleId") Long coupleId) {
+    @GetMapping("/my")
+    public ResponseEntity<RoomResponseDTO> getRoom(@AuthenticationPrincipal LoginInfo loginInfo) {
         if (loginInfo == null) {
             throw new LoginRequiredException();
         }
-        RoomResponseDTO response = roomService.getRoomByCoupleId(coupleId);
+        RoomResponseDTO response = roomService.getRoomByCoupleId(loginInfo.getCoupleId());
         return ResponseEntity.ok(response);
     }
 

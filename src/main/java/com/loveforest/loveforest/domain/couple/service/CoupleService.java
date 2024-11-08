@@ -1,6 +1,7 @@
 package com.loveforest.loveforest.domain.couple.service;
 
 import com.loveforest.loveforest.domain.couple.dto.CoupleCodeResponseDTO;
+import com.loveforest.loveforest.domain.couple.dto.CoupleResponseDTO;
 import com.loveforest.loveforest.domain.couple.entity.Couple;
 import com.loveforest.loveforest.domain.couple.exception.CoupleAlreadyExists;
 import com.loveforest.loveforest.domain.couple.exception.CoupleCodeAlreadyUsedException;
@@ -129,5 +130,27 @@ public class CoupleService {
             throw new CoupleNotFoundException();
         }
         return couple;
+    }
+
+    /**
+     * 커플 ID로 커플 정보 조회
+     *
+     * @param coupleId 커플 ID
+     * @return 사용자와 연동된 커플 객체 반환
+     */
+    public CoupleResponseDTO getCoupleInfo(Long coupleId) {
+        Couple couple = coupleRepository.findById(coupleId)
+                .orElseThrow(CoupleNotFoundException::new);
+
+        // 첫 번째 사용자의 기념일을 가져옴
+        String anniversaryDate = couple.getUsers().isEmpty() ? null :
+                couple.getUsers().get(0).getAnniversaryDate().toString();
+
+        return CoupleResponseDTO.builder()
+                .coupleId(couple.getId())
+                .coupleCode(couple.getCoupleCode())
+                .points(couple.getPoints())
+                .anniversaryDate(anniversaryDate)
+                .build();
     }
 }

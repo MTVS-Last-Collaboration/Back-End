@@ -1,6 +1,7 @@
 package com.loveforest.loveforest.domain.room.controller;
 
 import com.loveforest.loveforest.domain.auth.dto.LoginInfo;
+import com.loveforest.loveforest.domain.room.dto.PublicRoomResponseDTO;
 import com.loveforest.loveforest.domain.room.dto.RoomDecorationRequestDTO;
 import com.loveforest.loveforest.domain.room.dto.RoomFurnitureUpdateRequestDTO;
 import com.loveforest.loveforest.domain.room.dto.RoomResponseDTO;
@@ -8,16 +9,19 @@ import com.loveforest.loveforest.domain.room.service.RoomService;
 import com.loveforest.loveforest.domain.user.exception.LoginRequiredException;
 import com.loveforest.loveforest.exception.ErrorResponse;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/rooms")
 @RequiredArgsConstructor
@@ -169,5 +173,32 @@ public class RoomController {
         }
         roomService.deleteFurniture(furnitureLayoutId);
         return ResponseEntity.ok("가구가 성공적으로 삭제되었습니다.");
+    }
+
+    @GetMapping("/public/{coupleId}")
+    @Operation(
+            summary = "다른 사용자의 커플방 조회",
+            description = "다른 커플의 방 정보를 조회합니다. 공개된 정보만 반환합니다.",
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "방 조회 성공",
+                            content = @Content(schema = @Schema(implementation = PublicRoomResponseDTO.class))
+                    ),
+                    @ApiResponse(
+                            responseCode = "404",
+                            description = "방을 찾을 수 없음",
+                            content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+                    )
+            }
+    )
+    public ResponseEntity<PublicRoomResponseDTO> getPublicRoom(
+            @Parameter(description = "조회할 커플의 ID", required = true)
+            @PathVariable("coupleId") Long coupleId) {
+
+        log.info("다른 커플의 방 조회 요청 - 커플 ID: {}", coupleId);
+        PublicRoomResponseDTO response = roomService.getPublicRoomByCoupleId(coupleId);
+        log.info("다른 커플의 방 조회 완료 - 커플 ID: {}", coupleId);
+        return ResponseEntity.ok(response);
     }
 }

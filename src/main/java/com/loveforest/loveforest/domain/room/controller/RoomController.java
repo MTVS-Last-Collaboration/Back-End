@@ -194,8 +194,12 @@ public class RoomController {
     )
     public ResponseEntity<PublicRoomResponseDTO> getPublicRoom(
             @Parameter(description = "조회할 커플의 ID", required = true)
-            @PathVariable("coupleId") Long coupleId) {
+            @PathVariable("coupleId") Long coupleId,
+            @AuthenticationPrincipal LoginInfo loginInfo) {
 
+        if (loginInfo == null) {
+            throw new LoginRequiredException();
+        }
         log.info("다른 커플의 방 조회 요청 - 커플 ID: {}", coupleId);
         PublicRoomResponseDTO response = roomService.getPublicRoomByCoupleId(coupleId);
         log.info("다른 커플의 방 조회 완료 - 커플 ID: {}", coupleId);

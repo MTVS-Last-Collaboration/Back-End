@@ -1,5 +1,6 @@
 package com.loveforest.loveforest.domain.photoAlbum.service;
 
+import com.loveforest.loveforest.domain.photoAlbum.dto.AIServerRequest;
 import com.loveforest.loveforest.domain.photoAlbum.dto.PhotoAlbumRequestDTO;
 import com.loveforest.loveforest.domain.photoAlbum.dto.PhotoAlbumResponseDTO;
 import com.loveforest.loveforest.domain.photoAlbum.entity.PhotoAlbum;
@@ -42,15 +43,20 @@ public class PhotoAlbumService {
             // 2. AI 서버에 base64 이미지 그대로 전송 및 3D 오브젝트 수신
             WebClient webClient = webClientBuilder.baseUrl(aiServerUrl).build();
 
+            AIServerRequest aiRequest = new AIServerRequest(
+                    request.getBase64Image(),
+                    request.getPositionX(),
+                    request.getPositionY()
+            );
+
             byte[] objectData;
             try {
                 objectData = webClient.post()
-                        .uri("/process-image")
-                        .bodyValue(request.getBase64Image())  // base64 이미지 그대로 전송
+                        .uri("/convert_3d_model")
+                        .bodyValue(aiRequest)  // base64 이미지와 좌표 정보 함께 전송
                         .retrieve()
                         .bodyToMono(byte[].class)
                         .block();
-
                 if (objectData == null) {
                     throw new AIServerPhotoException();
                 }

@@ -89,7 +89,7 @@ public class DailyMissionService {
     private List<WeeklyMissionResponseDTO.DailyMissionContent> requestWeeklyMissionsFromAI() {
         try {
             ResponseEntity<WeeklyMissionResponseDTO> response = restTemplate.exchange(
-                    aiServerUrl + "/weekly-missions",
+                    aiServerUrl + "/generate_question",
                     HttpMethod.GET,
                     null,
                     WeeklyMissionResponseDTO.class

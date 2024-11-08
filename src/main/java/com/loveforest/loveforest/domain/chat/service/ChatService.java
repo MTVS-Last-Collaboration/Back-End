@@ -58,7 +58,7 @@ public class ChatService {
         log.info("Sending POST request to AI server at URL: {} with payload: {}", aiServerUrl, requestDTO);
 
         // AI 서버에 요청 보내기
-        AiResponseDTO aiResponseDTO = restTemplate.postForObject(aiServerUrl + "/api/chatbot", requestDTO, AiResponseDTO.class);
+        AiResponseDTO aiResponseDTO = restTemplate.postForObject(aiServerUrl + "/chatbot", requestDTO, AiResponseDTO.class);
 
         if (aiResponseDTO == null || aiResponseDTO.getResponse() == null || aiResponseDTO.getResponse().getAnswer() == null) {
             log.error("AI 서버 응답이 유효하지 않습니다.");

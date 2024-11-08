@@ -15,6 +15,9 @@ public class AnswerResponseDTO {
     @Schema(description = "게시글 ID", example = "1")
     private Long id;
 
+    @Schema(description = "게시글 제목", example = "제목입력")
+    private String title;
+
     @Schema(description = "게시글 내용", example = "오늘의 목표는 체력 관리입니다.")
     private String content;
 

@@ -17,6 +17,9 @@ public class Answer {
     private Long id;
 
     @Column(nullable = false)
+    private String title;
+
+    @Column(nullable = false)
     private String content; // 답변 내용
 
     @ManyToOne
@@ -33,7 +36,8 @@ public class Answer {
     @Column(nullable = false)
     private int likeCount = 0; // 좋아요 수 초기값 설정
 
-    public Answer(String content, User author, DailyTopic dailyTopic) {
+    public Answer(String title, String content, User author, DailyTopic dailyTopic) {
+        this.title = title;
         this.content = content;
         this.author = author;
         this.dailyTopic = dailyTopic;

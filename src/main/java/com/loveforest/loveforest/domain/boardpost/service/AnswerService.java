@@ -34,12 +34,13 @@ public class AnswerService {
         User author = userRepository.findByNickname(nickname)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
         // Answer 엔티티 생성
-        Answer answer = new Answer(answerRequestDTO.getContent(), author, dailyTopic);
+        Answer answer = new Answer(answerRequestDTO.getTitle() ,answerRequestDTO.getContent(), author, dailyTopic);
         Answer savedAnswer = answerRepository.save(answer);
 
         // AnswerResponseDTO로 변환하여 반환
         return new AnswerResponseDTO(
                 savedAnswer.getId(),
+                savedAnswer.getTitle(),
                 savedAnswer.getContent(),
                 savedAnswer.getAuthor().getNickname(),
                 savedAnswer.getLikeCount(),
@@ -52,6 +53,7 @@ public class AnswerService {
         return answerRepository.findByDailyTopic(dailyTopic).stream()
                 .map(answer -> new AnswerResponseDTO(
                         answer.getId(),
+                        answer.getTitle(),
                         answer.getContent(),
                         answer.getAuthor().getNickname(), // 작성자 닉네임
                         answer.getLikeCount(),

@@ -1,6 +1,7 @@
 package com.loveforest.loveforest.domain.flower.service;
 
 import com.loveforest.loveforest.domain.flower.dto.FlowerMoodResponseDTO;
+import com.loveforest.loveforest.domain.flower.dto.VoiceAnalysisRequestDTO;
 import com.loveforest.loveforest.domain.flower.entity.Flower;
 import com.loveforest.loveforest.domain.flower.exception.AiServerFlowerException;
 import com.loveforest.loveforest.domain.flower.exception.MaxMoodCountReachedException;
@@ -12,6 +13,7 @@ import com.loveforest.loveforest.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -43,9 +45,11 @@ public class FlowerService {
         // AI 서버로 음성 메시지를 전송하여 기분 상태 분석
         String mood;
         try {
+            VoiceAnalysisRequestDTO requestDTO = new VoiceAnalysisRequestDTO(base64VoiceMessage);
             mood = webClient.post()
                     .uri(serverUrl + "/analyze_sentiment")
-                    .bodyValue(base64VoiceMessage)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue(requestDTO)
                     .retrieve()
                     .bodyToMono(String.class)
                     .onErrorMap(WebClientResponseException.class, ex -> {

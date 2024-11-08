@@ -41,7 +41,11 @@ public class JwtTokenFilter extends GenericFilterBean {
                         .collect(Collectors.toList());
 
                 // 인증 객체 생성
-                Authentication auth = new UsernamePasswordAuthenticationToken(loginInfo, null, authorities);
+                Authentication auth = new UsernamePasswordAuthenticationToken(
+                        loginInfo,
+                        null,
+                        authorities
+                );
                 SecurityContextHolder.getContext().setAuthentication(auth);
             } catch (Exception e) {
                 log.warn("JWT 토큰 인증 실패: {}", e.getMessage());

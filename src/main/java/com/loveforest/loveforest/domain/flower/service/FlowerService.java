@@ -2,7 +2,7 @@ package com.loveforest.loveforest.domain.flower.service;
 
 import com.loveforest.loveforest.domain.flower.dto.FlowerMoodResponseDTO;
 import com.loveforest.loveforest.domain.flower.entity.Flower;
-import com.loveforest.loveforest.domain.flower.exception.AiServerException;
+import com.loveforest.loveforest.domain.flower.exception.AiServerFlowerException;
 import com.loveforest.loveforest.domain.flower.exception.MaxMoodCountReachedException;
 import com.loveforest.loveforest.domain.flower.exception.MoodAnalysisException;
 import com.loveforest.loveforest.domain.flower.repository.FlowerRepository;
@@ -26,7 +26,7 @@ public class FlowerService {
     private final UserRepository userRepository;
     private final WebClient.Builder webClientBuilder; // WebClient.Builder 주입
 
-    @Value("${ai.flower-url}")
+    @Value("${ai.server.url}")
     private String serverUrl;
 
     @Transactional
@@ -44,12 +44,13 @@ public class FlowerService {
         String mood;
         try {
             mood = webClient.post()
+                    .uri(serverUrl + "/analyze_sentiment")
                     .bodyValue(base64VoiceMessage)
                     .retrieve()
                     .bodyToMono(String.class)
                     .onErrorMap(WebClientResponseException.class, ex -> {
                         log.error("AI 서버 응답 실패: {}", ex.getMessage());
-                        throw new AiServerException();
+                        throw new AiServerFlowerException();
                     })
                     .block();
         } catch (Exception ex) {

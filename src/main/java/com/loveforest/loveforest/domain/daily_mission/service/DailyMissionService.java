@@ -34,7 +34,7 @@ public class DailyMissionService {
     private final RestTemplate restTemplate;
     private final CoupleRepository coupleRepository;
 
-    @Value("${ai.mission-url}")
+    @Value("${ai.server.url}")
     private String aiServerUrl;
 
     // 매주 월요일 새벽 1시에 일주일치 미션 생성

@@ -68,6 +68,12 @@ dependencies {
     // webclient
     implementation 'org.springframework.boot:spring-boot-starter-webflux'
 
+    // AWS S3
+    implementation 'org.springframework.cloud:spring-cloud-starter-aws:2.2.6.RELEASE'
+
+//    // Netty DNS resolver for MacOS
+//    implementation 'io.netty:netty-resolver-dns-native-macos:4.1.107.Final:osx-arch64'
+
 
 
 }

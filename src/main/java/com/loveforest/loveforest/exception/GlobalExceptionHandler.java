@@ -1,16 +1,30 @@
 package com.loveforest.loveforest.exception;
 
+import com.loveforest.loveforest.domain.auth.jwt.exception.InvalidAccessTokenException;
+import com.loveforest.loveforest.domain.auth.jwt.exception.InvalidRefreshTokenException;
 import com.loveforest.loveforest.domain.boardpost.exception.AlreadyLikedException;
 import com.loveforest.loveforest.domain.boardpost.exception.AnswerNotFoundException;
 import com.loveforest.loveforest.domain.boardpost.exception.DailyTopicNotFoundException;
 import com.loveforest.loveforest.domain.boardpost.exception.NotLikedException;
 import com.loveforest.loveforest.domain.chat.exception.ChatNotFoundException;
 import com.loveforest.loveforest.domain.couple.exception.CoupleAlreadyExists;
-import com.loveforest.loveforest.domain.flower.exception.AiServerException;
+import com.loveforest.loveforest.domain.couple.exception.CoupleCodeAlreadyUsedException;
+import com.loveforest.loveforest.domain.couple.exception.CoupleNotFoundException;
+import com.loveforest.loveforest.domain.daily_mission.exception.MissionAlreadyAnsweredException;
+import com.loveforest.loveforest.domain.daily_mission.exception.MissionNotFoundException;
+import com.loveforest.loveforest.domain.daily_mission.exception.PreviousMissionIncompleteException;
+import com.loveforest.loveforest.domain.flower.exception.AiServerFlowerException;
 import com.loveforest.loveforest.domain.flower.exception.MaxMoodCountReachedException;
 import com.loveforest.loveforest.domain.flower.exception.MoodAnalysisException;
 import com.loveforest.loveforest.domain.pet.exception.MaxLevelReachedException;
 import com.loveforest.loveforest.domain.pet.exception.PetNotFoundException;
+import com.loveforest.loveforest.domain.photoAlbum.exception.DuplicatePhotoPositionException;
+import com.loveforest.loveforest.domain.photoAlbum.exception.PhotoNotFoundException;
+import com.loveforest.loveforest.domain.photoAlbum.exception.PhotoUploadFailedException;
+import com.loveforest.loveforest.domain.room.exception.FurnitureLayoutNotFoundException;
+import com.loveforest.loveforest.domain.room.exception.FurnitureNotFoundException;
+import com.loveforest.loveforest.domain.room.exception.FurnitureOverlapException;
+import com.loveforest.loveforest.domain.room.exception.RoomNotFoundException;
 import com.loveforest.loveforest.domain.user.exception.EmailAlreadyExistsException;
 import com.loveforest.loveforest.domain.user.exception.InvalidPasswordException;
 import com.loveforest.loveforest.domain.user.exception.LoginRequiredException;
@@ -76,6 +90,40 @@ public class GlobalExceptionHandler {
         return buildErrorResponse(ex.getErrorCode().getStatus(), ex.getErrorCode().getErrorType(), ex.getErrorCode().getDescription(), ex.getErrorCode().getCode());
     }
 
+    // 사진 관련 예외 처리
+    @ExceptionHandler(PhotoNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handlePhotoNotFoundException(PhotoNotFoundException ex) {
+        log.error("사진을 찾을 수 없음 - {}", ex.getMessage());
+        return buildErrorResponse(
+                ex.getErrorCode().getStatus(),
+                ex.getErrorCode().getErrorType(),
+                ex.getErrorCode().getDescription(),
+                ex.getErrorCode().getCode()
+        );
+    }
+
+    @ExceptionHandler(PhotoUploadFailedException.class)
+    public ResponseEntity<ErrorResponse> handlePhotoUploadFailedException(PhotoUploadFailedException ex) {
+        log.error("사진 업로드 실패 - {}", ex.getMessage());
+        return buildErrorResponse(
+                ex.getErrorCode().getStatus(),
+                ex.getErrorCode().getErrorType(),
+                ex.getErrorCode().getDescription(),
+                ex.getErrorCode().getCode()
+        );
+    }
+
+    @ExceptionHandler(DuplicatePhotoPositionException.class)
+    public ResponseEntity<ErrorResponse> handleDuplicatePhotoPositionException(DuplicatePhotoPositionException ex) {
+        log.error("중복된 사진 위치 - {}", ex.getMessage());
+        return buildErrorResponse(
+                ex.getErrorCode().getStatus(),
+                ex.getErrorCode().getErrorType(),
+                ex.getErrorCode().getDescription(),
+                ex.getErrorCode().getCode()
+        );
+    }
+
     // 게시판 관련 예외 처리
     @ExceptionHandler(DailyTopicNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleDailyTopicNotFoundException(DailyTopicNotFoundException ex) {
@@ -110,8 +158,8 @@ public class GlobalExceptionHandler {
 
 
     // Flower 관련 예외 처리
-    @ExceptionHandler(AiServerException.class)
-    public ResponseEntity<ErrorResponse> handleAiServerException(AiServerException ex) {
+    @ExceptionHandler(AiServerFlowerException.class)
+    public ResponseEntity<ErrorResponse> handleAiServerException(AiServerFlowerException ex) {
         return buildErrorResponse(ex.getErrorCode().getStatus(), ex.getErrorCode().getErrorType(),
                 ex.getErrorCode().getDescription(), ex.getErrorCode().getCode());
     }
@@ -125,6 +173,131 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MaxMoodCountReachedException.class)
     public ResponseEntity<ErrorResponse> handleMaxMoodCountReachedException(MaxMoodCountReachedException ex) {
         log.warn("최대 기분 카운트 도달: {}", ex.getMessage());
+        return buildErrorResponse(
+                ex.getErrorCode().getStatus(),
+                ex.getErrorCode().getErrorType(),
+                ex.getErrorCode().getDescription(),
+                ex.getErrorCode().getCode()
+        );
+    }
+
+    // JWT 토큰 관련 예외 처리 추가
+    @ExceptionHandler(InvalidAccessTokenException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidAccessTokenException(InvalidAccessTokenException ex) {
+        log.error("유효하지 않은 액세스 토큰: {}", ex.getMessage());
+        return buildErrorResponse(
+                ex.getErrorCode().getStatus(),
+                ex.getErrorCode().getErrorType(),
+                ex.getErrorCode().getDescription(),
+                ex.getErrorCode().getCode()
+        );
+    }
+
+    @ExceptionHandler(InvalidRefreshTokenException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidRefreshTokenException(InvalidRefreshTokenException ex) {
+        log.error("유효하지 않은 리프레시 토큰: {}", ex.getMessage());
+        return buildErrorResponse(
+                ex.getErrorCode().getStatus(),
+                ex.getErrorCode().getErrorType(),
+                ex.getErrorCode().getDescription(),
+                ex.getErrorCode().getCode()
+        );
+    }
+
+    // Room 관련 예외 처리 추가
+    @ExceptionHandler(RoomNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleRoomNotFoundException(RoomNotFoundException ex) {
+        log.error("방을 찾을 수 없음: {}", ex.getMessage());
+        return buildErrorResponse(
+                ex.getErrorCode().getStatus(),
+                ex.getErrorCode().getErrorType(),
+                ex.getErrorCode().getDescription(),
+                ex.getErrorCode().getCode()
+        );
+    }
+
+    @ExceptionHandler(FurnitureLayoutNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleFurnitureLayoutNotFoundException(FurnitureLayoutNotFoundException ex) {
+        log.error("가구 배치를 찾을 수 없음: {}", ex.getMessage());
+        return buildErrorResponse(
+                ex.getErrorCode().getStatus(),
+                ex.getErrorCode().getErrorType(),
+                ex.getErrorCode().getDescription(),
+                ex.getErrorCode().getCode()
+        );
+    }
+
+    @ExceptionHandler(FurnitureNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleFurnitureNotFoundException(FurnitureNotFoundException ex) {
+        log.error("가구를 찾을 수 없음: {}", ex.getMessage());
+        return buildErrorResponse(
+                ex.getErrorCode().getStatus(),
+                ex.getErrorCode().getErrorType(),
+                ex.getErrorCode().getDescription(),
+                ex.getErrorCode().getCode()
+        );
+    }
+
+    @ExceptionHandler(FurnitureOverlapException.class)
+    public ResponseEntity<ErrorResponse> handleFurnitureOverlapException(FurnitureOverlapException ex) {
+        log.error("가구 배치 중복: {}", ex.getMessage());
+        return buildErrorResponse(
+                ex.getErrorCode().getStatus(),
+                ex.getErrorCode().getErrorType(),
+                ex.getErrorCode().getDescription(),
+                ex.getErrorCode().getCode()
+        );
+    }
+
+    // 미션 관련 예외 처리 추가
+    @ExceptionHandler(MissionNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleMissionNotFoundException(MissionNotFoundException ex) {
+        log.error("미션을 찾을 수 없음: {}", ex.getMessage());
+        return buildErrorResponse(
+                ex.getErrorCode().getStatus(),
+                ex.getErrorCode().getErrorType(),
+                ex.getErrorCode().getDescription(),
+                ex.getErrorCode().getCode()
+        );
+    }
+
+    @ExceptionHandler(MissionAlreadyAnsweredException.class)
+    public ResponseEntity<ErrorResponse> handleMissionAlreadyAnsweredException(MissionAlreadyAnsweredException ex) {
+        log.error("이미 답변한 미션: {}", ex.getMessage());
+        return buildErrorResponse(
+                ex.getErrorCode().getStatus(),
+                ex.getErrorCode().getErrorType(),
+                ex.getErrorCode().getDescription(),
+                ex.getErrorCode().getCode()
+        );
+    }
+
+    @ExceptionHandler(PreviousMissionIncompleteException.class)
+    public ResponseEntity<ErrorResponse> handlePreviousMissionIncompleteException(PreviousMissionIncompleteException ex) {
+        log.error("이전 미션 미완료: {}", ex.getMessage());
+        return buildErrorResponse(
+                ex.getErrorCode().getStatus(),
+                ex.getErrorCode().getErrorType(),
+                ex.getErrorCode().getDescription(),
+                ex.getErrorCode().getCode()
+        );
+    }
+
+    // Couple 관련 추가 예외 처리
+    @ExceptionHandler(CoupleNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleCoupleNotFoundException(CoupleNotFoundException ex) {
+        log.error("커플을 찾을 수 없음: {}", ex.getMessage());
+        return buildErrorResponse(
+                ex.getErrorCode().getStatus(),
+                ex.getErrorCode().getErrorType(),
+                ex.getErrorCode().getDescription(),
+                ex.getErrorCode().getCode()
+        );
+    }
+
+    @ExceptionHandler(CoupleCodeAlreadyUsedException.class)
+    public ResponseEntity<ErrorResponse> handleCoupleCodeAlreadyUsedException(CoupleCodeAlreadyUsedException ex) {
+        log.error("이미 사용 중인 커플 코드: {}", ex.getMessage());
         return buildErrorResponse(
                 ex.getErrorCode().getStatus(),
                 ex.getErrorCode().getErrorType(),

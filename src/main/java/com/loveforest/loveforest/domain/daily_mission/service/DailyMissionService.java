@@ -4,6 +4,7 @@ import com.loveforest.loveforest.domain.couple.entity.Couple;
 import com.loveforest.loveforest.domain.couple.exception.CoupleNotFoundException;
 import com.loveforest.loveforest.domain.couple.repository.CoupleRepository;
 import com.loveforest.loveforest.domain.daily_mission.dto.DailyMissionResponseDTO;
+import com.loveforest.loveforest.domain.daily_mission.dto.WeeklyMissionRequestDTO;
 import com.loveforest.loveforest.domain.daily_mission.dto.WeeklyMissionResponseDTO;
 import com.loveforest.loveforest.domain.daily_mission.entity.DailyMission;
 import com.loveforest.loveforest.domain.daily_mission.exception.*;
@@ -11,8 +12,7 @@ import com.loveforest.loveforest.domain.daily_mission.repository.DailyMissionRep
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -95,22 +95,62 @@ public class DailyMissionService {
      */
     private List<WeeklyMissionResponseDTO.DailyMissionContent> getMissionsFromAI() {
         try {
+            // HTTP 요청 헤더 설정
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+
+            // 요청 DTO 생성
+            WeeklyMissionRequestDTO requestDTO = new WeeklyMissionRequestDTO(
+                    LocalDate.now()
+            );
+
+            // HTTP 엔티티 생성
+            HttpEntity<WeeklyMissionRequestDTO> requestEntity =
+                    new HttpEntity<>(requestDTO, headers);
+
             ResponseEntity<WeeklyMissionResponseDTO> response = restTemplate.exchange(
                     aiServerUrl + AI_ENDPOINT,
-                    HttpMethod.GET,
-                    null,
+                    HttpMethod.POST,  // POST로 변경
+                    requestEntity,
                     WeeklyMissionResponseDTO.class
             );
 
             if (response.getBody() == null || response.getBody().getMissions() == null) {
+                log.error("AI 서버로부터 유효하지 않은 응답 수신");
                 throw new AIServerException();
             }
 
+            // 응답 데이터 유효성 검사
+            validateMissionResponse(response.getBody().getMissions());
+
             return response.getBody().getMissions();
         } catch (RestClientException e) {
-            log.error("AI 서버 통신 중 오류 발생", e);
+            log.error("AI 서버 통신 중 오류 발생: {}", e.getMessage());
+            throw new AIServerException();
+        } catch (Exception e) {
+            log.error("예상치 못한 오류 발생: {}", e.getMessage());
             throw new AIServerException();
         }
+    }
+
+    /**
+     *응답 데이터 유효성 검사
+     */
+    private void validateMissionResponse(List<WeeklyMissionResponseDTO.DailyMissionContent> missions) {
+        if (missions.size() != 7) {
+            log.error("잘못된 미션 개수: {}", missions.size());
+            throw new AIServerException();
+        }
+
+        // 각 미션의 유효성 검사
+        missions.forEach(mission -> {
+            if (mission.getDate() == null ||
+                    mission.getContent() == null ||
+                    mission.getContent().trim().isEmpty()) {
+                log.error("유효하지 않은 미션 데이터 발견");
+                throw new AIServerException();
+            }
+        });
     }
 
     /**

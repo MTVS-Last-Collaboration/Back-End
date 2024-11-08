@@ -4,6 +4,7 @@ import com.loveforest.loveforest.domain.auth.dto.LoginInfo;
 import com.loveforest.loveforest.domain.couple.dto.CoupleCodeResponseDTO;
 import com.loveforest.loveforest.domain.couple.dto.CoupleJoinRequestDTO;
 import com.loveforest.loveforest.domain.couple.dto.CoupleJoinResponseDTO;
+import com.loveforest.loveforest.domain.couple.dto.CoupleResponseDTO;
 import com.loveforest.loveforest.domain.couple.service.CoupleService;
 import com.loveforest.loveforest.domain.user.exception.LoginRequiredException;
 import com.loveforest.loveforest.exception.ErrorResponse;
@@ -74,7 +75,11 @@ public class CoupleController {
         return ResponseEntity.ok(new CoupleJoinResponseDTO("커플 연동이 성공적으로 완료되었습니다."));
     }
 
-
+    /**
+     * 커플 연동 API
+     *
+     * @return 나의 커플 코드 조회
+     */
     @Operation(summary = "나의 커플 코드 조회", description = "사용자의 커플 코드를 조회하는 API입니다. 로그인한 사용자가 속한 커플의 코드를 반환합니다.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "커플 코드 조회 성공", content = @Content(
@@ -100,5 +105,61 @@ public class CoupleController {
 
         CoupleCodeResponseDTO coupleCode = coupleService.getMyCoupleCode(loginInfo.getUserId());
         return ResponseEntity.ok(coupleCode);
+    }
+
+
+    /**
+     * 커플 연동 API
+     *
+     * @return 커플 정보 조회
+     */
+    @GetMapping
+    @Operation(
+            summary = "현재 로그인한 사용자의 커플 정보 조회",
+            description = "현재 로그인한 사용자의 커플 정보를 조회합니다. 커플 코드, 포인트, 기념일 등의 정보가 포함됩니다."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "커플 정보 조회 성공",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = CoupleResponseDTO.class),
+                            examples = @ExampleObject(
+                                    value = """
+                {
+                    "coupleId": 1,
+                    "coupleCode": "ABC123",
+                    "points": 100,
+                    "anniversaryDate": "2024-01-01"
+                }
+                """
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "커플을 찾을 수 없습니다.",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorResponse.class),
+                            examples = @ExampleObject(
+                                    value = "{\"status\": 404, \"errorType\": \"Not Found\", \"message\": \"커플을 찾을 수 없습니다.\"}"
+                            )
+                    )
+            )
+    })
+    public ResponseEntity<CoupleResponseDTO> getCoupleInfo(@AuthenticationPrincipal LoginInfo loginInfo) {
+        if (loginInfo == null) {
+            throw new LoginRequiredException();
+        }
+
+        log.info("커플 정보 조회 요청 - 사용자 ID: {}", loginInfo.getUserId());
+
+        CoupleResponseDTO coupleInfo = coupleService.getCoupleInfo(loginInfo.getCoupleId());
+
+        log.info("커플 정보 조회 완료 - 커플 ID: {}, 포인트: {}", coupleInfo.getCoupleId(), coupleInfo.getPoints());
+
+        return ResponseEntity.ok(coupleInfo);
     }
 }

@@ -68,7 +68,7 @@ public class RoomController {
         if (loginInfo == null) {
             throw new LoginRequiredException();
         }
-        roomService.decorateRoom(request);
+        roomService.decorateRoom(request, loginInfo.getCoupleId());
         return ResponseEntity.ok("가구 배치가 완료되었습니다.");
     }
 

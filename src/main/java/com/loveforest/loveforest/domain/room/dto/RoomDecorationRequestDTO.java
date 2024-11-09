@@ -11,9 +11,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class RoomDecorationRequestDTO {
 
-    @Schema(description = "커플 ID", example = "1", required = true)
-    private Long coupleId;
-
     @Schema(description = "가구 ID", example = "1", required = true)
     private Long furnitureId;
 

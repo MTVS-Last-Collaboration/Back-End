@@ -49,7 +49,7 @@ public class RoomService {
             }
 
             // 2. 기존 방 존재 여부 확인
-            if (roomRepository.findByCouple_Id(couple.getId()).isPresent()) {
+            if (roomRepository.findByCoupleId(couple.getId()).isPresent()) {
                 log.warn("방 생성 실패: 이미 존재하는 방입니다. CoupleId: {}", couple.getId());
                 throw new RoomAlreadyExistsException();
             }
@@ -80,8 +80,8 @@ public class RoomService {
      * @throws FurnitureOverlapException 가구가 겹치는 경우 발생
      */
     @Transactional
-    public void decorateRoom(RoomDecorationRequestDTO request) {
-        Room room = roomRepository.findByCouple_Id(request.getCoupleId())
+    public void decorateRoom(RoomDecorationRequestDTO request, Long coupleId) {
+        Room room = roomRepository.findByCoupleId(coupleId)
                 .orElseThrow(RoomNotFoundException::new);
 
         Furniture furniture = furnitureRepository.findById(request.getFurnitureId())
@@ -128,7 +128,7 @@ public class RoomService {
      * @throws RoomNotFoundException 방을 찾을 수 없는 경우 발생
      */
     public RoomResponseDTO getRoomByCoupleId(Long coupleId) {
-        Room room = roomRepository.findByCouple_Id(coupleId)
+        Room room = roomRepository.findByCoupleId(coupleId)
                 .orElseThrow(RoomNotFoundException::new);
 
         List<RoomResponseDTO.FurnitureLayoutDTO> furnitureLayouts = room.getFurnitureLayouts().stream()
@@ -194,7 +194,7 @@ public class RoomService {
      */
     @Transactional(readOnly = true)
     public PublicRoomResponseDTO getPublicRoomByCoupleId(Long coupleId) {
-        Room room = roomRepository.findByCouple_Id(coupleId)
+        Room room = roomRepository.findByCoupleId(coupleId)
                 .orElseThrow(RoomNotFoundException::new);
 
         List<PublicRoomResponseDTO.PublicFurnitureDTO> furnitureLayouts = room.getFurnitureLayouts().stream()

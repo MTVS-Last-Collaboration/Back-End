@@ -144,7 +144,25 @@ public class RoomService {
                 ))
                 .toList();
 
-        return new RoomResponseDTO(room.getId(), room.getCouple().getId(), furnitureLayouts);
+        RoomResponseDTO.FloorDTO floorDTO = null;
+        if (room.getFloor() != null) {
+            floorDTO = new RoomResponseDTO.FloorDTO(
+                    room.getFloor().getId(),
+                    room.getFloor().getName(),
+                    room.getFloor().getFloorNumber()
+            );
+        }
+
+        RoomResponseDTO.WallpaperDTO wallpaperDTO = null;
+        if (room.getWallpaper() != null) {
+            wallpaperDTO = new RoomResponseDTO.WallpaperDTO(
+                    room.getWallpaper().getId(),
+                    room.getWallpaper().getName(),
+                    room.getWallpaper().getWallpaperNumber()
+            );
+        }
+
+        return new RoomResponseDTO(room.getId(), room.getCouple().getId(), furnitureLayouts, floorDTO, wallpaperDTO);
     }
 
     /**

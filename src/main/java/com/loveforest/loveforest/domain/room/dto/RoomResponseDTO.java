@@ -20,6 +20,12 @@ public class RoomResponseDTO {
     @Schema(description = "방에 배치된 가구 목록")
     private List<FurnitureLayoutDTO> furnitureLayouts;
 
+    @Schema(description = "방의 바닥 정보")
+    private FloorDTO floor;
+
+    @Schema(description = "방의 벽지 정보")
+    private WallpaperDTO wallpaper;
+
     @Getter
     @AllArgsConstructor
     public static class FurnitureLayoutDTO {
@@ -48,5 +54,31 @@ public class RoomResponseDTO {
 
         @Schema(description = "가구의 높이", example = "30")
         private int height;
+    }
+
+    @Getter
+    @AllArgsConstructor
+    public static class FloorDTO {
+        @Schema(description = "바닥 ID", example = "1")
+        private Long id;
+
+        @Schema(description = "바닥 이름", example = "고급 나무 바닥")
+        private String name;
+
+        @Schema(description = "바닥 번호", example = "3")
+        private int floorNumber;
+    }
+
+    @Getter
+    @AllArgsConstructor
+    public static class WallpaperDTO {
+        @Schema(description = "벽지 ID", example = "1")
+        private Long id;
+
+        @Schema(description = "벽지 이름", example = "모던 벽지")
+        private String name;
+
+        @Schema(description = "벽지 번호", example = "5")
+        private int wallpaperNumber;
     }
 }

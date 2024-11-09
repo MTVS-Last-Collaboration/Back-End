@@ -96,6 +96,7 @@ public class RoomService {
 
         List<RoomResponseDTO.FurnitureLayoutDTO> furnitureLayouts = room.getFurnitureLayouts().stream()
                 .map(layout -> new RoomResponseDTO.FurnitureLayoutDTO(
+                        layout.getId(),
                         layout.getFurniture().getId(),
                         layout.getFurniture().getName(),
                         layout.getPositionX(),

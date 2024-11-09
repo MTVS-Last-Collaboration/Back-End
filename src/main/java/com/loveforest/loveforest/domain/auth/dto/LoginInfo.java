@@ -10,5 +10,4 @@ public class LoginInfo {
     private String nickname;
     private Authority authorities;
     private Long coupleId;
-    private int points;
 }

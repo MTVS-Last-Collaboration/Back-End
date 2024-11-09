@@ -102,8 +102,7 @@ public class ShopController {
         PurchaseResponseDTO response = shopService.purchaseItem(
                 request.getItemId(),
                 loginInfo.getUserId(),
-                loginInfo.getCoupleId(),
-                loginInfo.getPoints()
+                loginInfo.getCoupleId()
         );
         return ResponseEntity.ok(response);
     }

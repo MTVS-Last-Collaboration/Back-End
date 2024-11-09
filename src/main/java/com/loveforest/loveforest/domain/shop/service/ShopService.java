@@ -49,18 +49,19 @@ public class ShopService {
     }
 
     @Transactional
-    public PurchaseResponseDTO purchaseItem(Long itemId, Long userId, Long coupleId, int currentPoints) {
+    public PurchaseResponseDTO purchaseItem(Long itemId, Long userId, Long coupleId) {
         // 1. 엔티티 조회
         ShopItem shopItem = findShopItemById(itemId);
         User user = findUserById(userId);
         Couple couple = findCoupleById(coupleId);
 
         // 2. 구매 가능 여부 검증
-        shopValidator.validatePurchase(shopItem, currentPoints);
+        shopValidator.validatePurchase(shopItem, couple.getPoints());
 
         try {
             // 3. 포인트 차감 및 구매 처리
-            processPurchase(shopItem, user, couple);
+            couple.deductPoints(shopItem.getPrice());
+            coupleRepository.save(couple);
 
             // 4. 구매 이력 저장
             PurchaseHistory purchaseHistory = savePurchaseHistory(user, shopItem);
@@ -102,10 +103,6 @@ public class ShopService {
                 });
     }
 
-    private void processPurchase(ShopItem shopItem, User user, Couple couple) {
-        couple.deductPoints(shopItem.getPrice());
-        coupleRepository.save(couple);
-    }
 
     private PurchaseHistory savePurchaseHistory(User user, ShopItem shopItem) {
         PurchaseHistory purchaseHistory = PurchaseHistory.builder()

@@ -35,11 +35,13 @@ public class RoomService {
      * 커플의 방에 가구를 배치하는 메서드
      *
      * @param couple 커플룸 생성 시 필요
-     * @throws IllegalStateException 이미 방이 존재할때
+     * @throws RoomAlreadyExistsException 방 중복 생성
+     * @throws RoomCreationFailedException 방 생성 중 시스템 오류
+     * @throws InvalidRoomCreationException 잘못된 방 생성 요청
      */
 
     @Transactional
-    public Room createRoom(Couple couple) {
+    public void createRoom(Couple couple) {
         try {
             // 1. 입력값 검증
             if (couple == null) {
@@ -58,8 +60,6 @@ public class RoomService {
             // 4. 방 저장 및 반환
             Room savedRoom = roomRepository.save(newRoom);
             log.info("새로운 방 생성 완료. RoomId: {}, CoupleId: {}", savedRoom.getId(), couple.getId());
-
-            return savedRoom;
 
         } catch (Exception e) {
             // CustomException을 제외한 예상치 못한 예외 처리

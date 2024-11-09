@@ -156,4 +156,15 @@ public class CoupleService {
                 .anniversaryDate(anniversaryDate)
                 .build();
     }
+
+    @Transactional
+    public void addPointsToCouple(Long coupleId, int points) {
+        Couple couple = coupleRepository.findById(coupleId)
+                .orElseThrow(CoupleNotFoundException::new);
+
+        couple.addPoints(points);
+        coupleRepository.save(couple);
+
+        log.info("커플 포인트 추가 - 커플 ID: {}, 추가된 포인트: {}, 현재 포인트: {}", coupleId, points, couple.getPoints());
+    }
 }

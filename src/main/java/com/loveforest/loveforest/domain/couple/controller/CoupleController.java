@@ -162,4 +162,35 @@ public class CoupleController {
 
         return ResponseEntity.ok(coupleInfo);
     }
+
+    /**
+     * 커플 포인트 추가 API
+     *
+     * @param loginInfo 현재 로그인한 사용자 정보
+     * @param points 추가할 포인트
+     * @return 포인트 추가 완료 메시지
+     */
+    @Operation(summary = "커플 포인트 추가", description = "커플의 포인트를 지정된 값만큼 추가합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "포인트가 성공적으로 추가되었습니다."),
+            @ApiResponse(responseCode = "404", description = "커플을 찾을 수 없습니다.", content = @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(implementation = ErrorResponse.class),
+                    examples = @ExampleObject(
+                            value = "{\"status\": 404, \"errorType\": \"CoupleNotFound\", \"message\": \"해당 커플을 찾을 수 없습니다.\"}"
+                    )
+            ))
+    })
+    @PostMapping("/add-points")
+    public ResponseEntity<String> addPointsToCouple(
+            @AuthenticationPrincipal LoginInfo loginInfo,
+            @RequestBody int points) {
+
+        if (loginInfo == null) {
+            throw new LoginRequiredException();
+        }
+
+        coupleService.addPointsToCouple(loginInfo.getCoupleId(), points);
+        return ResponseEntity.ok("포인트가 성공적으로 추가되었습니다.");
+    }
 }

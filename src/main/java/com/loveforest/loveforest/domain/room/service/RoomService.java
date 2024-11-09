@@ -10,13 +10,11 @@ import com.loveforest.loveforest.domain.room.dto.RoomResponseDTO;
 import com.loveforest.loveforest.domain.room.entity.Furniture;
 import com.loveforest.loveforest.domain.room.entity.FurnitureLayout;
 import com.loveforest.loveforest.domain.room.entity.Room;
-import com.loveforest.loveforest.domain.room.exception.FurnitureLayoutNotFoundException;
-import com.loveforest.loveforest.domain.room.exception.FurnitureNotFoundException;
-import com.loveforest.loveforest.domain.room.exception.FurnitureOverlapException;
-import com.loveforest.loveforest.domain.room.exception.RoomNotFoundException;
+import com.loveforest.loveforest.domain.room.exception.*;
 import com.loveforest.loveforest.domain.room.repository.FurnitureLayoutRepository;
 import com.loveforest.loveforest.domain.room.repository.FurnitureRepository;
 import com.loveforest.loveforest.domain.room.repository.RoomRepository;
+import com.loveforest.loveforest.exception.CustomException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -33,6 +31,45 @@ public class RoomService {
     private final FurnitureRepository furnitureRepository;
     private final FurnitureLayoutRepository furnitureLayoutRepository;
 
+    /**
+     * 커플의 방에 가구를 배치하는 메서드
+     *
+     * @param couple 커플룸 생성 시 필요
+     * @throws RoomAlreadyExistsException 방 중복 생성
+     * @throws RoomCreationFailedException 방 생성 중 시스템 오류
+     * @throws InvalidRoomCreationException 잘못된 방 생성 요청
+     */
+
+    @Transactional
+    public void createRoom(Couple couple) {
+        try {
+            // 1. 입력값 검증
+            if (couple == null) {
+                throw new InvalidRoomCreationException();
+            }
+
+            // 2. 기존 방 존재 여부 확인
+            if (roomRepository.findByCouple_Id(couple.getId()).isPresent()) {
+                log.warn("방 생성 실패: 이미 존재하는 방입니다. CoupleId: {}", couple.getId());
+                throw new RoomAlreadyExistsException();
+            }
+
+            // 3. 새로운 방 생성
+            Room newRoom = new Room(couple);
+
+            // 4. 방 저장 및 반환
+            Room savedRoom = roomRepository.save(newRoom);
+            log.info("새로운 방 생성 완료. RoomId: {}, CoupleId: {}", savedRoom.getId(), couple.getId());
+
+        } catch (Exception e) {
+            // CustomException을 제외한 예상치 못한 예외 처리
+            if (!(e instanceof CustomException)) {
+                log.error("방 생성 중 예상치 못한 오류 발생", e);
+                throw new RoomCreationFailedException();
+            }
+            throw e;
+        }
+    }
 
     /**
      * 커플의 방에 가구를 배치하는 메서드
@@ -162,6 +199,7 @@ public class RoomService {
 
         List<PublicRoomResponseDTO.PublicFurnitureDTO> furnitureLayouts = room.getFurnitureLayouts().stream()
                 .map(layout -> new PublicRoomResponseDTO.PublicFurnitureDTO(
+                        layout.getId(),
                         layout.getFurniture().getId(),
                         layout.getFurniture().getName(),
                         layout.getPositionX(),

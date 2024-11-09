@@ -22,6 +22,10 @@ public class PublicRoomResponseDTO {
     @Getter
     @AllArgsConstructor
     public static class PublicFurnitureDTO {
+
+        @Schema(description = "가구 배치 정보 ID", example = "1")
+        private Long furnitureLayoutId;
+
         @Schema(description = "가구 ID", example = "1")
         private Long furnitureId;
 

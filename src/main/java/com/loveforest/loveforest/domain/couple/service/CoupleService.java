@@ -8,6 +8,7 @@ import com.loveforest.loveforest.domain.couple.exception.CoupleCodeAlreadyUsedEx
 import com.loveforest.loveforest.domain.couple.exception.CoupleNotFoundException;
 import com.loveforest.loveforest.domain.couple.repository.CoupleRepository;
 import com.loveforest.loveforest.domain.pet.service.PetService;
+import com.loveforest.loveforest.domain.room.service.RoomService;
 import com.loveforest.loveforest.domain.user.entity.User;
 import com.loveforest.loveforest.domain.user.exception.UserNotFoundException;
 import com.loveforest.loveforest.domain.user.repository.UserRepository;
@@ -28,9 +29,10 @@ public class CoupleService {
     private final CoupleRepository coupleRepository;
     private final UserRepository userRepository;
     private final PetService petService; // PetService 추가
+    private final RoomService roomService;
 
 
-       public String generateCoupleCode() {
+    public String generateCoupleCode() {
         String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
         SecureRandom random = new SecureRandom();
         StringBuilder code = new StringBuilder();
@@ -84,9 +86,10 @@ public class CoupleService {
         targetCouple.addUser(user);
         userRepository.save(user);
 
-        // 커플에 대한 Pet 생성
+        // 커플에 대한 Pet & Room 생성
         if (targetCouple.getUsers().size() == 2) {
             petService.createPetForCouple(targetCouple);
+            roomService.createRoom(targetCouple);
         }
 
 

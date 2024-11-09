@@ -70,33 +70,6 @@ public class ShopController {
         return ResponseEntity.ok(shopService.getItemsByType(itemType));
     }
 
-    @Operation(summary = "가구 목록 조회", description = "구매 가능한 가구 목록을 조회합니다.")
-    @GetMapping("/items/furniture")
-    public ResponseEntity<List<ShopItemDTO>> getFurnitureItems(@AuthenticationPrincipal LoginInfo loginInfo) {
-        if (loginInfo == null) {
-            throw new LoginRequiredException();
-        }
-        return ResponseEntity.ok(shopService.getItemsByType(ItemType.FURNITURE));
-    }
-
-    @Operation(summary = "벽지 목록 조회", description = "구매 가능한 벽지 목록을 조회합니다.")
-    @GetMapping("/items/wallpaper")
-    public ResponseEntity<List<ShopItemDTO>> getWallpaperItems(@AuthenticationPrincipal LoginInfo loginInfo) {
-        if (loginInfo == null) {
-            throw new LoginRequiredException();
-        }
-        return ResponseEntity.ok(shopService.getItemsByType(ItemType.WALLPAPER));
-    }
-
-    @Operation(summary = "바닥 목록 조회", description = "구매 가능한 바닥 목록을 조회합니다.")
-    @GetMapping("/items/floor")
-    public ResponseEntity<List<ShopItemDTO>> getFloorItems(@AuthenticationPrincipal LoginInfo loginInfo) {
-        if (loginInfo == null) {
-            throw new LoginRequiredException();
-        }
-        return ResponseEntity.ok(shopService.getItemsByType(ItemType.FLOOR));
-    }
-
     @PostMapping("/purchase")
     @Operation(
             summary = "아이템 구매",

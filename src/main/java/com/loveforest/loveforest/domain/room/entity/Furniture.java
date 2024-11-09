@@ -18,9 +18,6 @@ public class Furniture {
     @Column(name = "name", nullable = false)
     private String name;
 
-    @Column(name = "type", nullable = false)
-    private String type; // 가구 유형 (의자, 테이블 등)
-
     @Column(name = "price", nullable = false)
     private int price; // 가구의 가격
 

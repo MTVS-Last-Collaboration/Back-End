@@ -56,7 +56,7 @@ public class ShopService {
         Couple couple = findCoupleById(coupleId);
 
         // 2. 구매 가능 여부 검증
-        shopValidator.validatePurchase(shopItem, couple, currentPoints);
+        shopValidator.validatePurchase(shopItem, currentPoints);
 
         try {
             // 3. 포인트 차감 및 구매 처리

@@ -15,7 +15,7 @@ import org.springframework.stereotype.Component;
 public class ShopValidator {
     private final UserInventoryRepository userInventoryRepository;
 
-    public void validatePurchase(ShopItem shopItem, Couple couple, int currentPoints) {
+    public void validatePurchase(ShopItem shopItem, int currentPoints) {
         validateItemAvailability(shopItem);
         validatePoints(currentPoints, shopItem.getPrice());
     }

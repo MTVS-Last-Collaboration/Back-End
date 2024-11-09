@@ -52,95 +52,109 @@ public class ShopInitializer implements CommandLineRunner {
     private void initializeFurniture() {
         log.info("가구 데이터 초기화 시작...");
 
-        List<Furniture> furnitureList = Arrays.asList(
-                createFurniture("BedsideTable", 2, 3, 1500),
-                createFurniture("BigDrawer", 1, 3, 1500),
-                createFurniture("Chair_Blue", 1, 1, 1000),
-                createFurniture("Chair_Pink", 1, 1, 1000),
-                createFurniture("Chair_White", 1, 1, 1000),
-                createFurniture("Chair_Yellow", 1, 1, 1000),
-                createFurniture("CornerLight", 1, 1, 500),
-                createFurniture("Desk1", 2, 2, 1500),
-                createFurniture("DeskPlant", 1, 1, 500),
-                createFurniture("DoubleBed_Blue", 4, 4, 2000),
-                createFurniture("DoubleBed_Gray", 4, 4, 2000),
-                createFurniture("DoubleBed_Pink", 4, 4, 2000),
-                createFurniture("DoubleBed_Yellow", 4, 4, 2000),
-                createFurniture("Drawer1", 2, 1, 1500),
-                createFurniture("Drawer3", 2, 1, 1500),
-                createFurniture("Dresser", 3, 1, 1500),
-                createFurniture("Fatboy", 2, 2, 1000),
-                createFurniture("Fridge", 2, 2, 1500),
-                createFurniture("LaunchTable", 2, 3, 1500),
-                createFurniture("LoungeChair1", 1, 1, 1000),
-                createFurniture("Minifridge", 2, 2, 1500),
-                createFurniture("Plant2", 1, 1, 500),
-                createFurniture("PlantBox", 1, 2, 500),
-                createFurniture("Sofa", 1, 4, 1000),
-                createFurniture("Sofa1", 2, 2, 1000),
-                createFurniture("Sofa2", 2, 3, 1000),
-                createFurniture("Sofa2_Blue", 2, 3, 1000),
-                createFurniture("Wardrobe", 1, 4, 1500)
-        );
+        try {
+            List<Furniture> furnitureList = Arrays.asList(
+                    createFurniture("BedsideTable", 2, 3, 1500),
+                    createFurniture("BigDrawer", 1, 3, 1500),
+                    createFurniture("Chair_Blue", 1, 1, 1000),
+                    createFurniture("Chair_Pink", 1, 1, 1000),
+                    createFurniture("Chair_White", 1, 1, 1000),
+                    createFurniture("Chair_Yellow", 1, 1, 1000),
+                    createFurniture("CornerLight", 1, 1, 500),
+                    createFurniture("Desk1", 2, 2, 1500),
+                    createFurniture("DeskPlant", 1, 1, 500),
+                    createFurniture("DoubleBed_Blue", 4, 4, 2000),
+                    createFurniture("DoubleBed_Gray", 4, 4, 2000),
+                    createFurniture("DoubleBed_Pink", 4, 4, 2000),
+                    createFurniture("DoubleBed_Yellow", 4, 4, 2000),
+                    createFurniture("Drawer1", 2, 1, 1500),
+                    createFurniture("Drawer3", 2, 1, 1500),
+                    createFurniture("Dresser", 3, 1, 1500),
+                    createFurniture("Fatboy", 2, 2, 1000),
+                    createFurniture("Fridge", 2, 2, 1500),
+                    createFurniture("LaunchTable", 2, 3, 1500),
+                    createFurniture("LoungeChair1", 1, 1, 1000),
+                    createFurniture("Minifridge", 2, 2, 1500),
+                    createFurniture("Plant2", 1, 1, 500),
+                    createFurniture("PlantBox", 1, 2, 500),
+                    createFurniture("Sofa", 1, 4, 1000),
+                    createFurniture("Sofa1", 2, 2, 1000),
+                    createFurniture("Sofa2", 2, 3, 1000),
+                    createFurniture("Sofa2_Blue", 2, 3, 1000),
+                    createFurniture("Wardrobe", 1, 4, 1500)
+            );
 
-        furnitureRepository.saveAll(furnitureList);
+            furnitureRepository.saveAll(furnitureList);
+            log.info("가구 {}개 초기화 완료", furnitureList.size());
+            // ShopItem으로 변환하여 저장
+            List<ShopItem> shopItems = furnitureList.stream()
+                    .map(furniture -> ShopItem.createFurnitureItem(furniture, furniture.getPrice()))
+                    .toList();
 
-        // ShopItem으로 변환하여 저장
-        List<ShopItem> shopItems = furnitureList.stream()
-                .map(furniture -> ShopItem.createFurnitureItem(furniture, furniture.getPrice()))
-                .toList();
+            shopItemRepository.saveAll(shopItems);
+            log.info("가구 {}개 초기화 완료", furnitureList.size());
+        } catch (Exception e) {
+            log.error("가구 데이터 초기화 중 오류 발생: {}", e.getMessage(), e);
+            throw new InitializeException("가구 초기화 실패");
+        }
 
-        shopItemRepository.saveAll(shopItems);
-        log.info("가구 {}개 초기화 완료", furnitureList.size());
     }
 
     private void initializeWallpaper() {
         log.info("벽지 데이터 초기화 시작...");
+        try {
+            List<Wallpaper> wallpapers = new ArrayList<>();
+            for (int i = 1; i <= 11; i++) {
+                wallpapers.add(Wallpaper.builder()
+                        .wallpaperNumber(i)
+                        .name("Wallpaper " + i)
+                        .build());
+            }
 
-        List<Wallpaper> wallpapers = new ArrayList<>();
-        for (int i = 1; i <= 11; i++) {
-            wallpapers.add(Wallpaper.builder()
-                    .wallpaperNumber(i)
-                    .name("Wallpaper " + i)
-                    .build());
+            wallpaperRepository.saveAll(wallpapers);
+
+            List<ShopItem> shopItems = wallpapers.stream()
+                    .map(wallpaper -> ShopItem.createWallpaperItem(wallpaper, 500))
+                    .toList();
+
+            shopItemRepository.saveAll(shopItems);
+            log.info("벽지 11개 초기화 완료");
+        } catch (Exception e) {
+            log.error("벽지 데이터 초기화 중 오류 발생: {}", e.getMessage(), e);
+            throw new InitializeException("벽지 초기화 실패");
         }
-
-        wallpaperRepository.saveAll(wallpapers);
-
-        List<ShopItem> shopItems = wallpapers.stream()
-                .map(wallpaper -> ShopItem.createWallpaperItem(wallpaper, 500))
-                .toList();
-
-        shopItemRepository.saveAll(shopItems);
-        log.info("벽지 11개 초기화 완료");
     }
 
     private void initializeFloor() {
         log.info("바닥 데이터 초기화 시작...");
+        try {
+            List<Floor> floors = new ArrayList<>();
+            for (int i = 1; i <= 5; i++) {
+                floors.add(Floor.builder()
+                        .floorNumber(i)
+                        .name("Floor " + i)
+                        .build());
+            }
 
-        List<Floor> floors = new ArrayList<>();
-        for (int i = 1; i <= 5; i++) {
-            floors.add(Floor.builder()
-                    .floorNumber(i)
-                    .name("Floor " + i)
-                    .build());
+            floorRepository.saveAll(floors);
+
+            List<ShopItem> shopItems = floors.stream()
+                    .map(floor -> ShopItem.createFloorItem(floor, 500))
+                    .toList();
+
+            shopItemRepository.saveAll(shopItems);
+            log.info("바닥 5개 초기화 완료");
+        } catch (Exception e) {
+            log.error("바닥 데이터 초기화 중 오류 발생: {}", e.getMessage(), e);
+            throw new InitializeException("바닥 초기화 실패");
         }
-
-        floorRepository.saveAll(floors);
-
-        List<ShopItem> shopItems = floors.stream()
-                .map(floor -> ShopItem.createFloorItem(floor, 500))
-                .toList();
-
-        shopItemRepository.saveAll(shopItems);
-        log.info("바닥 5개 초기화 완료");
     }
 
     private Furniture createFurniture(String name, int width, int height, int price) {
         return Furniture.builder()
                 .name(name)
-                .width(width)          // xSize 대신 width 사용
-                .height(height)        // zSize 대신 height 사용
+                .width(width)
+                .height(height)
                 .price(price)
                 .build();
     }

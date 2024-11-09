@@ -1,6 +1,7 @@
 package com.loveforest.loveforest.domain.room.entity;
 
 import jakarta.persistence.*;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -31,12 +32,11 @@ public class Furniture {
 
 
 
-    // 생성자
-    public Furniture(String name, String type, int price, int width, int height) {
+    @Builder
+    public Furniture(String name, int width, int height, int price) {
         this.name = name;
-        this.type = type;
-        this.price = price;
         this.width = width;
         this.height = height;
+        this.price = price;
     }
 }

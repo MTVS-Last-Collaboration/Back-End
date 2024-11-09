@@ -162,6 +162,7 @@ public class RoomService {
 
         List<PublicRoomResponseDTO.PublicFurnitureDTO> furnitureLayouts = room.getFurnitureLayouts().stream()
                 .map(layout -> new PublicRoomResponseDTO.PublicFurnitureDTO(
+                        layout.getId(),
                         layout.getFurniture().getId(),
                         layout.getFurniture().getName(),
                         layout.getPositionX(),

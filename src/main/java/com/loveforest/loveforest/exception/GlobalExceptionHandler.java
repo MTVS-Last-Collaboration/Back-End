@@ -21,10 +21,7 @@ import com.loveforest.loveforest.domain.pet.exception.PetNotFoundException;
 import com.loveforest.loveforest.domain.photoAlbum.exception.DuplicatePhotoPositionException;
 import com.loveforest.loveforest.domain.photoAlbum.exception.PhotoNotFoundException;
 import com.loveforest.loveforest.domain.photoAlbum.exception.PhotoUploadFailedException;
-import com.loveforest.loveforest.domain.room.exception.FurnitureLayoutNotFoundException;
-import com.loveforest.loveforest.domain.room.exception.FurnitureNotFoundException;
-import com.loveforest.loveforest.domain.room.exception.FurnitureOverlapException;
-import com.loveforest.loveforest.domain.room.exception.RoomNotFoundException;
+import com.loveforest.loveforest.domain.room.exception.*;
 import com.loveforest.loveforest.domain.user.exception.EmailAlreadyExistsException;
 import com.loveforest.loveforest.domain.user.exception.InvalidPasswordException;
 import com.loveforest.loveforest.domain.user.exception.LoginRequiredException;
@@ -241,6 +238,39 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(FurnitureOverlapException.class)
     public ResponseEntity<ErrorResponse> handleFurnitureOverlapException(FurnitureOverlapException ex) {
         log.error("가구 배치 중복: {}", ex.getMessage());
+        return buildErrorResponse(
+                ex.getErrorCode().getStatus(),
+                ex.getErrorCode().getErrorType(),
+                ex.getErrorCode().getDescription(),
+                ex.getErrorCode().getCode()
+        );
+    }
+
+    @ExceptionHandler(RoomAlreadyExistsException .class)
+    public ResponseEntity<ErrorResponse> handleRoomAlreadyExistsException(RoomAlreadyExistsException ex) {
+        log.warn("방 중복 생성 시도 발생: {}", ex.getMessage());
+        return buildErrorResponse(
+                ex.getErrorCode().getStatus(),
+                ex.getErrorCode().getErrorType(),
+                ex.getErrorCode().getDescription(),
+                ex.getErrorCode().getCode()
+        );
+    }
+
+    @ExceptionHandler(InvalidRoomCreationException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidRoomCreationException(InvalidRoomCreationException ex) {
+        log.warn("잘못된 방 생성 요청: {}", ex.getMessage());
+        return buildErrorResponse(
+                ex.getErrorCode().getStatus(),
+                ex.getErrorCode().getErrorType(),
+                ex.getErrorCode().getDescription(),
+                ex.getErrorCode().getCode()
+        );
+    }
+
+    @ExceptionHandler(RoomCreationFailedException.class)
+    public ResponseEntity<ErrorResponse> handleRoomCreationFailedException(RoomCreationFailedException ex) {
+        log.error("방 생성 중 시스템 오류 발생: {}", ex.getMessage());
         return buildErrorResponse(
                 ex.getErrorCode().getStatus(),
                 ex.getErrorCode().getErrorType(),

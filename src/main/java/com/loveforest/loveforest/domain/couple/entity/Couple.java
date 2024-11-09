@@ -1,10 +1,12 @@
 package com.loveforest.loveforest.domain.couple.entity;
 
 import com.loveforest.loveforest.BaseTimeEntity;
+import com.loveforest.loveforest.domain.shop.exception.InsufficientPointsException;
 import com.loveforest.loveforest.domain.user.entity.User;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -43,7 +45,24 @@ public class Couple extends BaseTimeEntity {
         }
     }
 
+    /**
+     * 포인트를 추가하는 메서드
+     * @param points 추가할 포인트
+     */
     public void addPoints(int points) {
         this.points += points;
+    }
+
+    /**
+     * 포인트를 차감하는 메서드
+     * @param points 차감할 포인트
+     * @throws InsufficientPointsException 포인트가 부족한 경우
+     */
+    @Transactional
+    public void deductPoints(int points) {
+        if (this.points < points) {
+            throw new InsufficientPointsException();
+        }
+        this.points -= points;
     }
 }

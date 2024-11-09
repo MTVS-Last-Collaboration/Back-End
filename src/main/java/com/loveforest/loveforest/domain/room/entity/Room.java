@@ -27,6 +27,14 @@ public class Room {
     @OneToMany(mappedBy = "room", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<FurnitureLayout> furnitureLayouts = new ArrayList<>(); // 방 안의 가구 배치 정보
 
+    @OneToOne
+    @JoinColumn(name = "wallpaper_id")
+    private Wallpaper wallpaper;
+
+    @OneToOne
+    @JoinColumn(name = "floor_id")
+    private Floor floor;
+
     // 커플을 인자로 받는 생성자 추가
     public Room(Couple couple) {
         this.couple = couple;

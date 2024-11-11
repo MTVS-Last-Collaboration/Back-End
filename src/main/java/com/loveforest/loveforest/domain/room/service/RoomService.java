@@ -99,6 +99,13 @@ public class RoomService {
                 request.getPositionY(),
                 request.getRotation()
         );
+
+        // 5. 가구 배치
+        room.addFurnitureLayout(newLayout);
+        roomRepository.save(room);
+
+        log.info("가구 배치 완료 - coupleId: {}, furnitureId: {}, position: ({}, {})",
+                coupleId, furniture.getId(), request.getPositionX(), request.getPositionY());
     }
 
     private void validateFurnitureOwnership(Long coupleId, Long furnitureId) {

@@ -278,13 +278,15 @@ public class RoomServiceImpl implements RoomService {
                 .orElseThrow(FloorNotFoundException::new);
     }
 
-    private FurnitureLayout createFurnitureLayout(Furniture furniture, RoomDecorationRequestDTO request) {
-        return new FurnitureLayout(
+    private FurnitureLayout createFurnitureLayout(Room room, Furniture furniture, RoomDecorationRequestDTO request) {
+        FurnitureLayout layout = new FurnitureLayout(
                 furniture,
                 request.getPositionX(),
                 request.getPositionY(),
                 request.getRotation()
         );
+        layout.setRoom(room); // Room 관계 설정
+        return layout;
     }
 
     // 가구 충돌 검사를 위해 메서드 시그니처 수정

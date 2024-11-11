@@ -41,30 +41,27 @@ public class DailyMissionService {
      * 수동으로 일주일치 미션을 생성하는 메서드
      */
     @Transactional
-    public void generateWeeklyMissionsManually() {
-        validateAndGenerateMissions(LocalDate.now());
+    public void generateWeeklyMissionsManually(Long coupleId) {
+        validateAndGenerateMissions(coupleId);
     }
 
-    /**
-     * 스케줄링된 주간 미션 생성
-     */
-    @Scheduled(cron = "0 0 1 * * MON")
-    @Transactional
-    public void generateWeeklyMissions() {
-        validateAndGenerateMissions(LocalDate.now());
-    }
+//    /**
+//     * 스케줄링된 주간 미션 생성
+//     */
+//    @Scheduled(cron = "0 0 1 * * MON")
+//    @Transactional
+//    public void generateWeeklyMissions(Long coupleId) {
+//        validateAndGenerateMissions(coupleId);
+//    }
 
     /**
      * 미션 생성의 공통 로직
      * DRY 원칙을 적용하여 중복 코드 제거
      */
-    private void validateAndGenerateMissions(LocalDate date) {
-        log.info("주간 미션 생성 시작 - 날짜: {}", date);
-
-        validateMissionDate(date); // 날짜 검증 로직 분리
+    private void validateAndGenerateMissions(Long coupleId) {
 
         try {
-            List<WeeklyMissionResponseDTO.DailyMissionContent> weeklyMissions = getMissionsFromAI();
+            List<WeeklyMissionResponseDTO.DailyMissionContent> weeklyMissions = getMissionsFromAI(coupleId);
             validateMissions(weeklyMissions); // 미션 데이터 검증 로직 분리
 
             createMissionsForAllCouples(weeklyMissions);
@@ -93,7 +90,7 @@ public class DailyMissionService {
     /**
      * AI 서버에서 미션을 받아오는 메서드
      */
-    private List<WeeklyMissionResponseDTO.DailyMissionContent> getMissionsFromAI() {
+    private List<WeeklyMissionResponseDTO.DailyMissionContent> getMissionsFromAI(Long coupleId) {
         try {
             // HTTP 요청 헤더 설정
             HttpHeaders headers = new HttpHeaders();
@@ -101,7 +98,7 @@ public class DailyMissionService {
 
             // 요청 DTO 생성
             WeeklyMissionRequestDTO requestDTO = new WeeklyMissionRequestDTO(
-                    LocalDate.now()
+                    coupleId
             );
 
             // HTTP 엔티티 생성

@@ -1,10 +1,7 @@
 package com.loveforest.loveforest.domain.room.controller;
 
 import com.loveforest.loveforest.domain.auth.dto.LoginInfo;
-import com.loveforest.loveforest.domain.room.dto.PublicRoomResponseDTO;
-import com.loveforest.loveforest.domain.room.dto.RoomDecorationRequestDTO;
-import com.loveforest.loveforest.domain.room.dto.RoomFurnitureUpdateRequestDTO;
-import com.loveforest.loveforest.domain.room.dto.RoomResponseDTO;
+import com.loveforest.loveforest.domain.room.dto.*;
 import com.loveforest.loveforest.domain.room.service.RoomService;
 import com.loveforest.loveforest.domain.user.exception.LoginRequiredException;
 import com.loveforest.loveforest.exception.ErrorResponse;
@@ -64,12 +61,12 @@ public class RoomController {
             }
     )
     @PostMapping("/decorate")
-    public ResponseEntity<String> decorateRoom(@AuthenticationPrincipal LoginInfo loginInfo, @RequestBody RoomDecorationRequestDTO request) {
+    public ResponseEntity<RoomDecorationResponseDTO> decorateRoom(@AuthenticationPrincipal LoginInfo loginInfo, @RequestBody RoomDecorationRequestDTO request) {
         if (loginInfo == null) {
             throw new LoginRequiredException();
         }
-        roomService.decorateRoom(request, loginInfo.getCoupleId());
-        return ResponseEntity.ok("가구 배치가 완료되었습니다.");
+        RoomDecorationResponseDTO response = roomService.decorateRoom(request, loginInfo.getCoupleId());
+        return ResponseEntity.ok(response);
     }
 
     @Operation(

@@ -3,10 +3,7 @@ package com.loveforest.loveforest.domain.room.service;
 
 import com.loveforest.loveforest.domain.couple.entity.Couple;
 import com.loveforest.loveforest.domain.couple.repository.CoupleRepository;
-import com.loveforest.loveforest.domain.room.dto.PublicRoomResponseDTO;
-import com.loveforest.loveforest.domain.room.dto.RoomDecorationRequestDTO;
-import com.loveforest.loveforest.domain.room.dto.RoomFurnitureUpdateRequestDTO;
-import com.loveforest.loveforest.domain.room.dto.RoomResponseDTO;
+import com.loveforest.loveforest.domain.room.dto.*;
 import com.loveforest.loveforest.domain.room.entity.Furniture;
 import com.loveforest.loveforest.domain.room.entity.FurnitureLayout;
 import com.loveforest.loveforest.domain.room.entity.Room;
@@ -82,7 +79,7 @@ public class RoomService {
      * @throws FurnitureOverlapException 가구가 겹치는 경우 발생
      */
     @Transactional
-    public void decorateRoom(RoomDecorationRequestDTO request, Long coupleId) {
+    public RoomDecorationResponseDTO decorateRoom(RoomDecorationRequestDTO request, Long coupleId) {
         Room room = roomRepository.findByCoupleId(coupleId)
                 .orElseThrow(RoomNotFoundException::new);
 
@@ -102,10 +99,25 @@ public class RoomService {
 
         // 5. 가구 배치
         room.addFurnitureLayout(newLayout);
-        roomRepository.save(room);
+        Room savedRoom = roomRepository.save(room);
 
         log.info("가구 배치 완료 - coupleId: {}, furnitureId: {}, position: ({}, {})",
                 coupleId, furniture.getId(), request.getPositionX(), request.getPositionY());
+        // 6. 저장된 레이아웃 조회 (가장 최근에 추가된 레이아웃)
+        FurnitureLayout savedLayout = savedRoom.getFurnitureLayouts()
+                .get(savedRoom.getFurnitureLayouts().size() - 1);
+
+        // 7. 응답 DTO 생성 및 반환
+        return RoomDecorationResponseDTO.builder()
+                .layoutId(savedLayout.getId())
+                .furnitureId(furniture.getId())
+                .furnitureName(furniture.getName())
+                .positionX(savedLayout.getPositionX())
+                .positionY(savedLayout.getPositionY())
+                .rotation(savedLayout.getRotation())
+                .width(furniture.getWidth())
+                .height(furniture.getHeight())
+                .build();
     }
 
     private void validateFurnitureOwnership(Long coupleId, Long furnitureId) {

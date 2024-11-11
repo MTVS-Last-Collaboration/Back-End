@@ -36,6 +36,11 @@ public enum ErrorCode {
     INVALID_ROOM_CREATION(HttpStatus.BAD_REQUEST, "Invalid Room Creation", "방 생성에 필요한 데이터가 유효하지 않습니다.", "ROOM-006"),
     ROOM_CREATION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "Room Creation Failed", "방 생성 중 오류가 발생했습니다.", "ROOM-007"),
     FURNITURE_NOT_IN_INVENTORY(HttpStatus.BAD_REQUEST, "Furniture Not In Inventory", "보유하지 않은 가구입니다.", "ROOM-008"),
+    WALLPAPER_NOT_FOUND(HttpStatus.NOT_FOUND, "Wallpaper Not Found", "해당 벽지를 찾을 수 없습니다.", "ROOM-009"),
+    WALLPAPER_NOT_IN_INVENTORY(HttpStatus.BAD_REQUEST, "Wallpaper Not In Inventory", "보유하지 않은 벽지입니다.", "ROOM-010"),
+    FLOOR_NOT_FOUND(HttpStatus.NOT_FOUND, "Floor Not Found", "해당 바닥을 찾을 수 없습니다.", "ROOM-011"),
+    FLOOR_NOT_IN_INVENTORY(HttpStatus.BAD_REQUEST, "Floor Not In Inventory", "보유하지 않은 바닥입니다.", "ROOM-012"),
+    INVALID_ROOM_ACCESS(HttpStatus.BAD_REQUEST, "Invalid Room Access", "잘못된 방 접근입니다.", "ROOM-013"),
 
     // Chat 관련 에러
     CHAT_NOT_FOUND(HttpStatus.NOT_FOUND, "Chat Not Found", "대화 이력이 존재하지 않습니다.", "CHAT-001"),

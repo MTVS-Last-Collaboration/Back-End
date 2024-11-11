@@ -27,18 +27,33 @@ public class Room {
     @OneToMany(mappedBy = "room", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<FurnitureLayout> furnitureLayouts = new ArrayList<>(); // 방 안의 가구 배치 정보
 
-    @OneToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "wallpaper_id")
     private Wallpaper wallpaper;
 
-    @OneToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "floor_id")
     private Floor floor;
+
 
     // 커플을 인자로 받는 생성자 추가
     public Room(Couple couple) {
         this.couple = couple;
         this.furnitureLayouts = new ArrayList<>(); // 가구 배치 초기화
+    }
+
+    /**
+     * 벽지 설정 메서드
+     */
+    public void setWallpaper(Wallpaper wallpaper) {
+        this.wallpaper = wallpaper;
+    }
+
+    /**
+     * 바닥 설정 메서드
+     */
+    public void setFloor(Floor floor) {
+        this.floor = floor;
     }
 
 

@@ -63,7 +63,7 @@ public class FlowerService {
         }
 
         // 기분 상태가 '상' 또는 '중'인 경우에만 moodCount 증가
-        if ("상".equals(mood) || "중".equals(mood)) {
+        if ("긍정".equals(mood) || "중립".equals(mood)) {
             flower.incrementMoodCount();  // moodCount 증가
             flower.getUser().getCouple().addPoints(10);       // 커플 포인트 추가
             if (flower.getMoodCount() >= 30) {

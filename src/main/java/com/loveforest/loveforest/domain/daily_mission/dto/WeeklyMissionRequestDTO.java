@@ -8,5 +8,5 @@ import java.time.LocalDate;
 @Getter
 @AllArgsConstructor
 public class WeeklyMissionRequestDTO {
-    private LocalDate startDate;  // 미션 시작 날짜
+    private Long coupleId;  // 미션 시작 날짜
 }

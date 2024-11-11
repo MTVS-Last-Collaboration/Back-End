@@ -38,7 +38,7 @@ public class DailyMissionController {
         }
 
         log.info("일주일치 미션 수동 생성 요청 - 요청자 ID: {}", loginInfo.getUserId());
-        dailyMissionService.generateWeeklyMissionsManually();
+        dailyMissionService.generateWeeklyMissionsManually(loginInfo.getCoupleId());
         return ResponseEntity.ok("일주일치 미션이 성공적으로 생성되었습니다.");
     }
 

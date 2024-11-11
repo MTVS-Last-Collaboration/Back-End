@@ -69,6 +69,8 @@ public enum ErrorCode {
     DAILY_MISSION_ALREADY_EXISTS(HttpStatus.CONFLICT, "Daily Mission Already Exists", "해당 날짜에 이미 미션이 존재합니다.", "MISSION-004"),
     MISSION_GENERATION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "Mission Generation Failed", "미션 생성 중 오류가 발생했습니다.", "MISSION-005"),
     AI_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "AI Server Error", "AI 서버와의 통신 중 오류가 발생했습니다.", "MISSION-006"),
+    MISSION_ALREADY_COMPLETED(HttpStatus.BAD_REQUEST, "Mission Already Completed", "이미 완료된 미션은 수정할 수 없습니다.", "MISSION-007"
+    ),
 
     // Photo 관련 에러
     PHOTO_NOT_FOUND(HttpStatus.NOT_FOUND, "Photo Not Found", "해당 사진을 찾을 수 없습니다.", "PHOTO-001"),

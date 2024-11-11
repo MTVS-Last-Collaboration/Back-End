@@ -45,9 +45,12 @@ public class RoomServiceImpl implements RoomService {
 
         validateFurniturePosition(room, request);
 
+        // 1. FurnitureLayout을 먼저 저장하여 ID 생성
         FurnitureLayout newLayout = createFurnitureLayout(furniture, request);
-        room.addFurnitureLayout(newLayout);
+        FurnitureLayout savedLayout = furnitureLayoutRepository.save(newLayout);
 
+        // 2. 저장된 Layout을 Room에 추가
+        room.addFurnitureLayout(savedLayout);
         Room savedRoom = roomRepository.save(room);
         return createDecorationResponse(savedRoom, newLayout);
     }

@@ -14,6 +14,7 @@ import com.loveforest.loveforest.domain.room.exception.*;
 import com.loveforest.loveforest.domain.room.repository.FurnitureLayoutRepository;
 import com.loveforest.loveforest.domain.room.repository.FurnitureRepository;
 import com.loveforest.loveforest.domain.room.repository.RoomRepository;
+import com.loveforest.loveforest.domain.user.repository.UserInventoryRepository;
 import com.loveforest.loveforest.exception.CustomException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,6 +31,7 @@ public class RoomService {
     private final RoomRepository roomRepository;
     private final FurnitureRepository furnitureRepository;
     private final FurnitureLayoutRepository furnitureLayoutRepository;
+    private final UserInventoryRepository userInventoryRepository;
 
     /**
      * 커플의 방에 가구를 배치하는 메서드
@@ -87,18 +89,31 @@ public class RoomService {
         Furniture furniture = furnitureRepository.findById(request.getFurnitureId())
                 .orElseThrow(FurnitureNotFoundException::new);
 
-        // 가구 배치 중복 확인 (겹치는 영역이 있는지)
-        for (FurnitureLayout existingLayout : room.getFurnitureLayouts()) {
-            if (isOverlap(existingLayout, request.getPositionX(), request.getPositionY(), furniture.getWidth(), furniture.getHeight())) {
-                throw new FurnitureOverlapException();
-            }
-        }
+        // 3. 인벤토리에서 해당 가구 보유 여부 확인
+        validateFurnitureOwnership(coupleId, request.getFurnitureId());
 
-        // 가구 배치 추가
-        FurnitureLayout layout = new FurnitureLayout(furniture, request.getPositionX(), request.getPositionY(), request.getRotation());
-        room.addFurnitureLayout(layout);
-        roomRepository.save(room);
+        // 4. 가구 배치 위치 검증
+        FurnitureLayout newLayout = new FurnitureLayout(
+                furniture,
+                request.getPositionX(),
+                request.getPositionY(),
+                request.getRotation()
+        );
     }
+
+    private void validateFurnitureOwnership(Long coupleId, Long furnitureId) {
+        boolean hasItem = userInventoryRepository.existsByUser_Couple_IdAndShopItem_Furniture_Id(
+                coupleId,
+                furnitureId
+        );
+
+        if (!hasItem) {
+            log.error("가구 보유 확인 실패 - coupleId: {}, furnitureId: {}", coupleId, furnitureId);
+            throw new FurnitureNotInInventoryException();
+        }
+    }
+
+
 
     /**
      * 가구 배치 시 겹침 여부를 확인하는 내부 메서드

@@ -159,16 +159,6 @@ public class DailyMissionController {
                                             value = """
                                             [
                                               {
-                                                "missionNumber": 2,
-                                                "missionDate": "2024-11-08",
-                                                "missionContent": "서로에게 가장 고마웠던 순간은?",
-                                                "partner1Mood": "감동",
-                                                "partner1Answer": "아플 때 병원에 데려다줘서 고마웠어요.",
-                                                "partner2Mood": "행복",
-                                                "partner2Answer": "힘들 때 응원해줘서 고마웠어요.",
-                                                "completed": true
-                                              },
-                                              {
                                                 "missionNumber": 1,
                                                 "missionDate": "2024-11-07",
                                                 "missionContent": "처음 만났을 때 기억나는 점은?",
@@ -176,6 +166,16 @@ public class DailyMissionController {
                                                 "partner1Answer": "첫 인상이 정말 좋았어요.",
                                                 "partner2Mood": "기쁨",
                                                 "partner2Answer": "웃는 모습이 예뻤어요.",
+                                                "completed": true
+                                              },
+                                              {
+                                                "missionNumber": 2,
+                                                "missionDate": "2024-11-08",
+                                                "missionContent": "서로에게 가장 고마웠던 순간은?",
+                                                "partner1Mood": "감동",
+                                                "partner1Answer": "아플 때 병원에 데려다줘서 고마웠어요.",
+                                                "partner2Mood": "행복",
+                                                "partner2Answer": "힘들 때 응원해줘서 고마웠어요.",
                                                 "completed": true
                                               }
                                             ]

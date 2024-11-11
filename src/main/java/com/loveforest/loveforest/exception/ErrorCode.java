@@ -35,6 +35,7 @@ public enum ErrorCode {
     ROOM_ALREADY_EXISTS(HttpStatus.CONFLICT, "Room Already Exists", "이미 해당 커플의 방이 존재합니다.", "ROOM-005"),
     INVALID_ROOM_CREATION(HttpStatus.BAD_REQUEST, "Invalid Room Creation", "방 생성에 필요한 데이터가 유효하지 않습니다.", "ROOM-006"),
     ROOM_CREATION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "Room Creation Failed", "방 생성 중 오류가 발생했습니다.", "ROOM-007"),
+    FURNITURE_NOT_IN_INVENTORY(HttpStatus.BAD_REQUEST, "Furniture Not In Inventory", "보유하지 않은 가구입니다.", "ROOM-008"),
 
     // Chat 관련 에러
     CHAT_NOT_FOUND(HttpStatus.NOT_FOUND, "Chat Not Found", "대화 이력이 존재하지 않습니다.", "CHAT-001"),

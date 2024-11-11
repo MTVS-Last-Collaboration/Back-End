@@ -63,7 +63,7 @@ public class ShopController {
                     )
             }
     )
-    public ResponseEntity<List<ShopItemDTO>> getShopItems(@AuthenticationPrincipal LoginInfo loginInfo, @PathVariable ItemType itemType) {
+    public ResponseEntity<List<ShopItemDTO>> getShopItems(@AuthenticationPrincipal LoginInfo loginInfo, @PathVariable("itemType") ItemType itemType) {
         if (loginInfo == null) {
             throw new LoginRequiredException();
         }

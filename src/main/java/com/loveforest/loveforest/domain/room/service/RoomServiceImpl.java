@@ -46,7 +46,7 @@ public class RoomServiceImpl implements RoomService {
         validateFurniturePosition(room, request);
 
         // 1. FurnitureLayout을 먼저 저장하여 ID 생성
-        FurnitureLayout newLayout = createFurnitureLayout(furniture, request);
+        FurnitureLayout newLayout = createFurnitureLayout(room, furniture, request);
         FurnitureLayout savedLayout = furnitureLayoutRepository.save(newLayout);
 
         // 2. 저장된 Layout을 Room에 추가
@@ -278,13 +278,15 @@ public class RoomServiceImpl implements RoomService {
                 .orElseThrow(FloorNotFoundException::new);
     }
 
-    private FurnitureLayout createFurnitureLayout(Furniture furniture, RoomDecorationRequestDTO request) {
-        return new FurnitureLayout(
+    private FurnitureLayout createFurnitureLayout(Room room, Furniture furniture, RoomDecorationRequestDTO request) {
+        FurnitureLayout layout = new FurnitureLayout(
                 furniture,
                 request.getPositionX(),
                 request.getPositionY(),
                 request.getRotation()
         );
+        layout.setRoom(room); // Room 관계 설정
+        return layout;
     }
 
     // 가구 충돌 검사를 위해 메서드 시그니처 수정

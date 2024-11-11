@@ -3,12 +3,11 @@ package com.loveforest.loveforest.domain.couple.service;
 import com.loveforest.loveforest.domain.couple.dto.CoupleCodeResponseDTO;
 import com.loveforest.loveforest.domain.couple.dto.CoupleResponseDTO;
 import com.loveforest.loveforest.domain.couple.entity.Couple;
-import com.loveforest.loveforest.domain.couple.exception.CoupleAlreadyExists;
 import com.loveforest.loveforest.domain.couple.exception.CoupleCodeAlreadyUsedException;
 import com.loveforest.loveforest.domain.couple.exception.CoupleNotFoundException;
 import com.loveforest.loveforest.domain.couple.repository.CoupleRepository;
 import com.loveforest.loveforest.domain.pet.service.PetService;
-import com.loveforest.loveforest.domain.room.service.RoomService;
+import com.loveforest.loveforest.domain.room.service.RoomServiceImpl;
 import com.loveforest.loveforest.domain.user.entity.User;
 import com.loveforest.loveforest.domain.user.exception.UserNotFoundException;
 import com.loveforest.loveforest.domain.user.repository.UserRepository;
@@ -29,7 +28,7 @@ public class CoupleService {
     private final CoupleRepository coupleRepository;
     private final UserRepository userRepository;
     private final PetService petService; // PetService 추가
-    private final RoomService roomService;
+    private final RoomServiceImpl roomServiceImpl;
 
 
     public String generateCoupleCode() {
@@ -89,7 +88,7 @@ public class CoupleService {
         // 커플에 대한 Pet & Room 생성
         if (targetCouple.getUsers().size() == 2) {
             petService.createPetForCouple(targetCouple);
-            roomService.createRoom(targetCouple);
+            roomServiceImpl.createRoom(targetCouple);
         }
 
 

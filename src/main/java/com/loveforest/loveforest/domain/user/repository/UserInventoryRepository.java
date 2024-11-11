@@ -20,5 +20,9 @@ public interface UserInventoryRepository extends JpaRepository<UserInventory, Lo
             "WHERE ui.user.couple.id = :coupleId " +
             "AND ui.shopItem.furniture IS NOT NULL")
     List<UserInventory> findAllFurnitureByCouple(@Param("coupleId") Long coupleId);
+
+    boolean existsByUser_Couple_IdAndShopItem_Wallpaper_Id(Long coupleId, Long wallpaperId);
+
+    boolean existsByUser_Couple_IdAndShopItem_Floor_Id(Long coupleId, Long floorId);
 }
 

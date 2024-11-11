@@ -43,8 +43,6 @@ public class RoomServiceImpl implements RoomService {
         Room room = findRoomByCouple(coupleId);
         Furniture furniture = validateAndGetFurniture(coupleId, request.getFurnitureId());
 
-        validateFurniturePosition(room, request);
-
         // 1. FurnitureLayout을 먼저 저장하여 ID 생성
         FurnitureLayout newLayout = createFurnitureLayout(room, furniture, request);
         FurnitureLayout savedLayout = furnitureLayoutRepository.save(newLayout);
@@ -102,14 +100,6 @@ public class RoomServiceImpl implements RoomService {
                 .orElseThrow(FurnitureNotFoundException::new);
     }
 
-    private void validateFurniturePosition(Room room, RoomDecorationRequestDTO request) {
-        // 가구 위치 중복 검사 로직
-        boolean isOverlapping = room.getFurnitureLayouts().stream()
-                .anyMatch(layout -> isFurnitureOverlapping(layout, request));
-        if (isOverlapping) {
-            throw new FurnitureOverlapException();
-        }
-    }
 
     private boolean isFurnitureOverlapping(FurnitureLayout existing, RoomDecorationRequestDTO request) {
         // 가구 충돌 감지 로직 구현
@@ -142,16 +132,6 @@ public class RoomServiceImpl implements RoomService {
     public RoomDecorationResponseDTO moveFurniture(Long furnitureLayoutId, RoomFurnitureUpdateRequestDTO request) {
         FurnitureLayout layout = furnitureLayoutRepository.findById(furnitureLayoutId)
                 .orElseThrow(FurnitureLayoutNotFoundException::new);
-
-        // 이동할 위치에 다른 가구가 있는지 확인
-        Room room = layout.getRoom();
-        boolean isOverlapping = room.getFurnitureLayouts().stream()
-                .filter(existingLayout -> !existingLayout.getId().equals(furnitureLayoutId))
-                .anyMatch(existingLayout -> isFurnitureOverlapping(existingLayout, request));
-
-        if (isOverlapping) {
-            throw new FurnitureOverlapException();
-        }
 
         layout.setPosition(request.getPositionX(), request.getPositionY(), request.getRotation());
         furnitureLayoutRepository.save(layout);

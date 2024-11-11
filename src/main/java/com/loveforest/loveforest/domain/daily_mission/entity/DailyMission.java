@@ -4,9 +4,11 @@ import com.loveforest.loveforest.domain.couple.entity.Couple;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 import java.time.LocalDate;
 
+@Slf4j
 @Entity
 @Table(name = "tbl_daily_mission")
 @Getter
@@ -59,12 +61,17 @@ public class DailyMission {
     // 답변 업데이트 메서드
     public void updateAnswer(String mood, String answer, boolean isPartner1) {
         if (isPartner1) {
+            log.debug("파트너1 답변 업데이트 - 이전 mood: {}, answer: {}", this.partner1Mood, this.partner1Answer);
             this.partner1Mood = mood;
             this.partner1Answer = answer;
+            log.debug("파트너1 답변 업데이트 완료 - 새로운 mood: {}, answer: {}", mood, answer);
         } else {
+            log.debug("파트너2 답변 업데이트 - 이전 mood: {}, answer: {}", this.partner2Mood, this.partner2Answer);
             this.partner2Mood = mood;
             this.partner2Answer = answer;
+            log.debug("파트너2 답변 업데이트 완료 - 새로운 mood: {}, answer: {}", mood, answer);
         }
+
         checkCompletion();
     }
 
@@ -72,8 +79,8 @@ public class DailyMission {
     private void checkCompletion() {
         if (!this.partner1Answer.equals("null") && !this.partner2Answer.equals("null")) {
             this.isCompleted = true;
-            // 미션 완료 시 커플 포인트 추가
-            this.couple.addPoints(50);
+            this.couple.addPoints(50);  // 미션 완료 시 포인트 추가
+            log.info("미션 완료 처리 - 커플 포인트 50 추가됨");
         }
     }
 }

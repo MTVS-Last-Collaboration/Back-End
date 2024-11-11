@@ -213,7 +213,14 @@ public class DailyMissionService {
         boolean isPartner1 = isFirstPartner(coupleId, userId);
         mission.updateAnswer(mood, answer, isPartner1);
 
-        log.info("미션 답변 저장 완료 - 커플 ID: {}", coupleId);
+        // 변경된 미션 저장
+        DailyMission savedMission = dailyMissionRepository.save(mission);
+
+        // 저장된 결과 로깅
+        log.info("미션 답변 저장 완료 - 커플 ID: {}, 파트너1답변: {}, 파트너2답변: {}",
+                coupleId,
+                savedMission.getPartner1Answer(),
+                savedMission.getPartner2Answer());
     }
 
     private DailyMission getCurrentDailyMission(Long coupleId) {
@@ -223,6 +230,7 @@ public class DailyMissionService {
                     return new MissionNotFoundException();
                 });
     }
+
 
     private void validateAnswerSubmission(DailyMission mission, Long coupleId, Long userId) {
         boolean isPartner1 = isFirstPartner(coupleId, userId);

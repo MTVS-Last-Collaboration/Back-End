@@ -24,5 +24,7 @@ public interface UserInventoryRepository extends JpaRepository<UserInventory, Lo
     boolean existsByUser_Couple_IdAndShopItem_Wallpaper_Id(Long coupleId, Long wallpaperId);
 
     boolean existsByUser_Couple_IdAndShopItem_Floor_Id(Long coupleId, Long floorId);
+
+    List<UserInventory> findByUserId(Long userId);
 }
 

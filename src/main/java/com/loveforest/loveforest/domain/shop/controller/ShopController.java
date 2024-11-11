@@ -3,6 +3,7 @@ package com.loveforest.loveforest.domain.shop.controller;
 import com.loveforest.loveforest.domain.auth.dto.LoginInfo;
 import com.loveforest.loveforest.domain.shop.dto.PurchaseRequestDTO;
 import com.loveforest.loveforest.domain.shop.dto.PurchaseResponseDTO;
+import com.loveforest.loveforest.domain.shop.dto.PurchasedItemResponseDTO;
 import com.loveforest.loveforest.domain.shop.dto.ShopItemDTO;
 import com.loveforest.loveforest.domain.shop.entity.ItemType;
 import com.loveforest.loveforest.domain.shop.service.ShopService;
@@ -14,15 +15,18 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/shop")
 @RequiredArgsConstructor
@@ -31,6 +35,10 @@ public class ShopController {
 
     private final ShopService shopService;
 
+    /**
+     * 상품 목록 조회
+     *
+     */
     @GetMapping("/items/{itemType}")
     @Operation(
             summary = "상품 목록 조회",
@@ -70,6 +78,11 @@ public class ShopController {
         return ResponseEntity.ok(shopService.getItemsByType(itemType));
     }
 
+
+    /**
+     * 아이템 구매
+     *
+     */
     @PostMapping("/purchase")
     @Operation(
             summary = "아이템 구매",
@@ -105,6 +118,44 @@ public class ShopController {
                 loginInfo.getCoupleId()
         );
         return ResponseEntity.ok(response);
+    }
+
+
+    /**
+     * 구매한 아이템 목록 조회
+     *
+     */
+    @GetMapping("/purchased-items")
+    @Operation(
+            summary = "구매한 아이템 목록 조회",
+            description = "사용자가 구매한 모든 아이템의 목록을 조회합니다."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "조회 성공",
+                    content = @Content(
+                            mediaType = "application/json",
+                            array = @ArraySchema(schema = @Schema(implementation = PurchasedItemResponseDTO.class))
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "인증되지 않은 사용자",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+            )
+    })
+    public ResponseEntity<List<PurchasedItemResponseDTO>> getPurchasedItems(
+            @AuthenticationPrincipal LoginInfo loginInfo) {
+        if (loginInfo == null) {
+            throw new LoginRequiredException();
+        }
+
+        log.info("구매한 아이템 목록 조회 요청 - 사용자 ID: {}", loginInfo.getUserId());
+        List<PurchasedItemResponseDTO> items = shopService.getPurchasedItems(loginInfo.getUserId());
+        log.info("구매한 아이템 목록 조회 완료 - 조회된 아이템 수: {}", items.size());
+
+        return ResponseEntity.ok(items);
     }
 
 }

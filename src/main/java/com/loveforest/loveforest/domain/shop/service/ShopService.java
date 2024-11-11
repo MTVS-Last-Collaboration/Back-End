@@ -8,6 +8,7 @@ import com.loveforest.loveforest.domain.room.entity.Furniture;
 import com.loveforest.loveforest.domain.room.entity.Wallpaper;
 import com.loveforest.loveforest.domain.shop.config.ShopValidator;
 import com.loveforest.loveforest.domain.shop.dto.PurchaseResponseDTO;
+import com.loveforest.loveforest.domain.shop.dto.PurchasedItemResponseDTO;
 import com.loveforest.loveforest.domain.shop.dto.ShopItemDTO;
 import com.loveforest.loveforest.domain.shop.entity.ItemType;
 import com.loveforest.loveforest.domain.shop.entity.PurchaseHistory;
@@ -166,5 +167,48 @@ public class ShopService {
             builder.number(floor.getFloorNumber())
                     .name(floor.getName());
         }
+    }
+
+    @Transactional(readOnly = true)
+    public List<PurchasedItemResponseDTO> getPurchasedItems(Long userId) {
+        // 해당 사용자의 구매 이력 조회
+        List<UserInventory> inventory = userInventoryRepository.findByUserId(userId);
+
+        return inventory.stream()
+                .map(this::convertToPurchasedItemDTO)
+                .collect(Collectors.toList());
+    }
+
+    private PurchasedItemResponseDTO convertToPurchasedItemDTO(UserInventory inventory) {
+        ShopItem shopItem = inventory.getShopItem();
+        PurchasedItemResponseDTO.PurchasedItemResponseDTOBuilder builder =
+                PurchasedItemResponseDTO.builder()
+                        .itemId(shopItem.getId())
+                        .itemType(shopItem.getItemType().toString())
+                        .itemName(shopItem.getName())
+                        .purchasedAt(inventory.getAcquiredAt())
+                        .pricePaid(shopItem.getPrice());
+
+        // 아이템 타입별로 추가 정보 설정
+        switch (shopItem.getItemType()) {
+            case FURNITURE:
+                if (shopItem.getFurniture() != null) {
+                    builder.width(shopItem.getFurniture().getWidth())
+                            .height(shopItem.getFurniture().getHeight());
+                }
+                break;
+            case WALLPAPER:
+                if (shopItem.getWallpaper() != null) {
+                    builder.number(shopItem.getWallpaper().getWallpaperNumber());
+                }
+                break;
+            case FLOOR:
+                if (shopItem.getFloor() != null) {
+                    builder.number(shopItem.getFloor().getFloorNumber());
+                }
+                break;
+        }
+
+        return builder.build();
     }
 }

@@ -136,8 +136,8 @@ public class DailyMissionController {
     @PostMapping("/answer")
     public ResponseEntity<String> saveAnswer(
             @Parameter(hidden = true) @AuthenticationPrincipal LoginInfo loginInfo,
-            @Parameter(description = "사용자의 현재 기분", required = true) @RequestParam String mood,
-            @Parameter(description = "미션에 대한 답변", required = true) @RequestParam String answer) {
+            @Parameter(description = "사용자의 현재 기분", required = true) @RequestParam("mood") String mood,
+            @Parameter(description = "미션에 대한 답변", required = true) @RequestParam("answer") String answer) {
         if (loginInfo == null) {
             throw new LoginRequiredException();
         }

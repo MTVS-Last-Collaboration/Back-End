@@ -1,7 +1,7 @@
 {
   "AWSEBDockerrunVersion": "1",
   "Image": {
-    "Name":  "ecr url:tag명",
+    "Name":  "221082200491.dkr.ecr.ap-northeast-2.amazonaws.com/loveforest:loveforest",
     "Update": "true"
   },
   "Ports": [

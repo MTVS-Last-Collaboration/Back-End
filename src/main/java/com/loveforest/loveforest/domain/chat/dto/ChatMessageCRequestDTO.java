@@ -15,6 +15,4 @@ public class ChatMessageCRequestDTO {
     @Schema(description = "메시지 내용", example = "안녕하세요!")
     private String messages; // 메시지 내용
 
-    @Schema(description = "반려몽 레벨", example = "1")
-    private Long petLevel; // 반려몽 레벨
 }

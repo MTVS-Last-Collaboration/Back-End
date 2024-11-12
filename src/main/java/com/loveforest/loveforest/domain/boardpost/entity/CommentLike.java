@@ -22,6 +22,9 @@ public class CommentLike {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
+    @Version  // 낙관적 락을 위한 버전 필드 추가
+    private Long version;
+
     public CommentLike(Comment comment, User user) {
         this.comment = comment;
         this.user = user;

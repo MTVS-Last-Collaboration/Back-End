@@ -210,10 +210,10 @@ public class DailyMissionService {
         DailyMission mission = getCurrentDailyMission(coupleId);
 
         // 미션이 완료된 경우 수정 불가
-        if (mission.isCompleted()) {
-            log.warn("이미 완료된 미션은 수정할 수 없음 - 커플 ID: {}, 미션 ID: {}", coupleId, mission.getId());
-            throw new MissionAlreadyCompletedException();
-        }
+//        if (mission.isCompleted()) {
+//            log.warn("이미 완료된 미션은 수정할 수 없음 - 커플 ID: {}, 미션 ID: {}", coupleId, mission.getId());
+//            throw new MissionAlreadyCompletedException();
+//        }
 
         boolean isPartner1 = isFirstPartner(coupleId, userId);
 

@@ -52,6 +52,7 @@ public enum ErrorCode {
     DAILY_TOPIC_ALREADY_EXIST(HttpStatus.CONFLICT, "Already DailyTopic Existed", "이미 해당 토픽이 존재합니다.", "TOPIC-004"),
     LIKE_ALREADY_EXIST(HttpStatus.CONFLICT, "Already Like Existed", "이미 좋아요를 눌렀습니다.", "TOPIC-005"),
     LIKE_NOT_FOUND(HttpStatus.NOT_FOUND, "Like Not Found", "좋아요가 추가되지 않은 답변입니다.", "TOPIC-006"),
+    COMMENT_LIKE_OPERATION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "Comment Like Operation Failed", "댓글 좋아요 작업 처리 중 오류가 발생했습니다.", "COMMENT-007"),
 
     // Pet 관련 에러
     PET_NOT_FOUND(HttpStatus.NOT_FOUND, "Pet Not Found", "해당 커플에 연동된 팻을 찾을 수 없습니다.", "PET-001"),

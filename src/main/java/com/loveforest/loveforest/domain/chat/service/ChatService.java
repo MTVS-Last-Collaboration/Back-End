@@ -6,6 +6,8 @@ import com.loveforest.loveforest.domain.chat.entity.ChatMessage;
 import com.loveforest.loveforest.domain.chat.exception.ChatNotFoundException;
 import com.loveforest.loveforest.domain.chat.repository.ChatMessageRepository;
 import com.loveforest.loveforest.domain.chat.dto.AiResponseDTO;
+import com.loveforest.loveforest.domain.pet.entity.Pet;
+import com.loveforest.loveforest.domain.pet.repository.PetRepository;
 import com.loveforest.loveforest.exception.common.InvalidInputException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @Slf4j
@@ -22,22 +25,29 @@ public class ChatService {
     private final ChatMessageRepository chatMessageRepository;
     private final RestTemplate restTemplate;
     private final String aiServerUrl;
+    private final PetRepository petRepository;
 
     @Autowired
     public ChatService(ChatMessageRepository chatMessageRepository,
                        RestTemplate restTemplate,
-                       @Value("${ai.server.url}") String aiServerUrl) { // 설정 파일에서 URL 주입
+                       @Value("${ai.server.url}") String aiServerUrl,
+                       PetRepository petRepository) { // 설정 파일에서 URL 주입
         this.chatMessageRepository = chatMessageRepository;
         this.restTemplate = restTemplate;
         this.aiServerUrl = aiServerUrl;
+        this.petRepository = petRepository;
     }
 
-    public ChatMessageResponseDTO processMessage(Long senderId, Long coupleId, String message, Long petLevel) {
+    public ChatMessageResponseDTO processMessage(Long senderId, Long coupleId, String message) {
 
         // 예외 처리: 만약 메시지가 비어있거나 null이라면 예외 발생
         if (message == null || message.trim().isEmpty()) {
             throw new InvalidInputException();
         }
+
+        Optional<Pet> pet = petRepository.findByCoupleId(coupleId);
+        int petLevel = pet.map(Pet::getLevel).orElse(0);
+
 
         // AI 서버에 메시지 전송
         String aiResponse = callAiServer(senderId, message, coupleId, petLevel); // senderId도 포함
@@ -52,7 +62,7 @@ public class ChatService {
     }
 
 
-    private String callAiServer(Long senderId, String message, Long coupleId, Long petLevel) {
+    private String callAiServer(Long senderId, String message, Long coupleId, int petLevel) {
         ChatMessageRequestDTO requestDTO = new ChatMessageRequestDTO(senderId, message, coupleId, petLevel);
         log.info("Sending POST request to AI server at URL: {} with payload: {}", aiServerUrl + "/chatbot", requestDTO);
 

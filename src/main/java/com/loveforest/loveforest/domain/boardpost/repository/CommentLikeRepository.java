@@ -6,10 +6,15 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface CommentLikeRepository extends JpaRepository<CommentLike, Long> {
-    Optional<CommentLike> findByCommentIdAndUserId(Long commentId, Long userId);
+    @Query("SELECT cl FROM CommentLike cl WHERE cl.comment.id = :commentId AND cl.user.id = :userId")
+    List<CommentLike> findByCommentIdAndUserId(
+            @Param("commentId") Long commentId,
+            @Param("userId") Long userId
+    );
 
     boolean existsByCommentIdAndUserId(Long commentId, Long userId);
 

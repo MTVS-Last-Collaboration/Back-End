@@ -91,39 +91,27 @@ public class CommentService {
     @Transactional
     public LikeResponseDTO unlikeComment(Long commentId, Long userId) {
         try {
-            log.debug("댓글 좋아요 취소 시작 - 댓글 ID: {}, 사용자 ID: {}", commentId, userId);
+            List<CommentLike> likes = commentLikeRepository
+                    .findByCommentIdAndUserId(commentId, userId);
 
-            // 1. 댓글 엔티티 조회 및 검증
-            Comment comment = commentRepository.findById(commentId)
-                    .orElseThrow(() -> new IllegalArgumentException("댓글을 찾을 수 없습니다."));
+            if (likes.isEmpty()) {
+                throw new NotLikedException();
+            }
 
-            // 2. 좋아요 엔티티 조회 및 검증
-            CommentLike commentLike = commentLikeRepository.findByCommentIdAndUserId(commentId, userId)
-                    .orElseThrow(NotLikedException::new);
+            // 중복된 좋아요가 있다면 모두 제거
+            commentLikeRepository.deleteAll(likes);
 
-            // 3. 트랜잭션 내에서 좋아요 삭제 및 카운트 감소
-            commentLikeRepository.delete(commentLike);
-
-            // 4. 댓글의 좋아요 카운트 감소
+            Comment comment = likes.get(0).getComment();
             comment.decrementLike();
             Comment savedComment = commentRepository.save(comment);
-
-            log.info("댓글 좋아요 취소 완료 - 댓글 ID: {}, 현재 좋아요 수: {}", commentId, savedComment.getLikeCount());
 
             return new LikeResponseDTO(
                     savedComment.getId(),
                     savedComment.getLikeCount(),
                     false
             );
-
-        } catch (NotLikedException e) {
-            log.warn("좋아요를 누르지 않은 댓글 - 댓글 ID: {}, 사용자 ID: {}", commentId, userId);
-            throw e;
-        } catch (IllegalArgumentException e) {
-            log.error("댓글을 찾을 수 없음 - 댓글 ID: {}", commentId);
-            throw e;
         } catch (Exception e) {
-            log.error("댓글 좋아요 취소 중 오류 발생 - 댓글 ID: {}, 오류: {}", commentId, e.getMessage(), e);
+            log.error("댓글 좋아요 취소 중 오류 발생", e);
             throw new CommentLikeOperationException();
         }
     }

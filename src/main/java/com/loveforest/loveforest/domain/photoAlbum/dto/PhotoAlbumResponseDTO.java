@@ -15,8 +15,14 @@ public class PhotoAlbumResponseDTO {
     @Schema(description = "이미지 URL", example = "https://s3.amazon.com/images/photo.jpg")
     private String imageUrl;
 
-    @Schema(description = "3D 오브젝트 URL", example = "https://s3.amazon.com/objects/model.zip")
+    @Schema(description = "3D 오브젝트 URL (.obj 파일)", example = "https://s3.amazon.com/objects/model.obj")
     private String objectUrl;
+
+    @Schema(description = "텍스처 이미지 URL (.png 파일)", example = "https://s3.amazon.com/textures/texture.png")
+    private String pngUrl;
+
+    @Schema(description = "재질 파일 URL (.mtl 파일)", example = "https://s3.amazon.com/materials/material.mtl")
+    private String materialUrl;
 
     @Schema(description = "X 좌표", example = "100.0")
     private Double positionX;

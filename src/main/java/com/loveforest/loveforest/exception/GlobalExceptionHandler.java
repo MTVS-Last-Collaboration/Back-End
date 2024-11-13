@@ -15,6 +15,7 @@ import com.loveforest.loveforest.domain.flower.exception.MaxMoodCountReachedExce
 import com.loveforest.loveforest.domain.flower.exception.MoodAnalysisException;
 import com.loveforest.loveforest.domain.pet.exception.MaxLevelReachedException;
 import com.loveforest.loveforest.domain.pet.exception.PetNotFoundException;
+import com.loveforest.loveforest.domain.photoAlbum.dto.ApiResponseDTO;
 import com.loveforest.loveforest.domain.photoAlbum.exception.DuplicatePhotoPositionException;
 import com.loveforest.loveforest.domain.photoAlbum.exception.PhotoNotFoundException;
 import com.loveforest.loveforest.domain.photoAlbum.exception.PhotoUploadFailedException;
@@ -86,28 +87,6 @@ public class GlobalExceptionHandler {
     }
 
     // 사진 관련 예외 처리
-    @ExceptionHandler(PhotoNotFoundException.class)
-    public ResponseEntity<ErrorResponse> handlePhotoNotFoundException(PhotoNotFoundException ex) {
-        log.error("사진을 찾을 수 없음 - {}", ex.getMessage());
-        return buildErrorResponse(
-                ex.getErrorCode().getStatus(),
-                ex.getErrorCode().getErrorType(),
-                ex.getErrorCode().getDescription(),
-                ex.getErrorCode().getCode()
-        );
-    }
-
-    @ExceptionHandler(PhotoUploadFailedException.class)
-    public ResponseEntity<ErrorResponse> handlePhotoUploadFailedException(PhotoUploadFailedException ex) {
-        log.error("사진 업로드 실패 - {}", ex.getMessage());
-        return buildErrorResponse(
-                ex.getErrorCode().getStatus(),
-                ex.getErrorCode().getErrorType(),
-                ex.getErrorCode().getDescription(),
-                ex.getErrorCode().getCode()
-        );
-    }
-
     @ExceptionHandler(DuplicatePhotoPositionException.class)
     public ResponseEntity<ErrorResponse> handleDuplicatePhotoPositionException(DuplicatePhotoPositionException ex) {
         log.error("중복된 사진 위치 - {}", ex.getMessage());
@@ -117,6 +96,30 @@ public class GlobalExceptionHandler {
                 ex.getErrorCode().getDescription(),
                 ex.getErrorCode().getCode()
         );
+    }
+
+    @ExceptionHandler(PhotoUploadFailedException.class)
+    public ResponseEntity<ApiResponseDTO<ErrorResponse>> handlePhotoUploadFailedException(
+            PhotoUploadFailedException e) {
+        log.error("사진 업로드 실패", e);
+        ErrorResponse errorResponse = new ErrorResponse();
+        errorResponse.setStatus(HttpStatus.BAD_REQUEST.value());
+        errorResponse.setMessage("사진 업로드에 실패했습니다.");
+        errorResponse.setTimestamp(LocalDateTime.now());
+        return ResponseEntity.badRequest()
+                .body(ApiResponseDTO.success("사진 업로드에 실패했습니다.", errorResponse));
+    }
+
+    @ExceptionHandler(PhotoNotFoundException.class)
+    public ResponseEntity<ApiResponseDTO<ErrorResponse>> handlePhotoNotFoundException(
+            PhotoNotFoundException e) {
+        log.error("사진을 찾을 수 없음", e);
+        ErrorResponse errorResponse = new ErrorResponse();
+        errorResponse.setStatus(HttpStatus.NOT_FOUND.value());
+        errorResponse.setMessage("사진을 찾을 수 없습니다.");
+        errorResponse.setTimestamp(LocalDateTime.now());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(ApiResponseDTO.success("사진을 찾을 수 없습니다.", errorResponse));
     }
 
     // 게시판 관련 예외 처리

@@ -1,4 +1,4 @@
-package com.loveforest.loveforest.config;
+package com.loveforest.loveforest.s3;
 
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;

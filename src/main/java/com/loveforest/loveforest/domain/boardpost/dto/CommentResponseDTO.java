@@ -1,5 +1,6 @@
 package com.loveforest.loveforest.domain.boardpost.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -28,6 +29,7 @@ public class CommentResponseDTO {
     @Schema(description = "댓글 좋아요 수", example = "1")
     private int likeCount;
 
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSSSS")
     @Schema(description = "댓글 생성일", example = "2023-01-01T12:00:00")
     private LocalDateTime createdDate;
 }

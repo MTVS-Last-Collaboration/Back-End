@@ -15,10 +15,16 @@ public class PhotoAlbum {
     private Long id;
 
     @Column(nullable = false)
-    private String imageUrl;  // S3에 저장된 이미지 URL
+    private String imageUrl;  // S3에 저장된 원본 이미지 URL
 
     @Column(nullable = false)
-    private String objectUrl; // S3에 저장된 3D 오브젝트 URL
+    private String objectUrl; // S3에 저장된 3D .obj 파일 URL
+
+    @Column(nullable = false)
+    private String pngUrl; // S3에 저장된 .png 파일 URL (텍스처)
+
+    @Column(nullable = false)
+    private String materialUrl; // S3에 저장된 .mtl 파일 URL (재질)
 
     @Column(nullable = false)
     private Double positionX;
@@ -31,9 +37,12 @@ public class PhotoAlbum {
     private User user;
 
     // 생성자
-    public PhotoAlbum(String imageUrl, String objectUrl, Double positionX, Double positionY, User user) {
+    public PhotoAlbum(String imageUrl, String objectUrl, String pngUrl, String materialUrl,
+                      Double positionX, Double positionY, User user) {
         this.imageUrl = imageUrl;
         this.objectUrl = objectUrl;
+        this.pngUrl = pngUrl;
+        this.materialUrl = materialUrl;
         this.positionX = positionX;
         this.positionY = positionY;
         this.user = user;

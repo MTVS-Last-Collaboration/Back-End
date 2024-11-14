@@ -37,6 +37,8 @@ public class S3Service {
         String fileName = UUID.randomUUID().toString() + extension;
         ObjectMetadata metadata = new ObjectMetadata();
         metadata.setContentLength(fileData.length);
+        // 브라우저에서 바로 보기 설정 추가
+        metadata.setContentDisposition("inline");
 
         try {
             // S3에 파일 업로드

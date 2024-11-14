@@ -5,15 +5,13 @@ import com.loveforest.loveforest.domain.boardpost.dto.LikeResponseDTO;
 import com.loveforest.loveforest.domain.boardpost.entity.Answer;
 import com.loveforest.loveforest.domain.boardpost.entity.Comment;
 import com.loveforest.loveforest.domain.boardpost.entity.CommentLike;
-import com.loveforest.loveforest.domain.boardpost.exception.AlreadyLikedException;
-import com.loveforest.loveforest.domain.boardpost.exception.AnswerNotFoundException;
-import com.loveforest.loveforest.domain.boardpost.exception.CommentsNotFoundException;
-import com.loveforest.loveforest.domain.boardpost.exception.NotLikedException;
+import com.loveforest.loveforest.domain.boardpost.exception.*;
 import com.loveforest.loveforest.domain.boardpost.repository.CommentLikeRepository;
 import com.loveforest.loveforest.domain.boardpost.repository.CommentRepository;
 import com.loveforest.loveforest.domain.user.entity.User;
 import com.loveforest.loveforest.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,6 +19,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class CommentService {
@@ -91,15 +90,30 @@ public class CommentService {
     // 댓글에 대한 좋아요 취소
     @Transactional
     public LikeResponseDTO unlikeComment(Long commentId, Long userId) {
-        Comment comment = commentRepository.findById(commentId)
-                .orElseThrow(() -> new IllegalArgumentException("댓글을 찾을 수 없습니다."));
+        try {
+            List<CommentLike> likes = commentLikeRepository
+                    .findByCommentIdAndUserId(commentId, userId);
 
-        CommentLike commentLike = commentLikeRepository.findByCommentIdAndUserId(commentId, userId)
-                .orElseThrow(NotLikedException::new);
+            if (likes.isEmpty()) {
+                throw new NotLikedException();
+            }
 
-        commentLikeRepository.delete(commentLike);
-        comment.decrementLike();
-        return new LikeResponseDTO(comment.getId(), comment.getLikeCount(), false);
+            // 중복된 좋아요가 있다면 모두 제거
+            commentLikeRepository.deleteAll(likes);
+
+            Comment comment = likes.get(0).getComment();
+            comment.decrementLike();
+            Comment savedComment = commentRepository.save(comment);
+
+            return new LikeResponseDTO(
+                    savedComment.getId(),
+                    savedComment.getLikeCount(),
+                    false
+            );
+        } catch (Exception e) {
+            log.error("댓글 좋아요 취소 중 오류 발생", e);
+            throw new CommentLikeOperationException();
+        }
     }
 
     // 중복 좋아요 확인

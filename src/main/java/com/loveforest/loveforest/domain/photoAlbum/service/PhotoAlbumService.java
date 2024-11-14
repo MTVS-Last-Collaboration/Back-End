@@ -5,25 +5,37 @@ import com.loveforest.loveforest.domain.photoAlbum.dto.PhotoAlbumRequestDTO;
 import com.loveforest.loveforest.domain.photoAlbum.dto.PhotoAlbumResponseDTO;
 import com.loveforest.loveforest.domain.photoAlbum.entity.PhotoAlbum;
 import com.loveforest.loveforest.domain.photoAlbum.exception.AIServerPhotoException;
+import com.loveforest.loveforest.domain.photoAlbum.exception.PhotoNotFoundException;
 import com.loveforest.loveforest.domain.photoAlbum.exception.PhotoUploadFailedException;
 import com.loveforest.loveforest.domain.photoAlbum.repository.PhotoAlbumRepository;
 import com.loveforest.loveforest.domain.user.entity.User;
 import com.loveforest.loveforest.domain.user.exception.UserNotFoundException;
 import com.loveforest.loveforest.domain.user.repository.UserRepository;
 import com.loveforest.loveforest.exception.common.InvalidInputException;
+import com.loveforest.loveforest.exception.common.UnauthorizedException;
 import com.loveforest.loveforest.s3.service.S3Service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.buffer.DataBuffer;
+import org.springframework.core.io.buffer.DataBufferUtils;
 import org.springframework.http.MediaType;
+import org.springframework.http.codec.multipart.FilePart;
+import org.springframework.http.codec.multipart.Part;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.reactive.function.BodyExtractors;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
+import reactor.core.publisher.Flux;
 
+import java.nio.ByteBuffer;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CountDownLatch;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -39,54 +51,182 @@ public class PhotoAlbumService {
     @Value("${ai.server.url}")
     private String aiServerUrl;
 
+    @Value("${cloud.aws.s3.bucket}")
+    private String bucketName;
+
+    /**
+     * 사진 및 3D 모델 저장
+     */
     public PhotoAlbumResponseDTO savePhoto(PhotoAlbumRequestDTO request, Long userId) {
+        List<String> uploadedUrls = new ArrayList<>(); // 저장된 파일 URL들
+
         try {
             // 1. 이미지 유효성 검사
             validateImage(request.getBase64Image());
 
             // 2. S3에 원본 이미지 업로드
             String imageUrl = uploadOriginalImage(request.getBase64Image());
+            uploadedUrls.add(imageUrl);
 
             // 3. AI 서버에 3D 변환 요청
-            byte[] modelData = convert3DModel(request);
+            List<byte[]> modelFiles = convert3DModel(request); // `.obj`, `.png`, `.mtl` 파일 받음
 
-            // 4. S3에 3D 모델 업로드
-            String objectUrl = uploadModelFile(modelData);
+            // 4. S3에 각 파일 업로드 및 URL 추가
+            String objUrl = s3Service.uploadFile(modelFiles.get(0), ".obj");
+            uploadedUrls.add(objUrl);
+            String pngUrl = s3Service.uploadFile(modelFiles.get(1), ".png");
+            uploadedUrls.add(pngUrl);
+            String mtlUrl = s3Service.uploadFile(modelFiles.get(2), ".mtl");
+            uploadedUrls.add(mtlUrl);
 
             // 5. DB에 정보 저장
-            return savePhotoAlbumData(imageUrl, objectUrl, request, userId);
-
-        } catch (IllegalArgumentException e) {
-            log.error("잘못된 입력 데이터: {}", e.getMessage());
-            throw new PhotoUploadFailedException();
-        } catch (Exception e) {
+            return savePhotoAlbumData(imageUrl, objUrl, pngUrl, mtlUrl, request, userId);
+        }catch (Exception e) {
             log.error("사진 업로드 처리 중 오류: {}", e.getMessage());
+            cleanupFailedUploads(uploadedUrls); // 파일 삭제
             throw new PhotoUploadFailedException();
         }
     }
 
+    /**
+     * 실패 시 업로드된 파일들 정리
+     */
+    private void cleanupFailedUploads(List<String> uploadedUrls) {
+        for (String url : uploadedUrls) {
+            s3Service.deleteFile(url);
+        }
+    }
+
+    /**
+     * 사진 삭제
+     */
+    @Transactional
+    public void deletePhoto(Long photoId, Long userId) {
+        PhotoAlbum photo = photoAlbumRepository.findById(photoId)
+                .orElseThrow(PhotoNotFoundException::new);
+
+        // 권한 확인
+        if (!photo.getUser().getId().equals(userId)) {
+            throw new UnauthorizedException();
+        }
+
+        try {
+            // S3에서 이미지와 3D 모델 파일 삭제
+            s3Service.deleteFile(photo.getImageUrl());
+            s3Service.deleteFile(photo.getObjectUrl());
+
+            // DB에서 데이터 삭제
+            photoAlbumRepository.delete(photo);
+
+            log.info("사진 및 3D 모델 삭제 완료 - photoId: {}", photoId);
+        } catch (Exception e) {
+            log.error("사진 삭제 중 오류 발생 - photoId: {}", photoId, e);
+            throw new PhotoNotFoundException();
+        }
+    }
+
+    /**
+     * 안전한 URL로 사진 조회
+     * Presigned URL을 사용하여 보안 강화
+     */
+    @Transactional(readOnly = true)
+    public PhotoAlbumResponseDTO getSecurePhoto(Long photoId, Long userId) {
+        PhotoAlbum photo = photoAlbumRepository.findById(photoId)
+                .orElseThrow(PhotoNotFoundException::new);
+
+        // 권한 확인
+        if (!photo.getUser().getId().equals(userId)) {
+            throw new UnauthorizedException();
+        }
+
+        // Presigned URL 생성 (1시간 유효)
+        String secureImageUrl = s3Service.generatePresignedUrl(
+                extractKeyFromUrl(photo.getImageUrl()), 60);
+        String secureObjectUrl = s3Service.generatePresignedUrl(
+                extractKeyFromUrl(photo.getObjectUrl()), 60);
+        String securePngUrl = s3Service.generatePresignedUrl(
+                extractKeyFromUrl(photo.getPngUrl()), 60);
+        String secureMaterialUrl = s3Service.generatePresignedUrl(
+                extractKeyFromUrl(photo.getMaterialUrl()), 60);
+
+        return new PhotoAlbumResponseDTO(
+                photo.getId(),
+                secureImageUrl,
+                secureObjectUrl,
+                securePngUrl,
+                secureMaterialUrl,
+                photo.getPositionX(),
+                photo.getPositionY()
+        );
+    }
+
+    /**
+     * 전체 사진 목록 조회 (Presigned URL 사용)
+     */
+    @Transactional(readOnly = true)
+    public List<PhotoAlbumResponseDTO> getSecurePhotos(Long userId) {
+        return photoAlbumRepository.findByUserId(userId).stream()
+                .map(photo -> {
+                    String secureImageUrl = s3Service.generatePresignedUrl(
+                            extractKeyFromUrl(photo.getImageUrl()), 60);
+                    String secureObjectUrl = s3Service.generatePresignedUrl(
+                            extractKeyFromUrl(photo.getObjectUrl()), 60);
+                    String secureTextureUrl = s3Service.generatePresignedUrl(
+                            extractKeyFromUrl(photo.getPngUrl()), 60);
+                    String secureMaterialUrl = s3Service.generatePresignedUrl(
+                            extractKeyFromUrl(photo.getMaterialUrl()), 60);
+
+                    return new PhotoAlbumResponseDTO(
+                            photo.getId(),
+                            secureImageUrl,
+                            secureObjectUrl,
+                            secureTextureUrl,
+                            secureMaterialUrl,
+                            photo.getPositionX(),
+                            photo.getPositionY()
+                    );
+                })
+                .collect(Collectors.toList());
+    }
+
+
+
+    private String extractKeyFromUrl(String url) {
+        return url.substring(url.lastIndexOf("/") + 1);
+    }
+
+
+
+    /**
+     * 이미지 유효성 검사
+     */
     private void validateImage(String base64Image) {
         if (base64Image == null || base64Image.isEmpty()) {
+            log.error("이미지가 비어있음 또는 null");
             throw new InvalidInputException();
         }
-        // Base64 형식 검증
-        if (!base64Image.matches("^data:image/.*;base64,.*")) {
+        if (!base64Image.matches("^[A-Za-z0-9+/=]+$")) {
+            log.error("이미지 형식이 유효하지 않음: {}", base64Image);
             throw new InvalidInputException();
         }
     }
 
+    /**
+     * 원본 이미지 업로드
+     */
     private String uploadOriginalImage(String base64Image) {
         byte[] imageData = Base64.getDecoder().decode(
-                base64Image.split(",")[1]  // "data:image/jpeg;base64," 부분 제거
+                base64Image // "data:image/jpeg;base64," 부분 제거
         );
         return s3Service.uploadFile(imageData, ".jpg");
     }
 
-    private byte[] convert3DModel(PhotoAlbumRequestDTO request) {
+    /**
+     * AI 서버에 3D 모델 변환 요청하여 .obj, .png, .mtl 파일을 List<byte[]>로 반환
+     */
+    private List<byte[]> convert3DModel(PhotoAlbumRequestDTO request) {
         WebClient webClient = webClientBuilder.baseUrl(aiServerUrl)
-                .codecs(configurer -> configurer
-                        .defaultCodecs()
-                        .maxInMemorySize(10 * 1024 * 1024))  // 10MB로 설정
+                .codecs(configurer -> configurer.defaultCodecs().maxInMemorySize(10 * 1024 * 1024)) // 10MB 설정
                 .build();
 
         AIServerRequest aiRequest = new AIServerRequest(
@@ -96,41 +236,44 @@ public class PhotoAlbumService {
         );
 
         try {
-            byte[] modelData = webClient.post()
+            return webClient.post()
                     .uri("/convert_3d_model")
                     .contentType(MediaType.APPLICATION_JSON)
                     .bodyValue(aiRequest)
-                    .accept(MediaType.APPLICATION_OCTET_STREAM)
+                    .accept(MediaType.MULTIPART_MIXED)
                     .retrieve()
-                    .bodyToMono(byte[].class)
-                    .block(Duration.ofMinutes(2));  // 2분 타임아웃
-
-            if (modelData == null || !isValidZipFile(modelData)) {
-                throw new AIServerPhotoException();
-            }
-
-            return modelData;
+                    .bodyToFlux(DataBuffer.class)
+                    .map(this::toByteArray) // DataBuffer -> byte[] 변환
+                    .collectList() // List<byte[]>로 수집
+                    .block(Duration.ofSeconds(100)); // 10초 내 완료되지 않으면 타임아웃 발생
 
         } catch (WebClientResponseException e) {
-            log.error("AI 서버 오류: {} - {}", e.getStatusCode(), e.getMessage());
+            log.error("AI 서버 오류: {}", e.getMessage(), e);
             throw new AIServerPhotoException();
+        } catch (Exception e) {
+            log.error("사진 업로드 처리 중 오류: {}", e.getMessage(), e);
+            throw new PhotoUploadFailedException();
         }
     }
 
-    private boolean isValidZipFile(byte[] data) {
-        // ZIP 파일 시그니처 확인
-        return data.length >= 4 &&
-                data[0] == 0x50 && data[1] == 0x4B &&
-                data[2] == 0x03 && data[3] == 0x04;
+
+    // DataBuffer를 byte[]로 변환하는 메서드
+    private byte[] toByteArray(DataBuffer dataBuffer) {
+        byte[] bytes = new byte[dataBuffer.readableByteCount()];
+        dataBuffer.read(bytes);
+        DataBufferUtils.release(dataBuffer);  // DataBuffer 메모리 해제
+        return bytes;
     }
 
-    private String uploadModelFile(byte[] modelData) {
-        return s3Service.uploadFile(modelData, ".zip");
-    }
 
+    /**
+     * DB에 사진 정보 저장
+     */
     private PhotoAlbumResponseDTO savePhotoAlbumData(
             String imageUrl,
-            String objectUrl,
+            String objUrl,
+            String pngUrl,
+            String mtlUrl,
             PhotoAlbumRequestDTO request,
             Long userId) {
 
@@ -139,7 +282,9 @@ public class PhotoAlbumService {
 
         PhotoAlbum photoAlbum = new PhotoAlbum(
                 imageUrl,
-                objectUrl,
+                objUrl,
+                pngUrl,
+                mtlUrl,
                 request.getPositionX(),
                 request.getPositionY(),
                 user
@@ -151,6 +296,8 @@ public class PhotoAlbumService {
                 savedPhotoAlbum.getId(),
                 savedPhotoAlbum.getImageUrl(),
                 savedPhotoAlbum.getObjectUrl(),
+                savedPhotoAlbum.getPngUrl(),
+                savedPhotoAlbum.getMaterialUrl(),
                 savedPhotoAlbum.getPositionX(),
                 savedPhotoAlbum.getPositionY()
         );
@@ -163,9 +310,12 @@ public class PhotoAlbumService {
                         photo.getId(),
                         photo.getImageUrl(),
                         photo.getObjectUrl(),
+                        photo.getPngUrl(),
+                        photo.getMaterialUrl(),
                         photo.getPositionX(),
                         photo.getPositionY()
                 ))
                 .collect(Collectors.toList());
     }
+
 }

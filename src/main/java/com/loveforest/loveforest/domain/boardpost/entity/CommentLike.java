@@ -8,6 +8,10 @@ import lombok.NoArgsConstructor;
 @Entity
 @Getter
 @NoArgsConstructor
+@Table(name = "comment_like",
+        uniqueConstraints = @UniqueConstraint(
+                columnNames = {"comment_id", "user_id"}
+        ))
 public class CommentLike {
 
     @Id
@@ -21,6 +25,9 @@ public class CommentLike {
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
+
+    @Version  // 낙관적 락을 위한 버전 필드 추가
+    private Long version;
 
     public CommentLike(Comment comment, User user) {
         this.comment = comment;

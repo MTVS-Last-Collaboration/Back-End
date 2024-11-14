@@ -20,6 +20,6 @@ public class ChatMessageRequestDTO {
     @Schema(description = "커플의 ID", example = "1")
     private Long coupleId; // 발신자 ID
 
-    @Schema(description = "반려몽 레벨", example = "1~4")
-    private Long petLevel; // 반려몽 레벨
+    @Schema(description = "반려몽 레벨", example = "1~20")
+    private int petLevel; // 반려몽 레벨
 }

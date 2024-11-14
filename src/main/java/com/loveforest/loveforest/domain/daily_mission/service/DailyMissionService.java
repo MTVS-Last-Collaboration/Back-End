@@ -205,15 +205,39 @@ public class DailyMissionService {
     // 답변 저장
     @Transactional
     public void saveAnswer(Long coupleId, Long userId, String mood, String answer) {
-        log.debug("미션 답변 저장 시작 - 커플 ID: {}, 사용자 ID: {}", coupleId, userId);
+        log.debug("미션 답변 저장/수정 시작 - 커플 ID: {}, 사용자 ID: {}", coupleId, userId);
 
         DailyMission mission = getCurrentDailyMission(coupleId);
-        validateAnswerSubmission(mission, coupleId, userId);
+
+        // 미션이 완료된 경우 수정 불가
+//        if (mission.isCompleted()) {
+//            log.warn("이미 완료된 미션은 수정할 수 없음 - 커플 ID: {}, 미션 ID: {}", coupleId, mission.getId());
+//            throw new MissionAlreadyCompletedException();
+//        }
 
         boolean isPartner1 = isFirstPartner(coupleId, userId);
+
+        // 자신의 이전 답변 로깅
+        if (isPartner1) {
+            log.debug("파트너1의 이전 답변 - mood: {}, answer: {}", mission.getPartner1Mood(), mission.getPartner1Answer());
+        } else {
+            log.debug("파트너2의 이전 답변 - mood: {}, answer: {}", mission.getPartner2Mood(), mission.getPartner2Answer());
+        }
+
         mission.updateAnswer(mood, answer, isPartner1);
 
-        log.info("미션 답변 저장 완료 - 커플 ID: {}", coupleId);
+        // 변경된 미션 저장
+        DailyMission savedMission = dailyMissionRepository.save(mission);
+
+        // 저장된 결과 로깅
+        log.info("미션 답변 저장 완료 - 커플 ID: {}, 파트너1답변: {}, 파트너2답변: {}",
+                coupleId,
+                savedMission.getPartner1Answer(),
+                savedMission.getPartner2Answer());
+
+        if (savedMission.isCompleted()) {
+            log.info("미션 완료됨 - 포인트 지급 완료");
+        }
     }
 
     private DailyMission getCurrentDailyMission(Long coupleId) {
@@ -224,13 +248,6 @@ public class DailyMissionService {
                 });
     }
 
-    private void validateAnswerSubmission(DailyMission mission, Long coupleId, Long userId) {
-        boolean isPartner1 = isFirstPartner(coupleId, userId);
-        if (isAlreadyAnswered(mission, isPartner1)) {
-            log.warn("이미 답변한 미션 - 커플 ID: {}, 사용자 ID: {}", coupleId, userId);
-            throw new MissionAlreadyAnsweredException();
-        }
-    }
 
     // 첫 번째 파트너인지 확인하는 메서드
     private boolean isFirstPartner(Long coupleId, Long userId) {

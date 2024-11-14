@@ -2,10 +2,7 @@ package com.loveforest.loveforest.exception;
 
 import com.loveforest.loveforest.domain.auth.jwt.exception.InvalidAccessTokenException;
 import com.loveforest.loveforest.domain.auth.jwt.exception.InvalidRefreshTokenException;
-import com.loveforest.loveforest.domain.boardpost.exception.AlreadyLikedException;
-import com.loveforest.loveforest.domain.boardpost.exception.AnswerNotFoundException;
-import com.loveforest.loveforest.domain.boardpost.exception.DailyTopicNotFoundException;
-import com.loveforest.loveforest.domain.boardpost.exception.NotLikedException;
+import com.loveforest.loveforest.domain.boardpost.exception.*;
 import com.loveforest.loveforest.domain.chat.exception.ChatNotFoundException;
 import com.loveforest.loveforest.domain.couple.exception.CoupleAlreadyExists;
 import com.loveforest.loveforest.domain.couple.exception.CoupleCodeAlreadyUsedException;
@@ -18,6 +15,7 @@ import com.loveforest.loveforest.domain.flower.exception.MaxMoodCountReachedExce
 import com.loveforest.loveforest.domain.flower.exception.MoodAnalysisException;
 import com.loveforest.loveforest.domain.pet.exception.MaxLevelReachedException;
 import com.loveforest.loveforest.domain.pet.exception.PetNotFoundException;
+import com.loveforest.loveforest.domain.photoAlbum.dto.ApiResponseDTO;
 import com.loveforest.loveforest.domain.photoAlbum.exception.DuplicatePhotoPositionException;
 import com.loveforest.loveforest.domain.photoAlbum.exception.PhotoNotFoundException;
 import com.loveforest.loveforest.domain.photoAlbum.exception.PhotoUploadFailedException;
@@ -30,6 +28,7 @@ import com.loveforest.loveforest.exception.common.UnauthorizedException;
 import com.loveforest.loveforest.domain.user.exception.UserNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -88,28 +87,6 @@ public class GlobalExceptionHandler {
     }
 
     // 사진 관련 예외 처리
-    @ExceptionHandler(PhotoNotFoundException.class)
-    public ResponseEntity<ErrorResponse> handlePhotoNotFoundException(PhotoNotFoundException ex) {
-        log.error("사진을 찾을 수 없음 - {}", ex.getMessage());
-        return buildErrorResponse(
-                ex.getErrorCode().getStatus(),
-                ex.getErrorCode().getErrorType(),
-                ex.getErrorCode().getDescription(),
-                ex.getErrorCode().getCode()
-        );
-    }
-
-    @ExceptionHandler(PhotoUploadFailedException.class)
-    public ResponseEntity<ErrorResponse> handlePhotoUploadFailedException(PhotoUploadFailedException ex) {
-        log.error("사진 업로드 실패 - {}", ex.getMessage());
-        return buildErrorResponse(
-                ex.getErrorCode().getStatus(),
-                ex.getErrorCode().getErrorType(),
-                ex.getErrorCode().getDescription(),
-                ex.getErrorCode().getCode()
-        );
-    }
-
     @ExceptionHandler(DuplicatePhotoPositionException.class)
     public ResponseEntity<ErrorResponse> handleDuplicatePhotoPositionException(DuplicatePhotoPositionException ex) {
         log.error("중복된 사진 위치 - {}", ex.getMessage());
@@ -119,6 +96,30 @@ public class GlobalExceptionHandler {
                 ex.getErrorCode().getDescription(),
                 ex.getErrorCode().getCode()
         );
+    }
+
+    @ExceptionHandler(PhotoUploadFailedException.class)
+    public ResponseEntity<ApiResponseDTO<ErrorResponse>> handlePhotoUploadFailedException(
+            PhotoUploadFailedException e) {
+        log.error("사진 업로드 실패", e);
+        ErrorResponse errorResponse = new ErrorResponse();
+        errorResponse.setStatus(HttpStatus.BAD_REQUEST.value());
+        errorResponse.setMessage("사진 업로드에 실패했습니다.");
+        errorResponse.setTimestamp(LocalDateTime.now());
+        return ResponseEntity.badRequest()
+                .body(ApiResponseDTO.success("사진 업로드에 실패했습니다.", errorResponse));
+    }
+
+    @ExceptionHandler(PhotoNotFoundException.class)
+    public ResponseEntity<ApiResponseDTO<ErrorResponse>> handlePhotoNotFoundException(
+            PhotoNotFoundException e) {
+        log.error("사진을 찾을 수 없음", e);
+        ErrorResponse errorResponse = new ErrorResponse();
+        errorResponse.setStatus(HttpStatus.NOT_FOUND.value());
+        errorResponse.setMessage("사진을 찾을 수 없습니다.");
+        errorResponse.setTimestamp(LocalDateTime.now());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(ApiResponseDTO.success("사진을 찾을 수 없습니다.", errorResponse));
     }
 
     // 게시판 관련 예외 처리
@@ -140,6 +141,30 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(NotLikedException.class)
     public ResponseEntity<ErrorResponse> handleNotLikedException(NotLikedException ex) {
         return buildErrorResponse(ex.getErrorCode().getStatus(), ex.getErrorCode().getErrorType(), ex.getErrorCode().getDescription(), ex.getErrorCode().getCode());
+    }
+
+    // 댓글 좋아요 관련 예외 처리 추가
+    @ExceptionHandler(CommentLikeOperationException.class)
+    public ResponseEntity<ErrorResponse> handleCommentLikeOperationException(CommentLikeOperationException ex) {
+        log.error("댓글 좋아요 작업 처리 중 오류 발생: {}", ex.getMessage());
+        return buildErrorResponse(
+                ex.getErrorCode().getStatus(),
+                ex.getErrorCode().getErrorType(),
+                ex.getErrorCode().getCode(),
+                ex.getErrorCode().getDescription()
+        );
+    }
+
+    // Optimistic Lock 관련 예외 처리 추가
+    @ExceptionHandler(ObjectOptimisticLockingFailureException.class)
+    public ResponseEntity<ErrorResponse> handleOptimisticLockingFailure(ObjectOptimisticLockingFailureException ex) {
+        log.error("동시성 제어 오류 발생: {}", ex.getMessage());
+        return buildErrorResponse(
+                HttpStatus.CONFLICT,
+                "Concurrent Modification Error",
+                "다른 사용자가 동시에 수정을 시도했습니다. 다시 시도해주세요.",
+                "COMMENT-008"
+        );
     }
 
     // 펫 관련 예외 처리

@@ -4,6 +4,7 @@ import com.loveforest.loveforest.domain.user.entity.User;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 
@@ -43,9 +44,12 @@ public class Comment {
         this.likeCount++;
     }
 
+    @Transactional
     public void decrementLike() {
-        if (this.likeCount > 0) {
-            this.likeCount--;
+        synchronized (this) {
+            if (this.likeCount > 0) {
+                this.likeCount--;
+            }
         }
     }
 }

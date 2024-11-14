@@ -23,6 +23,7 @@ public class ChatMessage {
     @Column(nullable = false)
     private String message; // 사용자가 보낸 메시지
 
+    @Column(length = 10000)
     private String response; // AI 서버의 응답
 
     @Column(name = "timestamp", nullable = false)

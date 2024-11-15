@@ -43,7 +43,7 @@ public class FlowerController {
                     content = @Content(
                             mediaType = "application/json",
                             schema = @Schema(implementation = FlowerMoodResponseDTO.class),
-                            examples = @ExampleObject(value = "{\"mood\": \"상\"}")
+                            examples = @ExampleObject(value = "{\"mood\": \"긍정\"}")
                     )
             ),
             @ApiResponse(

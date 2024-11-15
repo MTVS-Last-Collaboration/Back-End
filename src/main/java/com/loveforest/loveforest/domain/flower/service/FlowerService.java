@@ -73,7 +73,7 @@ public class FlowerService {
 
         flowerRepository.save(flower);
 
-        return new FlowerMoodResponseDTO(mood);
+        return new FlowerMoodResponseDTO(mood, user.getNickname());
     }
 
     @Transactional

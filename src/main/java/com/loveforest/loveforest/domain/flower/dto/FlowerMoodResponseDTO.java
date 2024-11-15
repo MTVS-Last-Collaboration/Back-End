@@ -14,9 +14,4 @@ public class FlowerMoodResponseDTO {
     @Schema(description = "사용자의 닉네임", example = "송민제")
     private String nickname;
 
-    @Schema(description = "녹음횟수", example = "3")
-    private int evolutionCount;
-
-
-
 }

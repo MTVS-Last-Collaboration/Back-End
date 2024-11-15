@@ -48,6 +48,15 @@ public class CommentService {
         );
     }
 
+    public void deleteComment(Long commentId) {
+        Comment comment = commentRepository.findById(commentId)
+                .orElseThrow(CommentsNotFoundException::new);
+
+        commentLikeRepository.deleteByCommentId(commentId);
+
+        commentRepository.delete(comment);
+    }
+
     public List<CommentResponseDTO> getCommentsByAnswer(Answer answer) {
         List<Comment> comments = commentRepository.findByAnswer(answer);
 

@@ -6,6 +6,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Getter
@@ -29,6 +31,9 @@ public class Answer {
     @ManyToOne
     @JoinColumn(name = "daily_topic_id", nullable = false)
     private DailyTopic dailyTopic; // 연관된 질문
+
+    @OneToMany(mappedBy = "answer", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Comment> comments = new ArrayList<>();
 
     @Column(nullable = false)
     private LocalDateTime createdDate = LocalDateTime.now(); // 생성 시간

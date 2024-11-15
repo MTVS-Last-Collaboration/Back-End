@@ -11,6 +11,7 @@ import com.loveforest.loveforest.domain.boardpost.exception.AnswerNotFoundExcept
 import com.loveforest.loveforest.domain.boardpost.exception.NotLikedException;
 import com.loveforest.loveforest.domain.boardpost.repository.AnswerLikeRepository;
 import com.loveforest.loveforest.domain.boardpost.repository.AnswerRepository;
+import com.loveforest.loveforest.domain.boardpost.repository.CommentLikeRepository;
 import com.loveforest.loveforest.domain.user.entity.User;
 import com.loveforest.loveforest.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +29,7 @@ public class AnswerService {
     private final AnswerRepository answerRepository;
     private final UserRepository userRepository;
     private final AnswerLikeRepository answerLikeRepository;
+    private final CommentLikeRepository commentLikeRepository;
 
     public AnswerResponseDTO createAnswer(AnswerRequestDTO answerRequestDTO, String nickname, DailyTopic dailyTopic) {
 
@@ -46,6 +48,18 @@ public class AnswerService {
                 savedAnswer.getLikeCount(),
                 savedAnswer.getCreatedDate()
         );
+    }
+
+    @Transactional
+    public void deleteAnswer(Long answerId) {
+        Answer answer = answerRepository.findById(answerId)
+                .orElseThrow(AnswerNotFoundException::new);
+
+        answer.getComments().forEach(comment -> {
+            commentLikeRepository.deleteAll(comment.getLikes());
+        });
+
+        answerRepository.delete(answer);
     }
 
     public List<AnswerResponseDTO> getAnswersByDailyTopic(DailyTopic dailyTopic) {

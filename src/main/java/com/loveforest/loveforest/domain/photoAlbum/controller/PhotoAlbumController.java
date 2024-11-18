@@ -77,33 +77,6 @@ public class PhotoAlbumController {
 
 
     /**
-     * 안전한 사진 조회
-     * @param loginInfo
-     * @param photoId
-     * @return
-     */
-    @Operation(summary = "안전한 사진 조회", description = "Presigned URL을 사용하여 특정 사진을 안전하게 조회합니다.")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "사진 조회 성공"),
-            @ApiResponse(responseCode = "404", description = "사진을 찾을 수 없음")
-    })
-    @GetMapping("/{photoId}/secure")
-    public ResponseEntity<ApiResponseDTO<PhotoAlbumResponseDTO>> getSecurePhoto(
-            @AuthenticationPrincipal LoginInfo loginInfo,
-            @PathVariable Long photoId) {
-
-        log.info("보안 사진 조회 요청 - 사용자 ID: {}, 사진 ID: {}",
-                loginInfo.getUserId(), photoId);
-
-        PhotoAlbumResponseDTO response =
-                photoAlbumService.getSecurePhoto(photoId, loginInfo.getUserId());
-
-        log.info("보안 사진 조회 완료 - 사진 ID: {}", photoId);
-        return ResponseEntity.ok(ApiResponseDTO.success(response));
-    }
-
-
-    /**
      * 사진 목록 조회
      * @param loginInfo
      * @return

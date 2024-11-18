@@ -10,10 +10,7 @@ import com.loveforest.loveforest.domain.couple.exception.CoupleNotFoundException
 import com.loveforest.loveforest.domain.daily_mission.exception.MissionAlreadyAnsweredException;
 import com.loveforest.loveforest.domain.daily_mission.exception.MissionNotFoundException;
 import com.loveforest.loveforest.domain.daily_mission.exception.PreviousMissionIncompleteException;
-import com.loveforest.loveforest.domain.flower.exception.AiServerFlowerException;
-import com.loveforest.loveforest.domain.flower.exception.FlowerNotFoundException;
-import com.loveforest.loveforest.domain.flower.exception.MaxMoodCountReachedException;
-import com.loveforest.loveforest.domain.flower.exception.MoodAnalysisException;
+import com.loveforest.loveforest.domain.flower.exception.*;
 import com.loveforest.loveforest.domain.pet.exception.MaxLevelReachedException;
 import com.loveforest.loveforest.domain.pet.exception.PetNotFoundException;
 import com.loveforest.loveforest.domain.photoAlbum.dto.ApiResponseDTO;
@@ -213,6 +210,18 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(FlowerNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleFlowerNotFoundException(FlowerNotFoundException ex) {
         log.error("꽃을 찾을 수 없음: {}", ex.getMessage());
+        return buildErrorResponse(
+                ex.getErrorCode().getStatus(),
+                ex.getErrorCode().getErrorType(),
+                ex.getErrorCode().getDescription(),
+                ex.getErrorCode().getCode()
+        );
+    }
+
+    @ExceptionHandler(VoiceMessageNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleVoiceMessageNotFoundException(
+            VoiceMessageNotFoundException ex) {
+        log.error("음성 메시지를 찾을 수 없음: {}", ex.getMessage());
         return buildErrorResponse(
                 ex.getErrorCode().getStatus(),
                 ex.getErrorCode().getErrorType(),

@@ -47,7 +47,7 @@ public class FlowerService {
     }
 
     @Transactional
-    public FlowerMoodResponseDTO analyzeMood(Long userId, String base64VoiceMessage) {
+    public FlowerMoodResponseDTO analyzeMood(Long userId, VoiceAnalysisRequestDTO voiceData) {
         User user = userRepository.findById(userId)
                 .orElseThrow(UserNotFoundException::new);
 
@@ -60,11 +60,10 @@ public class FlowerService {
         // AI 서버로 음성 메시지를 전송하여 기분 상태 분석
         String mood;
         try {
-            VoiceAnalysisRequestDTO requestDTO = new VoiceAnalysisRequestDTO(base64VoiceMessage);
             mood = webClient.post()
                     .uri(serverUrl + "/analyze_sentiment")
                     .contentType(MediaType.APPLICATION_JSON)
-                    .bodyValue(requestDTO)
+                    .bodyValue(voiceData)
                     .retrieve()
                     .bodyToMono(String.class)
                     .onErrorMap(WebClientResponseException.class, ex -> {

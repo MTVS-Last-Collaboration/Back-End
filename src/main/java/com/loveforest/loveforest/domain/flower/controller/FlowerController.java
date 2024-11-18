@@ -3,6 +3,7 @@ package com.loveforest.loveforest.domain.flower.controller;
 import com.loveforest.loveforest.domain.auth.dto.LoginInfo;
 import com.loveforest.loveforest.domain.flower.dto.FlowerMoodResponseDTO;
 import com.loveforest.loveforest.domain.flower.dto.FlowerRequestDTO;
+import com.loveforest.loveforest.domain.flower.dto.VoiceAnalysisRequestDTO;
 import com.loveforest.loveforest.domain.flower.service.FlowerService;
 import com.loveforest.loveforest.domain.user.exception.LoginRequiredException;
 import com.loveforest.loveforest.exception.ErrorResponse;
@@ -59,13 +60,13 @@ public class FlowerController {
     @PostMapping("/analyze-mood")
     public ResponseEntity<FlowerMoodResponseDTO> analyzeMood(
             @AuthenticationPrincipal LoginInfo loginInfo,
-            @RequestBody String base64VoiceMessage) {
+            @RequestBody VoiceAnalysisRequestDTO voiceData) {
         if (loginInfo == null) {
             throw new LoginRequiredException();
         }
 
         log.info("음성 분석 요청 시작 - 사용자 ID: {}", loginInfo.getUserId());
-        FlowerMoodResponseDTO response = flowerService.analyzeMood(loginInfo.getUserId(), base64VoiceMessage);
+        FlowerMoodResponseDTO response = flowerService.analyzeMood(loginInfo.getUserId(), voiceData);
         log.info("음성 분석 성공 - 기분 상태: {}", response.getMood());
         return ResponseEntity.ok(response);
     }

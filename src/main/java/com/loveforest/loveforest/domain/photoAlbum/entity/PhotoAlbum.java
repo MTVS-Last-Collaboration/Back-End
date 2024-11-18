@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
@@ -23,7 +24,7 @@ public class PhotoAlbum {
     private String content; // 내용 추가
 
     @Column(nullable = false)
-    private LocalDateTime photoDate; // 날짜 추가
+    private LocalDate photoDate; // 날짜 추가
 
 
     @Column(nullable = false)
@@ -49,7 +50,7 @@ public class PhotoAlbum {
     private User user;
 
     // 생성자 수정
-    public PhotoAlbum(String title, String content, LocalDateTime photoDate,
+    public PhotoAlbum(String title, String content, LocalDate photoDate,
                       String imageUrl, String objectUrl, String pngUrl, String materialUrl,
                       Double positionX, Double positionY, User user) {
         this.title = title;

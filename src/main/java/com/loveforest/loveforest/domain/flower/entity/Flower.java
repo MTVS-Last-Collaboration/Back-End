@@ -5,6 +5,8 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Table(name = "tbl_flower")
 @Getter
@@ -20,6 +22,14 @@ public class Flower {
 
     @Column(nullable = false)
     private int moodCount = 0; // 중이상 상태 횟수
+
+    // 음성 메시지 S3 URL 추가
+    @Column(name = "voice_url")
+    private String voiceUrl;
+
+    // 음성 메시지 저장 시간 추가
+    @Column(name = "voice_saved_at")
+    private LocalDateTime voiceSavedAt;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
@@ -40,6 +50,18 @@ public class Flower {
 
     public void updateName(String newName) {
         this.name = newName;
+    }
+
+    // 음성 메시지 업데이트 메서드
+    public void updateVoiceMessage(String voiceUrl) {
+        this.voiceUrl = voiceUrl;
+        this.voiceSavedAt = LocalDateTime.now();
+    }
+
+    // 음성 메시지 삭제 메서드
+    public void clearVoiceMessage() {
+        this.voiceUrl = null;
+        this.voiceSavedAt = null;
     }
 
 }

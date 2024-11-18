@@ -20,22 +20,16 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.core.io.buffer.DataBufferUtils;
 import org.springframework.http.MediaType;
-import org.springframework.http.codec.multipart.FilePart;
-import org.springframework.http.codec.multipart.Part;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.reactive.function.BodyExtractors;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
-import reactor.core.publisher.Flux;
 
-import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.CountDownLatch;
+
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -72,13 +66,29 @@ public class PhotoAlbumService {
             List<byte[]> modelFiles = convert3DModel(request); // `.obj`, `.png`, `.mtl` 파일 받음
 
             // 4. S3에 각 파일 업로드 및 URL 추가
-            String objUrl = s3Service.uploadFile(modelFiles.get(0), ".obj");
+            String objUrl = s3Service.uploadFile(
+                    modelFiles.get(0),              // 파일 데이터 (byte[])
+                    ".obj",                         // 확장자
+                    "application/octet-stream",     // MIME 타입
+                    modelFiles.get(0).length        // 파일 크기
+            );
             uploadedUrls.add(objUrl);
-            String pngUrl = s3Service.uploadFile(modelFiles.get(1), ".png");
-            uploadedUrls.add(pngUrl);
-            String mtlUrl = s3Service.uploadFile(modelFiles.get(2), ".mtl");
-            uploadedUrls.add(mtlUrl);
 
+            String pngUrl = s3Service.uploadFile(
+                    modelFiles.get(1),
+                    ".png",
+                    "image/png",
+                    modelFiles.get(1).length
+            );
+            uploadedUrls.add(pngUrl);
+
+            String mtlUrl = s3Service.uploadFile(
+                    modelFiles.get(2),
+                    ".mtl",
+                    "application/octet-stream",
+                    modelFiles.get(2).length
+            );
+            uploadedUrls.add(mtlUrl);
             // 5. DB에 정보 저장
             return savePhotoAlbumData(imageUrl, objUrl, pngUrl, mtlUrl, request, userId);
         }catch (Exception e) {
@@ -125,77 +135,6 @@ public class PhotoAlbumService {
         }
     }
 
-    /**
-     * 안전한 URL로 사진 조회
-     * Presigned URL을 사용하여 보안 강화
-     */
-    @Transactional(readOnly = true)
-    public PhotoAlbumResponseDTO getSecurePhoto(Long photoId, Long userId) {
-        PhotoAlbum photo = photoAlbumRepository.findById(photoId)
-                .orElseThrow(PhotoNotFoundException::new);
-
-        // 권한 확인
-        if (!photo.getUser().getId().equals(userId)) {
-            throw new UnauthorizedException();
-        }
-
-        // Presigned URL 생성 (1시간 유효)
-        String secureImageUrl = s3Service.generatePresignedUrl(
-                extractKeyFromUrl(photo.getImageUrl()), 60);
-        String secureObjectUrl = s3Service.generatePresignedUrl(
-                extractKeyFromUrl(photo.getObjectUrl()), 60);
-        String securePngUrl = s3Service.generatePresignedUrl(
-                extractKeyFromUrl(photo.getPngUrl()), 60);
-        String secureMaterialUrl = s3Service.generatePresignedUrl(
-                extractKeyFromUrl(photo.getMaterialUrl()), 60);
-
-        return new PhotoAlbumResponseDTO(
-                photo.getId(),
-                secureImageUrl,
-                secureObjectUrl,
-                securePngUrl,
-                secureMaterialUrl,
-                photo.getPositionX(),
-                photo.getPositionY()
-        );
-    }
-
-    /**
-     * 전체 사진 목록 조회 (Presigned URL 사용)
-     */
-    @Transactional(readOnly = true)
-    public List<PhotoAlbumResponseDTO> getSecurePhotos(Long userId) {
-        return photoAlbumRepository.findByUserId(userId).stream()
-                .map(photo -> {
-                    String secureImageUrl = s3Service.generatePresignedUrl(
-                            extractKeyFromUrl(photo.getImageUrl()), 60);
-                    String secureObjectUrl = s3Service.generatePresignedUrl(
-                            extractKeyFromUrl(photo.getObjectUrl()), 60);
-                    String secureTextureUrl = s3Service.generatePresignedUrl(
-                            extractKeyFromUrl(photo.getPngUrl()), 60);
-                    String secureMaterialUrl = s3Service.generatePresignedUrl(
-                            extractKeyFromUrl(photo.getMaterialUrl()), 60);
-
-                    return new PhotoAlbumResponseDTO(
-                            photo.getId(),
-                            secureImageUrl,
-                            secureObjectUrl,
-                            secureTextureUrl,
-                            secureMaterialUrl,
-                            photo.getPositionX(),
-                            photo.getPositionY()
-                    );
-                })
-                .collect(Collectors.toList());
-    }
-
-
-
-    private String extractKeyFromUrl(String url) {
-        return url.substring(url.lastIndexOf("/") + 1);
-    }
-
-
 
     /**
      * 이미지 유효성 검사
@@ -215,12 +154,17 @@ public class PhotoAlbumService {
      * 원본 이미지 업로드
      */
     private String uploadOriginalImage(String base64Image) {
-        byte[] imageData = Base64.getDecoder().decode(
-                base64Image // "data:image/jpeg;base64," 부분 제거
-        );
-        return s3Service.uploadFile(imageData, ".jpg");
-    }
+        byte[] imageData = Base64.getDecoder().decode(base64Image); // Base64 디코딩
+        String contentType = "image/jpeg"; // 이미지의 MIME 타입 설정
+        long contentLength = imageData.length; // 파일 크기 계산
 
+        return s3Service.uploadFile(
+                imageData,           // 파일 데이터
+                ".jpg",              // 파일 확장자
+                contentType,         // MIME 타입
+                contentLength        // 파일 크기
+        );
+    }
     /**
      * AI 서버에 3D 모델 변환 요청하여 .obj, .png, .mtl 파일을 List<byte[]>로 반환
      */

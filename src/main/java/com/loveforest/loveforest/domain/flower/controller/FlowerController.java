@@ -6,7 +6,9 @@ import com.loveforest.loveforest.domain.flower.dto.FlowerRequestDTO;
 import com.loveforest.loveforest.domain.flower.dto.VoiceAnalysisRequestDTO;
 import com.loveforest.loveforest.domain.flower.service.FlowerService;
 import com.loveforest.loveforest.domain.user.exception.LoginRequiredException;
+import com.loveforest.loveforest.exception.ErrorCode;
 import com.loveforest.loveforest.exception.ErrorResponse;
+import com.loveforest.loveforest.exception.common.InvalidInputException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
@@ -16,12 +18,11 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/api/flower")
@@ -36,7 +37,8 @@ public class FlowerController {
      * 사용자의 기분 상태 분석
      *
      */
-    @Operation(summary = "사용자의 기분 상태 분석", description = "사용자의 음성 메시지를 분석하여 기분 상태(상, 중, 하)를 반환합니다.")
+    @Operation(summary = "사용자의 기분 상태 분석",
+            description = "사용자의 음성 메시지를 분석하여 기분 상태(긍정, 중립, 부정)를 반환합니다. 긍정일 경우 음성이 저장됩니다.")
     @ApiResponses({
             @ApiResponse(
                     responseCode = "200",
@@ -44,30 +46,65 @@ public class FlowerController {
                     content = @Content(
                             mediaType = "application/json",
                             schema = @Schema(implementation = FlowerMoodResponseDTO.class),
-                            examples = @ExampleObject(value = "{\"mood\": \"긍정\"}")
+                            examples = @ExampleObject(value =
+                                    "{\"mood\": \"긍정\", \"nickname\": \"사용자닉네임\"}")
                     )
             ),
             @ApiResponse(
                     responseCode = "400",
-                    description = "잘못된 요청입니다.",
+                    description = "잘못된 요청 (비어있는 파일 또는 잘못된 파일 형식)",
                     content = @Content(
                             mediaType = "application/json",
                             schema = @Schema(implementation = ErrorResponse.class),
-                            examples = @ExampleObject(value = "{\"status\": 400, \"errorType\": \"BadRequest\", \"message\": \"잘못된 요청입니다.\"}")
+                            examples = @ExampleObject(value =
+                                    "{\"status\": 400, \"errorType\": \"BadRequest\", \"message\": \"잘못된 음성 파일입니다.\"}")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "서버 오류 (AI 서버 통신 실패 또는 파일 처리 실패)",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorResponse.class),
+                            examples = @ExampleObject(value =
+                                    "{\"status\": 500, \"errorType\": \"ServerError\", \"message\": \"서버 처리 중 오류가 발생했습니다.\"}")
                     )
             )
     })
-    @PostMapping("/analyze-mood")
+    @PostMapping(value = "/analyze-mood",
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE,
+            produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<FlowerMoodResponseDTO> analyzeMood(
             @AuthenticationPrincipal LoginInfo loginInfo,
-            @RequestBody VoiceAnalysisRequestDTO voiceData) {
+            @RequestParam("voice") MultipartFile voiceFile) {
+
         if (loginInfo == null) {
             throw new LoginRequiredException();
         }
 
-        log.info("음성 분석 요청 시작 - 사용자 ID: {}", loginInfo.getUserId());
-        FlowerMoodResponseDTO response = flowerService.analyzeMood(loginInfo.getUserId(), voiceData);
-        log.info("음성 분석 성공 - 기분 상태: {}", response.getMood());
+        // 파일 기본 검증
+        if (voiceFile == null || voiceFile.isEmpty()) {
+            throw new InvalidInputException(ErrorCode.INVALID_VOICE_MESSAGE);
+        }
+
+        // 파일 타입 검증
+        String contentType = voiceFile.getContentType();
+        if (contentType == null || !contentType.startsWith("audio/")) {
+            throw new InvalidInputException(ErrorCode.INVALID_VOICE_MESSAGE);
+        }
+
+        log.info("음성 분석 요청 시작 - 사용자 ID: {}, 파일크기: {}, 파일타입: {}",
+                loginInfo.getUserId(),
+                voiceFile.getSize(),
+                contentType);
+
+        FlowerMoodResponseDTO response = flowerService.analyzeMood(loginInfo.getUserId(), voiceFile);
+
+        log.info("음성 분석 완료 - 사용자 ID: {}, 기분 상태: {}, 파일 저장: {}",
+                loginInfo.getUserId(),
+                response.getMood(),
+                "긍정".equals(response.getMood()));
+
         return ResponseEntity.ok(response);
     }
 
@@ -139,5 +176,41 @@ public class FlowerController {
         flowerService.startNewSeed(loginInfo.getUserId());
         log.info("새로운 씨앗 시작 성공 - 사용자 ID: {}", loginInfo.getUserId());
         return ResponseEntity.ok().build();
+    }
+
+    /**
+     * 음성 메시지 조회
+     */
+    @Operation(summary = "음성 메시지 조회",
+            description = "저장된 음성 메시지의 URL을 조회합니다. 음성 메시지는 자정이 되면 자동으로 삭제됩니다.")
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "음성 메시지 URL 조회 성공",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(type = "string", example = "https://s3.amazonaws.com/bucket/voice/123.mp3")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "음성 메시지를 찾을 수 없음",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorResponse.class)
+                    )
+            )
+    })
+    @GetMapping("/voice")
+    public ResponseEntity<String> getVoiceMessage(@AuthenticationPrincipal LoginInfo loginInfo) {
+        if (loginInfo == null) {
+            throw new LoginRequiredException();
+        }
+
+        log.info("음성 메시지 조회 요청 - 사용자 ID: {}", loginInfo.getUserId());
+        String voiceUrl = flowerService.getVoiceMessage(loginInfo.getUserId());
+        log.info("음성 메시지 조회 완료 - 사용자 ID: {}", loginInfo.getUserId());
+
+        return ResponseEntity.ok(voiceUrl);
     }
 }

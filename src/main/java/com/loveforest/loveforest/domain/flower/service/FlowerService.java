@@ -3,24 +3,29 @@ package com.loveforest.loveforest.domain.flower.service;
 import com.loveforest.loveforest.domain.flower.dto.FlowerMoodResponseDTO;
 import com.loveforest.loveforest.domain.flower.dto.VoiceAnalysisRequestDTO;
 import com.loveforest.loveforest.domain.flower.entity.Flower;
-import com.loveforest.loveforest.domain.flower.exception.AiServerFlowerException;
-import com.loveforest.loveforest.domain.flower.exception.FlowerNotFoundException;
-import com.loveforest.loveforest.domain.flower.exception.MaxMoodCountReachedException;
-import com.loveforest.loveforest.domain.flower.exception.MoodAnalysisException;
+import com.loveforest.loveforest.domain.flower.exception.*;
 import com.loveforest.loveforest.domain.flower.repository.FlowerRepository;
 import com.loveforest.loveforest.domain.user.entity.User;
 import com.loveforest.loveforest.domain.user.exception.UserNotFoundException;
 import com.loveforest.loveforest.domain.user.repository.UserRepository;
 import com.loveforest.loveforest.exception.ErrorCode;
 import com.loveforest.loveforest.exception.common.InvalidInputException;
+import com.loveforest.loveforest.s3.service.S3Service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
+
+import java.io.IOException;
+import java.time.LocalDateTime;
+import java.util.Base64;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -31,6 +36,7 @@ public class FlowerService {
     private final UserRepository userRepository;
     private final WebClient.Builder webClientBuilder; // WebClient.Builder 주입
     private static final int MAX_FLOWER_NAME_LENGTH = 50;
+    private final S3Service s3Service;
 
     @Value("${ai.server.url}")
     private String serverUrl;
@@ -47,21 +53,59 @@ public class FlowerService {
     }
 
     @Transactional
-    public FlowerMoodResponseDTO analyzeMood(Long userId, VoiceAnalysisRequestDTO voiceData) {
+    public FlowerMoodResponseDTO analyzeMood(Long userId, MultipartFile voiceFile) {
         User user = userRepository.findById(userId)
                 .orElseThrow(UserNotFoundException::new);
 
         Flower flower = flowerRepository.findByUserId(userId)
                 .orElseGet(() -> new Flower("My Flower", user));
 
-        // WebClient 인스턴스 생성
+        // AI 서버에 전송할 데이터 준비
+        VoiceAnalysisRequestDTO voiceData = new VoiceAnalysisRequestDTO();
+        try {
+            // 파일을 Base64로 인코딩 (AI 서버와의 통신용)
+            voiceData.setVoiceData(Base64.getEncoder().encodeToString(voiceFile.getBytes()));
+        } catch (IOException e) {
+            log.error("음성 파일 읽기 실패: {}", e.getMessage());
+            throw new VoiceMessageUploadFailedException();
+        }
+
+        // AI 서버 분석 요청 및 처리...
+        String mood = analyzeWithAIServer(voiceData);
+
+
+        // 기분 상태가 '상' 또는 '중'인 경우에만 moodCount 증가
+        if ("긍정".equals(mood) || "중립".equals(mood)) {
+            try {
+                // 음성 메시지 저장
+                saveVoiceMessage(userId, voiceFile);
+
+                // moodCount 증가 및 포인트 추가
+                flower.incrementMoodCount();
+                flower.getUser().getCouple().addPoints(10);
+
+                if (flower.getMoodCount() >= 30) {
+                    throw new MaxMoodCountReachedException();
+                }
+            } catch (Exception e) {
+                log.error("긍정 응답 처리 중 오류 발생: {}", e.getMessage());
+                throw e;
+            }
+        }
+
+        flowerRepository.save(flower);
+        log.info("기분 분석 완료 - 사용자: {}, 기분: {}, 음성저장: {}",
+                user.getNickname(), mood, "긍정".equals(mood));
+
+        return new FlowerMoodResponseDTO(mood, user.getNickname());
+    }
+
+    private String analyzeWithAIServer(VoiceAnalysisRequestDTO voiceData) {
         WebClient webClient = webClientBuilder.baseUrl(serverUrl).build();
 
-        // AI 서버로 음성 메시지를 전송하여 기분 상태 분석
-        String mood;
         try {
-            mood = webClient.post()
-                    .uri(serverUrl + "/analyze_sentiment")
+            return webClient.post()
+                    .uri("/analyze_sentiment")
                     .contentType(MediaType.APPLICATION_JSON)
                     .bodyValue(voiceData)
                     .retrieve()
@@ -75,19 +119,6 @@ public class FlowerService {
             log.error("기분 상태 분석 중 오류 발생: {}", ex.getMessage());
             throw new MoodAnalysisException();
         }
-
-        // 기분 상태가 '상' 또는 '중'인 경우에만 moodCount 증가
-        if ("긍정".equals(mood) || "중립".equals(mood)) {
-            flower.incrementMoodCount();  // moodCount 증가
-            flower.getUser().getCouple().addPoints(10);       // 커플 포인트 추가
-            if (flower.getMoodCount() >= 30) {
-                throw new MaxMoodCountReachedException();
-            }
-        }
-
-        flowerRepository.save(flower);
-
-        return new FlowerMoodResponseDTO(mood, user.getNickname());
     }
 
     @Transactional
@@ -116,5 +147,96 @@ public class FlowerService {
                 .orElseThrow(UserNotFoundException::new);
         flower.resetMoodCount();
         flowerRepository.save(flower);
+    }
+
+    @Transactional
+    public void saveVoiceMessage(Long userId, MultipartFile voiceFile) {
+        if (voiceFile == null || voiceFile.isEmpty()) {
+            throw new InvalidInputException(ErrorCode.INVALID_VOICE_MESSAGE);
+        }
+
+        // 파일 형식 검증
+        String contentType = voiceFile.getContentType();
+        if (contentType == null || !contentType.startsWith("audio/")) {
+            throw new InvalidInputException(ErrorCode.INVALID_VOICE_MESSAGE);
+        }
+
+        try {
+            Flower flower = flowerRepository.findByUserId(userId)
+                    .orElseThrow(FlowerNotFoundException::new);
+
+            // 기존 음성 메시지가 있다면 S3에서 삭제
+            if (flower.getVoiceUrl() != null) {
+                try {
+                    s3Service.deleteFile(flower.getVoiceUrl());
+                } catch (Exception e) {
+                    log.warn("기존 음성 메시지 삭제 실패: {}", e.getMessage());
+                }
+            }
+
+            // 파일 확장자 추출
+            String originalFilename = voiceFile.getOriginalFilename();
+            String extension = originalFilename != null ?
+                    originalFilename.substring(originalFilename.lastIndexOf(".")) : ".mp3";
+
+
+            // S3에 업로드
+            String voiceUrl = s3Service.uploadFile(
+                    voiceFile.getBytes(),  // byte[] 로 변환
+                    extension,
+                    contentType,
+                    voiceFile.getSize()
+            );
+
+
+            // Flower 엔티티 업데이트
+            flower.updateVoiceMessage(voiceUrl);
+            flowerRepository.save(flower);
+
+            log.info("음성 메시지 저장 완료 - 사용자 ID: {}, URL: {}, 크기: {}, 타입: {}",
+                    userId, voiceUrl, voiceFile.getSize(), contentType);
+
+        } catch (IOException e) {
+            log.error("음성 파일 처리 중 IO 오류 발생: {}", e.getMessage());
+            throw new VoiceMessageUploadFailedException();
+        } catch (Exception e) {
+            log.error("음성 메시지 저장 중 오류 발생: {}", e.getMessage());
+            throw e;
+        }
+    }
+
+    @Transactional(readOnly = true)
+    public String getVoiceMessage(Long userId) {
+        Flower flower = flowerRepository.findByUserId(userId)
+                .orElseThrow(FlowerNotFoundException::new);
+
+        if (flower.getVoiceUrl() == null) {
+            throw new VoiceMessageNotFoundException();
+        }
+
+        return flower.getVoiceUrl();
+    }
+
+    // 매일 자정에 실행
+    @Scheduled(cron = "0 0 0 * * *")
+    @Transactional
+    public void deleteExpiredVoiceMessages() {
+        log.info("자정 음성메시지 삭제 작업 시작");
+
+        LocalDateTime yesterday = LocalDateTime.now().minusDays(1);
+        List<Flower> flowers = flowerRepository.findAllByVoiceUrlIsNotNull();
+
+        for (Flower flower : flowers) {
+            if (flower.getVoiceSavedAt().isBefore(yesterday)) {
+                // S3에서 파일 삭제
+                s3Service.deleteFile(flower.getVoiceUrl());
+                // 엔티티에서 URL 제거
+                flower.clearVoiceMessage();
+                flowerRepository.save(flower);
+
+                log.info("음성메시지 삭제 완료 - 꽃 ID: {}", flower.getId());
+            }
+        }
+        log.info("자정 음성메시지 삭제 작업 완료");
     }
 }

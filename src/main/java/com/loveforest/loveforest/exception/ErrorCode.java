@@ -65,6 +65,9 @@ public enum ErrorCode {
     FLOWER_NOT_FOUND(HttpStatus.NOT_FOUND, "Flower Not Found", "해당 사용자의 꽃을 찾을 수 없습니다.", "FLOWER-004"),
     INVALID_FLOWER_NAME(HttpStatus.BAD_REQUEST, "Invalid Flower Name", "꽃 이름이 유효하지 않습니다.", "FLOWER-005"),
     INVALID_FLOWER_NAME_LENGTH(HttpStatus.BAD_REQUEST, "Invalid Flower Name Length", "꽃 이름의 길이가 유효하지 않습니다.", "FLOWER-006"),
+    VOICE_MESSAGE_NOT_FOUND(HttpStatus.NOT_FOUND, "Voice Message Not Found", "음성 메시지를 찾을 수 없습니다.", "FLOWER-007"),
+    VOICE_MESSAGE_UPLOAD_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "Voice Message Upload Failed", "음성 메시지 업로드에 실패했습니다.", "FLOWER-008"),
+    INVALID_VOICE_MESSAGE(HttpStatus.BAD_REQUEST, "Invalid Voice Message", "유효하지 않은 음성 메시지입니다.", "FLOWER-009"),
 
     // Mission 관련 에러 추가
     MISSION_NOT_FOUND(HttpStatus.NOT_FOUND, "Mission Not Found", "해당 미션을 찾을 수 없습니다.", "MISSION-001"),

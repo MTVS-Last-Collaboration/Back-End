@@ -4,12 +4,15 @@ import com.loveforest.loveforest.domain.flower.dto.FlowerMoodResponseDTO;
 import com.loveforest.loveforest.domain.flower.dto.VoiceAnalysisRequestDTO;
 import com.loveforest.loveforest.domain.flower.entity.Flower;
 import com.loveforest.loveforest.domain.flower.exception.AiServerFlowerException;
+import com.loveforest.loveforest.domain.flower.exception.FlowerNotFoundException;
 import com.loveforest.loveforest.domain.flower.exception.MaxMoodCountReachedException;
 import com.loveforest.loveforest.domain.flower.exception.MoodAnalysisException;
 import com.loveforest.loveforest.domain.flower.repository.FlowerRepository;
 import com.loveforest.loveforest.domain.user.entity.User;
 import com.loveforest.loveforest.domain.user.exception.UserNotFoundException;
 import com.loveforest.loveforest.domain.user.repository.UserRepository;
+import com.loveforest.loveforest.exception.ErrorCode;
+import com.loveforest.loveforest.exception.common.InvalidInputException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -27,6 +30,7 @@ public class FlowerService {
     private final FlowerRepository flowerRepository;
     private final UserRepository userRepository;
     private final WebClient.Builder webClientBuilder; // WebClient.Builder 주입
+    private static final int MAX_FLOWER_NAME_LENGTH = 50;
 
     @Value("${ai.server.url}")
     private String serverUrl;
@@ -78,10 +82,22 @@ public class FlowerService {
 
     @Transactional
     public void setFlowerName(Long userId, String newName) {
+        validateFlowerName(newName);
+
         Flower flower = flowerRepository.findByUserId(userId)
-                .orElseThrow(UserNotFoundException::new);
+                .orElseThrow(FlowerNotFoundException::new);
+
         flower.updateName(newName);
         flowerRepository.save(flower);
+    }
+
+    private void validateFlowerName(String name) {
+        if (name == null || name.trim().isEmpty()) {
+            throw new InvalidInputException(ErrorCode.INVALID_FLOWER_NAME);
+        }
+        if (name.length() > MAX_FLOWER_NAME_LENGTH) {
+            throw new InvalidInputException(ErrorCode.INVALID_FLOWER_NAME_LENGTH);
+        }
     }
 
     @Transactional

@@ -26,27 +26,41 @@ import java.util.List;
 public class PhotoAlbumController {
 
     private final PhotoAlbumService photoAlbumService;
-
     /**
-     * 사진 등록
-     * @param loginInfo
-     * @param request
-     * @return
+     * 사진 등록 (3D 변환 없이 원본 이미지 저장)
      */
-    @Operation(summary = "사진 등록", description = "새로운 사진을 등록하고 AI 서버를 통해 3D 오브젝트로 변환합니다.")
-    @ApiResponse(responseCode = "200", description = "사진 등록 및 3D 변환 성공")
+    @Operation(summary = "사진 등록", description = "새로운 사진을 등록합니다.")
+    @ApiResponse(responseCode = "200", description = "사진 등록 성공")
     @PostMapping
-    public ResponseEntity<ApiResponseDTO<PhotoAlbumResponseDTO>> savePhoto(
+    public ResponseEntity<ApiResponseDTO<String>> savePhoto(
             @AuthenticationPrincipal LoginInfo loginInfo,
             @Valid @RequestBody PhotoAlbumRequestDTO request) {
 
         log.info("사진 등록 요청 - 사용자 ID: {}, 좌표: ({}, {})",
                 loginInfo.getUserId(), request.getPositionX(), request.getPositionY());
 
-        PhotoAlbumResponseDTO response = photoAlbumService.savePhoto(request, loginInfo.getUserId());
+        String imageUrl = photoAlbumService.savePhoto(request, loginInfo.getUserId());
 
-        log.info("사진 등록 완료 - 사진 ID: {}", response.getId());
-        return ResponseEntity.ok(ApiResponseDTO.success("사진이 성공적으로 등록되었습니다.", response));
+        log.info("사진 등록 완료 - 이미지 URL: {}", imageUrl);
+        return ResponseEntity.ok(ApiResponseDTO.success("사진이 성공적으로 등록되었습니다.", imageUrl));
+    }
+
+    /**
+     * 3D 모델 변환
+     */
+    @Operation(summary = "3D 모델 변환", description = "저장된 사진을 기반으로 3D 오브젝트를 생성합니다.")
+    @ApiResponse(responseCode = "200", description = "3D 변환 성공")
+    @PostMapping("/convert")
+    public ResponseEntity<ApiResponseDTO<List<String>>> convertTo3DModel(
+            @AuthenticationPrincipal LoginInfo loginInfo,
+            @RequestParam Long photoId) {
+
+        log.info("3D 모델 변환 요청 - 사용자 ID: {}, 사진 ID: {}", loginInfo.getUserId(), photoId);
+
+        List<String> modelUrls = photoAlbumService.convertPhotoTo3D(photoId, loginInfo.getUserId());
+
+        log.info("3D 모델 변환 완료 - 모델 URL: {}", modelUrls);
+        return ResponseEntity.ok(ApiResponseDTO.success("3D 모델 변환이 성공적으로 완료되었습니다.", modelUrls));
     }
 
     /**

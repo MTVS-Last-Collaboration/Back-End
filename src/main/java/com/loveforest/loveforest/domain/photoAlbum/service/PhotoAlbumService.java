@@ -48,55 +48,85 @@ public class PhotoAlbumService {
     @Value("${cloud.aws.s3.bucket}")
     private String bucketName;
 
+
+
+
     /**
-     * 사진 및 3D 모델 저장
+     * 사진 등록 (3D 변환 없이 원본 이미지 저장)
      */
-    public PhotoAlbumResponseDTO savePhoto(PhotoAlbumRequestDTO request, Long userId) {
-        List<String> uploadedUrls = new ArrayList<>(); // 저장된 파일 URL들
+    public String savePhoto(PhotoAlbumRequestDTO request, Long userId) {
+        validateImage(request.getBase64Image());
 
-        try {
-            // 1. 이미지 유효성 검사
-            validateImage(request.getBase64Image());
+        // S3에 원본 이미지 업로드
+        String imageUrl = uploadOriginalImage(request.getBase64Image());
 
-            // 2. S3에 원본 이미지 업로드
-            String imageUrl = uploadOriginalImage(request.getBase64Image());
-            uploadedUrls.add(imageUrl);
+        // DB에 저장 (3D 모델 관련 필드는 null 처리)
+        savePhotoData(imageUrl, null, null, null, request, userId);
 
-            // 3. AI 서버에 3D 변환 요청
-            List<byte[]> modelFiles = convert3DModel(request); // `.obj`, `.png`, `.mtl` 파일 받음
-
-            // 4. S3에 각 파일 업로드 및 URL 추가
-            String objUrl = s3Service.uploadFile(
-                    modelFiles.get(0),              // 파일 데이터 (byte[])
-                    ".obj",                         // 확장자
-                    "application/octet-stream",     // MIME 타입
-                    modelFiles.get(0).length        // 파일 크기
-            );
-            uploadedUrls.add(objUrl);
-
-            String pngUrl = s3Service.uploadFile(
-                    modelFiles.get(1),
-                    ".png",
-                    "image/png",
-                    modelFiles.get(1).length
-            );
-            uploadedUrls.add(pngUrl);
-
-            String mtlUrl = s3Service.uploadFile(
-                    modelFiles.get(2),
-                    ".mtl",
-                    "application/octet-stream",
-                    modelFiles.get(2).length
-            );
-            uploadedUrls.add(mtlUrl);
-            // 5. DB에 정보 저장
-            return savePhotoAlbumData(imageUrl, objUrl, pngUrl, mtlUrl, request, userId);
-        }catch (Exception e) {
-            log.error("사진 업로드 처리 중 오류: {}", e.getMessage());
-            cleanupFailedUploads(uploadedUrls); // 파일 삭제
-            throw new PhotoUploadFailedException();
-        }
+        return imageUrl;
     }
+
+    /**
+     * 3D 모델 변환
+     */
+    public List<String> convertPhotoTo3D(Long photoId, Long userId) {
+        PhotoAlbum photoAlbum = photoAlbumRepository.findById(photoId)
+                .orElseThrow(PhotoNotFoundException::new);
+
+        // 권한 확인
+        if (!photoAlbum.getUser().getId().equals(userId)) {
+            throw new UnauthorizedException();
+        }
+
+        // AI 서버에 3D 변환 요청
+        PhotoAlbumRequestDTO request = new PhotoAlbumRequestDTO(
+                photoAlbum.getImageUrl(), photoAlbum.getPositionX(), photoAlbum.getPositionY()
+        );
+        List<byte[]> modelFiles = convert3DModel(request);
+
+        // S3에 모델 업로드 및 URL 반환
+        List<String> modelUrls = upload3DModelFiles(modelFiles);
+
+        // DB 업데이트
+        updatePhotoWithModelUrls(photoAlbum, modelUrls);
+
+        return modelUrls;
+    }
+
+    private List<String> upload3DModelFiles(List<byte[]> modelFiles) {
+        List<String> modelUrls = new ArrayList<>();
+        modelUrls.add(s3Service.uploadFile(modelFiles.get(0), ".obj", "application/octet-stream", modelFiles.get(0).length));
+        modelUrls.add(s3Service.uploadFile(modelFiles.get(1), ".png", "image/png", modelFiles.get(1).length));
+        modelUrls.add(s3Service.uploadFile(modelFiles.get(2), ".mtl", "application/octet-stream", modelFiles.get(2).length));
+        return modelUrls;
+    }
+
+    private void updatePhotoWithModelUrls(PhotoAlbum photoAlbum, List<String> modelUrls) {
+        photoAlbum.updateModelUrls(
+                modelUrls.get(0), // objUrl
+                modelUrls.get(1), // pngUrl
+                modelUrls.get(2)  // mtlUrl
+        );
+        photoAlbumRepository.save(photoAlbum);
+    }
+
+
+    private void savePhotoData(String imageUrl, String objUrl, String pngUrl, String mtlUrl,
+                               PhotoAlbumRequestDTO request, Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(UserNotFoundException::new);
+
+        PhotoAlbum photoAlbum = new PhotoAlbum(
+                imageUrl, objUrl, pngUrl, mtlUrl,
+                request.getPositionX(), request.getPositionY(), user
+        );
+
+        photoAlbumRepository.save(photoAlbum);
+    }
+
+
+
+
 
     /**
      * 실패 시 업로드된 파일들 정리

@@ -22,4 +22,10 @@ public class PhotoAlbumRequestDTO {
     @Schema(description = "Y 좌표", example = "200.0", required = true)
     @NotNull(message = "Y 좌표는 필수입니다.")
     private Double positionY;
+
+    public PhotoAlbumRequestDTO(String base64Image, Double positionX, Double positionY) {
+        this.base64Image = base64Image;
+        this.positionX = positionX;
+        this.positionY = positionY;
+    }
 }

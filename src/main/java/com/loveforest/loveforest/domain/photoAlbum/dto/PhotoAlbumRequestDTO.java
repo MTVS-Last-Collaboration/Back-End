@@ -7,6 +7,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Getter
@@ -22,7 +23,7 @@ public class PhotoAlbumRequestDTO {
 
     @Schema(description = "사진 날짜", example = "2024-01-01T12:00:00")
     @NotNull(message = "날짜는 필수입니다")
-    private LocalDateTime photoDate;
+    private LocalDate photoDate;
 
     @Schema(description = "이미지 파일", type = "string", format = "binary")
     @NotNull(message = "사진은 필수입니다")

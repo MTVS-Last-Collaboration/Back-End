@@ -26,6 +26,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 
 import java.io.IOException;
 import java.time.Duration;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -87,8 +88,8 @@ public class PhotoAlbumService {
     /**
      * 사진 날짜 유효성 검증
      */
-    private void validatePhotoDate(LocalDateTime photoDate) {
-        if (photoDate == null || photoDate.isAfter(LocalDateTime.now())) {
+    private void validatePhotoDate(LocalDate photoDate) {
+        if (photoDate == null || photoDate.isAfter(LocalDate.now())) {
             throw new InvalidInputException();
         }
     }

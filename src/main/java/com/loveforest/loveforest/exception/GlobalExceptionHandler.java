@@ -11,6 +11,7 @@ import com.loveforest.loveforest.domain.daily_mission.exception.MissionAlreadyAn
 import com.loveforest.loveforest.domain.daily_mission.exception.MissionNotFoundException;
 import com.loveforest.loveforest.domain.daily_mission.exception.PreviousMissionIncompleteException;
 import com.loveforest.loveforest.domain.flower.exception.AiServerFlowerException;
+import com.loveforest.loveforest.domain.flower.exception.FlowerNotFoundException;
 import com.loveforest.loveforest.domain.flower.exception.MaxMoodCountReachedException;
 import com.loveforest.loveforest.domain.flower.exception.MoodAnalysisException;
 import com.loveforest.loveforest.domain.pet.exception.MaxLevelReachedException;
@@ -45,7 +46,13 @@ public class GlobalExceptionHandler {
     // 400 BadRequest 관련 예외 처리
     @ExceptionHandler(InvalidInputException.class)
     public ResponseEntity<ErrorResponse> handleInvalidInputException(InvalidInputException ex) {
-        return buildErrorResponse(ex.getErrorCode().getStatus(), ex.getErrorCode().getErrorType(), ex.getMessage(), ex.getErrorCode().getCode());
+        log.error("잘못된 입력값: {}", ex.getMessage());
+        return buildErrorResponse(
+                ex.getErrorCode().getStatus(),
+                ex.getErrorCode().getErrorType(),
+                ex.getMessage(),
+                ex.getErrorCode().getCode()
+        );
     }
 
     // 401 Unauthorized 관련 예외 처리
@@ -202,6 +209,18 @@ public class GlobalExceptionHandler {
                 ex.getErrorCode().getCode()
         );
     }
+
+    @ExceptionHandler(FlowerNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleFlowerNotFoundException(FlowerNotFoundException ex) {
+        log.error("꽃을 찾을 수 없음: {}", ex.getMessage());
+        return buildErrorResponse(
+                ex.getErrorCode().getStatus(),
+                ex.getErrorCode().getErrorType(),
+                ex.getErrorCode().getDescription(),
+                ex.getErrorCode().getCode()
+        );
+    }
+
 
     // JWT 토큰 관련 예외 처리 추가
     @ExceptionHandler(InvalidAccessTokenException.class)

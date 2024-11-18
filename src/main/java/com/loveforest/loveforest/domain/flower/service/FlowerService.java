@@ -36,6 +36,17 @@ public class FlowerService {
     private String serverUrl;
 
     @Transactional
+    public void createFlowerForUser(User user) {
+        // 이미 꽃이 있는지 확인
+        if (flowerRepository.findByUserId(user.getId()).isPresent()) {
+            return;
+        }
+
+        Flower flower = new Flower("My Flower", user); // 기본 이름 설정
+        flowerRepository.save(flower);
+    }
+
+    @Transactional
     public FlowerMoodResponseDTO analyzeMood(Long userId, String base64VoiceMessage) {
         User user = userRepository.findById(userId)
                 .orElseThrow(UserNotFoundException::new);

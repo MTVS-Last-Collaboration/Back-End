@@ -6,6 +6,7 @@ import com.loveforest.loveforest.domain.couple.entity.Couple;
 import com.loveforest.loveforest.domain.couple.exception.CoupleCodeAlreadyUsedException;
 import com.loveforest.loveforest.domain.couple.exception.CoupleNotFoundException;
 import com.loveforest.loveforest.domain.couple.repository.CoupleRepository;
+import com.loveforest.loveforest.domain.flower.service.FlowerService;
 import com.loveforest.loveforest.domain.pet.service.PetService;
 import com.loveforest.loveforest.domain.room.service.RoomServiceImpl;
 import com.loveforest.loveforest.domain.user.entity.User;
@@ -29,6 +30,7 @@ public class CoupleService {
     private final UserRepository userRepository;
     private final PetService petService; // PetService 추가
     private final RoomServiceImpl roomServiceImpl;
+    private final FlowerService flowerService;
 
 
     public String generateCoupleCode() {
@@ -44,60 +46,61 @@ public class CoupleService {
     /**
      * 커플 코드로 두 번째 사용자를 커플에 연동
      * */
+    @Transactional
     public void joinCouple(Long userId, String coupleCode) {
-        // 요청한 사용자
-        User user = userRepository.findById(userId)
+        // 1. 요청한 사용자 조회
+        User requestUser = userRepository.findById(userId)
                 .orElseThrow(UserNotFoundException::new);
 
-        // 사용자가 이미 속한 커플이 있을 경우
-        Couple currentCouple = user.getCouple();
+        // 2. 사용자가 이미 속한 커플이 있을 경우
+        Couple currentCouple = requestUser.getCouple();
         if (currentCouple != null) {
             if (currentCouple.getUsers().size() < 2) {
-                // 기존 Couple의 모든 User들의 couple 속성을 null로 설정하여 관계 해제
+                // 기존 Couple의 모든 User들의 couple 속성을 null로 설정
                 for (User existingUser : currentCouple.getUsers()) {
                     existingUser.setCouple(null);
                 }
                 userRepository.saveAll(currentCouple.getUsers());
-                // 관계가 해제된 후 Couple 삭제
                 coupleRepository.delete(currentCouple);
             } else {
                 throw new IllegalStateException("이미 다른 커플과 연동된 상태입니다.");
             }
         }
 
-        // 타겟 커플 코드로 커플 가져오기
+        // 3. 타겟 커플 조회
         Couple targetCouple = coupleRepository.findByCoupleCode(coupleCode)
                 .orElseThrow(CoupleNotFoundException::new);
 
-        // 타겟 커플이 이미 두 명으로 연동된 경우 예외 처리
+        // 4. 타겟 커플이 이미 두 명인지 확인
         if (targetCouple.getUsers().size() >= 2) {
             throw new CoupleCodeAlreadyUsedException();
         }
 
-        // A 사용자의 기념일을 B에게 설정하고 커플 코드 일치화
+        // 5. 기념일 동기화 및 커플 연동
         LocalDate anniversaryDate = targetCouple.getUsers().get(0).getAnniversaryDate();
-        user.setAnniversaryDate(anniversaryDate);
+        requestUser.setAnniversaryDate(anniversaryDate);
+        requestUser.setCouple(targetCouple);
+        targetCouple.addUser(requestUser);
+        userRepository.save(requestUser);
 
-        // 기존 커플 삭제 및 타겟 커플로 연동
-        user.setCouple(targetCouple);
-
-        // 커플에 사용자 추가 및 저장
-        targetCouple.addUser(user);
-        userRepository.save(user);
-
-        // 커플에 대한 Pet & Room 생성
+        // 6. 커플에 대한 꽃 생성
         if (targetCouple.getUsers().size() == 2) {
+            // 각 사용자에 대해 꽃 생성
+            for (User member : targetCouple.getUsers()) {
+                flowerService.createFlowerForUser(member);
+            }
+
+            // Pet & Room 생성도 함께 진행
             petService.createPetForCouple(targetCouple);
             roomServiceImpl.createRoom(targetCouple);
         }
 
-
-
         coupleRepository.save(targetCouple);
-        // 커플 연동 성공 로그
-        log.info("커플 연동 성공 - 사용자 ID: {}, 닉네임: {}, 타겟 커플 코드: {}, 기념일: {}",
-                user.getId(), user.getNickname(), coupleCode, anniversaryDate);
+        log.info("커플 연동 프로세스 완료 - 커플 ID: {}", targetCouple.getId());
     }
+
+
+
 
     public CoupleCodeResponseDTO getMyCoupleCode(Long userId) {
         // 요청한 사용자

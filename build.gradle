@@ -73,6 +73,8 @@ dependencies {
 
 //    // Netty DNS resolver for MacOS
 //    implementation 'io.netty:netty-resolver-dns-native-macos:4.1.107.Final:osx-arch64'
+    // Spring Schedule (자정 삭제 기능 구현용)
+    implementation 'org.springframework.boot:spring-boot-starter-scheduling'
 
 
 

@@ -13,14 +13,19 @@ import com.loveforest.loveforest.domain.user.exception.UserNotFoundException;
 import com.loveforest.loveforest.domain.user.repository.UserRepository;
 import com.loveforest.loveforest.exception.ErrorCode;
 import com.loveforest.loveforest.exception.common.InvalidInputException;
+import com.loveforest.loveforest.s3.service.S3Service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
+
+import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -31,6 +36,7 @@ public class FlowerService {
     private final UserRepository userRepository;
     private final WebClient.Builder webClientBuilder; // WebClient.Builder 주입
     private static final int MAX_FLOWER_NAME_LENGTH = 50;
+    private final S3Service s3Service;
 
     @Value("${ai.server.url}")
     private String serverUrl;
@@ -116,5 +122,28 @@ public class FlowerService {
                 .orElseThrow(UserNotFoundException::new);
         flower.resetMoodCount();
         flowerRepository.save(flower);
+    }
+
+    // 매일 자정에 실행
+    @Scheduled(cron = "0 0 0 * * *")
+    @Transactional
+    public void deleteExpiredVoiceMessages() {
+        log.info("자정 음성메시지 삭제 작업 시작");
+
+        LocalDateTime yesterday = LocalDateTime.now().minusDays(1);
+        List<Flower> flowers = flowerRepository.findAllByVoiceUrlIsNotNull();
+
+        for (Flower flower : flowers) {
+            if (flower.getVoiceSavedAt().isBefore(yesterday)) {
+                // S3에서 파일 삭제
+                s3Service.deleteFile(flower.getVoiceUrl());
+                // 엔티티에서 URL 제거
+                flower.clearVoiceMessage();
+                flowerRepository.save(flower);
+
+                log.info("음성메시지 삭제 완료 - 꽃 ID: {}", flower.getId());
+            }
+        }
+        log.info("자정 음성메시지 삭제 작업 완료");
     }
 }

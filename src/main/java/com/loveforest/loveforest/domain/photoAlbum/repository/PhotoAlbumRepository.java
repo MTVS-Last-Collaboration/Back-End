@@ -13,6 +13,4 @@ public interface PhotoAlbumRepository extends JpaRepository<PhotoAlbum, Long> {
     @Query("SELECT p FROM PhotoAlbum p JOIN FETCH p.user WHERE p.user.id = :userId ORDER BY p.id DESC")
     List<PhotoAlbum> findByUserId(@Param("userId") Long userId);
 
-    // 특정 사용자의 특정 좌표에 사진이 있는지 확인
-    boolean existsByUserIdAndPositionXAndPositionY(Long userId, Double positionX, Double positionY);
 }

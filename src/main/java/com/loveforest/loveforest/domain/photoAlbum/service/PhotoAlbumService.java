@@ -1,9 +1,9 @@
 package com.loveforest.loveforest.domain.photoAlbum.service;
 
 import com.loveforest.loveforest.domain.photoAlbum.dto.AIServerRequest;
+import com.loveforest.loveforest.domain.photoAlbum.dto.PhotoAlbumRequestDTO;
 import com.loveforest.loveforest.domain.photoAlbum.dto.PhotoAlbumResponseDTO;
 import com.loveforest.loveforest.domain.photoAlbum.entity.PhotoAlbum;
-import com.loveforest.loveforest.domain.photoAlbum.exception.AIServerPhotoException;
 import com.loveforest.loveforest.domain.photoAlbum.exception.PhotoNotFoundException;
 import com.loveforest.loveforest.domain.photoAlbum.exception.PhotoUploadFailedException;
 import com.loveforest.loveforest.domain.photoAlbum.repository.PhotoAlbumRepository;
@@ -23,11 +23,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.io.IOException;
 import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 import java.util.Optional;
@@ -53,16 +54,43 @@ public class PhotoAlbumService {
 
 
     /**
-     * 사진 등록 (3D 변환 없이 원본 이미지 저장)
+     * 사진 등록 (메타데이터 포함)
      */
-    public String savePhoto(MultipartFile photo, Long userId) {
+    public String savePhoto(PhotoAlbumRequestDTO request, Long userId) {
+        validateImage(request.getPhoto());
+        validatePhotoDate(request.getPhotoDate());
 
-        validateImage(photo);
+        String imageUrl = uploadOriginalImage(request.getPhoto());
 
-        String imageUrl = uploadOriginalImage(photo);
+        User user = userRepository.findById(userId)
+                .orElseThrow(UserNotFoundException::new);
 
-        savePhotoData(imageUrl, null, null, null, userId, null, null);
+        PhotoAlbum photoAlbum = new PhotoAlbum(
+                request.getTitle(),
+                request.getContent(),
+                request.getPhotoDate(),
+                imageUrl,
+                null, // objectUrl
+                null, // pngUrl
+                null, // materialUrl
+                null, // positionX
+                null, // positionY
+                user
+        );
+
+        photoAlbumRepository.save(photoAlbum);
+        log.info("사진 저장 완료 - 제목: {}, 작성자: {}", request.getTitle(), user.getNickname());
+
         return imageUrl;
+    }
+
+    /**
+     * 사진 날짜 유효성 검증
+     */
+    private void validatePhotoDate(LocalDateTime photoDate) {
+        if (photoDate == null || photoDate.isAfter(LocalDateTime.now())) {
+            throw new InvalidInputException();
+        }
     }
 
     /**
@@ -77,19 +105,6 @@ public class PhotoAlbumService {
         if (contentType == null || !contentType.startsWith("image/")) {
             throw new InvalidInputException();
         }
-    }
-
-    private void savePhotoData(String imageUrl, String objUrl, String pngUrl, String mtlUrl,
-                               Long userId, Double positionX, Double positionY) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(UserNotFoundException::new);
-
-        PhotoAlbum photoAlbum = new PhotoAlbum(
-                imageUrl, objUrl, pngUrl, mtlUrl,
-                positionX, positionY, user
-        );
-
-        photoAlbumRepository.save(photoAlbum);
     }
 
     /**
@@ -215,11 +230,18 @@ public class PhotoAlbumService {
         return bytes;
     }
 
+    /**
+     * 사진 조회 기능 수정
+     */
     @Transactional(readOnly = true)
     public List<PhotoAlbumResponseDTO> getPhotos(Long userId) {
         return photoAlbumRepository.findByUserId(userId).stream()
+                .sorted(Comparator.comparing(PhotoAlbum::getPhotoDate).reversed()) //날짜 기준 내림차순 정렬
                 .map(photo -> new PhotoAlbumResponseDTO(
                         photo.getId(),
+                        photo.getTitle(),
+                        photo.getContent(),
+                        photo.getPhotoDate(),
                         photo.getImageUrl(),
                         photo.getObjectUrl(),
                         photo.getPngUrl(),

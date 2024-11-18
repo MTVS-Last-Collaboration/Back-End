@@ -2,6 +2,7 @@ package com.loveforest.loveforest.domain.photoAlbum.controller;
 
 import com.loveforest.loveforest.domain.auth.dto.LoginInfo;
 import com.loveforest.loveforest.domain.photoAlbum.dto.ApiResponseDTO;
+import com.loveforest.loveforest.domain.photoAlbum.dto.PhotoAlbumRequestDTO;
 import com.loveforest.loveforest.domain.photoAlbum.dto.PhotoAlbumResponseDTO;
 import com.loveforest.loveforest.domain.photoAlbum.service.PhotoAlbumService;
 import com.loveforest.loveforest.domain.user.exception.LoginRequiredException;
@@ -9,6 +10,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
@@ -33,15 +35,15 @@ public class PhotoAlbumController {
     @Operation(summary = "사진 등록", description = "새로운 사진을 등록합니다.")
     @ApiResponse(responseCode = "200", description = "사진 등록 성공")
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<ApiResponseDTO<String>> savePhoto(@AuthenticationPrincipal LoginInfo loginInfo, @RequestParam("photo") MultipartFile photo) {
+    public ResponseEntity<ApiResponseDTO<String>> savePhoto(@AuthenticationPrincipal LoginInfo loginInfo, @Valid @ModelAttribute PhotoAlbumRequestDTO request) {
 
         if (loginInfo == null) {
             throw new LoginRequiredException();
         }
 
-        String imageUrl = photoAlbumService.savePhoto(photo, loginInfo.getUserId());
+        String imageUrl = photoAlbumService.savePhoto(request, loginInfo.getUserId());
 
-        log.info("사진 등록 완료 - 이미지 URL: {}", imageUrl);
+        log.info("사진 등록 완료 - 제목: {}, 이미지 URL: {}", request.getTitle(), imageUrl);
         return ResponseEntity.ok(ApiResponseDTO.success("사진이 성공적으로 등록되었습니다.", imageUrl));
     }
 

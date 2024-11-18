@@ -5,6 +5,7 @@ import com.loveforest.loveforest.domain.photoAlbum.dto.ApiResponseDTO;
 import com.loveforest.loveforest.domain.photoAlbum.dto.PhotoAlbumRequestDTO;
 import com.loveforest.loveforest.domain.photoAlbum.dto.PhotoAlbumResponseDTO;
 import com.loveforest.loveforest.domain.photoAlbum.service.PhotoAlbumService;
+import com.loveforest.loveforest.domain.user.exception.LoginRequiredException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -36,6 +37,11 @@ public class PhotoAlbumController {
             @AuthenticationPrincipal LoginInfo loginInfo,
             @Valid @RequestBody PhotoAlbumRequestDTO request) {
 
+        if (loginInfo == null) {
+            throw new LoginRequiredException();
+        }
+
+
         log.info("사진 등록 요청 - 사용자 ID: {}, 좌표: ({}, {})",
                 loginInfo.getUserId(), request.getPositionX(), request.getPositionY());
 
@@ -54,6 +60,11 @@ public class PhotoAlbumController {
     public ResponseEntity<ApiResponseDTO<List<String>>> convertTo3DModel(
             @AuthenticationPrincipal LoginInfo loginInfo,
             @RequestParam Long photoId) {
+
+        if (loginInfo == null) {
+            throw new LoginRequiredException();
+        }
+
 
         log.info("3D 모델 변환 요청 - 사용자 ID: {}, 사진 ID: {}", loginInfo.getUserId(), photoId);
 
@@ -80,6 +91,11 @@ public class PhotoAlbumController {
             @AuthenticationPrincipal LoginInfo loginInfo,
             @PathVariable Long photoId) {
 
+        if (loginInfo == null) {
+            throw new LoginRequiredException();
+        }
+
+
         log.info("사진 삭제 요청 - 사용자 ID: {}, 사진 ID: {}",
                 loginInfo.getUserId(), photoId);
 
@@ -100,6 +116,11 @@ public class PhotoAlbumController {
     @GetMapping
     public ResponseEntity<ApiResponseDTO<List<PhotoAlbumResponseDTO>>> getPhotos(
             @AuthenticationPrincipal LoginInfo loginInfo) {
+
+        if (loginInfo == null) {
+            throw new LoginRequiredException();
+        }
+
 
         log.info("사진 목록 조회 요청 - 사용자 ID: {}", loginInfo.getUserId());
         List<PhotoAlbumResponseDTO> photos = photoAlbumService.getPhotos(loginInfo.getUserId());
@@ -126,6 +147,11 @@ public class PhotoAlbumController {
     public ResponseEntity<ApiResponseDTO<Void>> bulkDeletePhotos(
             @AuthenticationPrincipal LoginInfo loginInfo,
             @RequestBody List<Long> photoIds) {
+
+        if (loginInfo == null) {
+            throw new LoginRequiredException();
+        }
+
 
         log.info("사진 일괄 삭제 요청 - 사용자 ID: {}, 사진 수: {}",
                 loginInfo.getUserId(), photoIds.size());

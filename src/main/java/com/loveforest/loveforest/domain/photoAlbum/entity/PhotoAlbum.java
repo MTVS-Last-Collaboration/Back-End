@@ -48,9 +48,11 @@ public class PhotoAlbum {
         this.user = user;
     }
 
-    public void updateModelUrls(String objectUrl, String pngUrl, String materialUrl) {
-        this.objectUrl = objectUrl;
+    public void updateModelUrlsAndPosition(String objUrl, String pngUrl, String mtlUrl, Double positionX, Double positionY) {
+        this.objectUrl = objUrl;
         this.pngUrl = pngUrl;
-        this.materialUrl = materialUrl;
+        this.materialUrl = mtlUrl;
+        this.positionX = positionX;
+        this.positionY = positionY;
     }
 }

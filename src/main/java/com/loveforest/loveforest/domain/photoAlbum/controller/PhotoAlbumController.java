@@ -2,7 +2,6 @@ package com.loveforest.loveforest.domain.photoAlbum.controller;
 
 import com.loveforest.loveforest.domain.auth.dto.LoginInfo;
 import com.loveforest.loveforest.domain.photoAlbum.dto.ApiResponseDTO;
-import com.loveforest.loveforest.domain.photoAlbum.dto.PhotoAlbumRequestDTO;
 import com.loveforest.loveforest.domain.photoAlbum.dto.PhotoAlbumResponseDTO;
 import com.loveforest.loveforest.domain.photoAlbum.service.PhotoAlbumService;
 import com.loveforest.loveforest.domain.user.exception.LoginRequiredException;
@@ -10,12 +9,13 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -32,20 +32,14 @@ public class PhotoAlbumController {
      */
     @Operation(summary = "사진 등록", description = "새로운 사진을 등록합니다.")
     @ApiResponse(responseCode = "200", description = "사진 등록 성공")
-    @PostMapping
-    public ResponseEntity<ApiResponseDTO<String>> savePhoto(
-            @AuthenticationPrincipal LoginInfo loginInfo,
-            @Valid @RequestBody PhotoAlbumRequestDTO request) {
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ApiResponseDTO<String>> savePhoto(@AuthenticationPrincipal LoginInfo loginInfo, @RequestParam("photo") MultipartFile photo) {
 
         if (loginInfo == null) {
             throw new LoginRequiredException();
         }
 
-
-        log.info("사진 등록 요청 - 사용자 ID: {}, 좌표: ({}, {})",
-                loginInfo.getUserId(), request.getPositionX(), request.getPositionY());
-
-        String imageUrl = photoAlbumService.savePhoto(request, loginInfo.getUserId());
+        String imageUrl = photoAlbumService.savePhoto(photo, loginInfo.getUserId());
 
         log.info("사진 등록 완료 - 이미지 URL: {}", imageUrl);
         return ResponseEntity.ok(ApiResponseDTO.success("사진이 성공적으로 등록되었습니다.", imageUrl));
@@ -56,22 +50,17 @@ public class PhotoAlbumController {
      */
     @Operation(summary = "3D 모델 변환", description = "저장된 사진을 기반으로 3D 오브젝트를 생성합니다.")
     @ApiResponse(responseCode = "200", description = "3D 변환 성공")
-    @PostMapping("/convert")
-    public ResponseEntity<ApiResponseDTO<List<String>>> convertTo3DModel(
-            @AuthenticationPrincipal LoginInfo loginInfo,
-            @RequestParam Long photoId) {
+    @PostMapping("/convert/{photoId}")
+    public ResponseEntity<ApiResponseDTO<List<String>>> convertTo3DModel(@AuthenticationPrincipal LoginInfo loginInfo, @PathVariable("photoId") Long photoId,
+            @RequestParam Double positionX, @RequestParam Double positionY) {
 
-        if (loginInfo == null) {
-            throw new LoginRequiredException();
-        }
-
-
-        log.info("3D 모델 변환 요청 - 사용자 ID: {}, 사진 ID: {}", loginInfo.getUserId(), photoId);
-
-        List<String> modelUrls = photoAlbumService.convertPhotoTo3D(photoId, loginInfo.getUserId());
-
-        log.info("3D 모델 변환 완료 - 모델 URL: {}", modelUrls);
-        return ResponseEntity.ok(ApiResponseDTO.success("3D 모델 변환이 성공적으로 완료되었습니다.", modelUrls));
+        List<String> modelUrls = photoAlbumService.convert3DModel(
+                photoId,
+                loginInfo.getUserId(),
+                positionX,
+                positionY
+        );
+        return ResponseEntity.ok(ApiResponseDTO.success("3D 모델 변환이 완료되었습니다.", modelUrls));
     }
 
     /**

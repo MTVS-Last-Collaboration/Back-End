@@ -5,6 +5,8 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Table(name = "tbl_photo_album")
 @Getter
@@ -13,6 +15,16 @@ public class PhotoAlbum {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Column(nullable = false)
+    private String title; // 제목 추가
+
+    @Column(nullable = false)
+    private String content; // 내용 추가
+
+    @Column(nullable = false)
+    private LocalDateTime photoDate; // 날짜 추가
+
 
     @Column(nullable = false)
     private String imageUrl;  // S3에 저장된 원본 이미지 URL
@@ -36,9 +48,13 @@ public class PhotoAlbum {
     @JoinColumn(name = "user_id")
     private User user;
 
-    // 생성자
-    public PhotoAlbum(String imageUrl, String objectUrl, String pngUrl, String materialUrl,
+    // 생성자 수정
+    public PhotoAlbum(String title, String content, LocalDateTime photoDate,
+                      String imageUrl, String objectUrl, String pngUrl, String materialUrl,
                       Double positionX, Double positionY, User user) {
+        this.title = title;
+        this.content = content;
+        this.photoDate = photoDate;
         this.imageUrl = imageUrl;
         this.objectUrl = objectUrl;
         this.pngUrl = pngUrl;
@@ -48,9 +64,11 @@ public class PhotoAlbum {
         this.user = user;
     }
 
-    public void updateModelUrls(String objectUrl, String pngUrl, String materialUrl) {
-        this.objectUrl = objectUrl;
+    public void updateModelUrlsAndPosition(String objUrl, String pngUrl, String mtlUrl, Double positionX, Double positionY) {
+        this.objectUrl = objUrl;
         this.pngUrl = pngUrl;
-        this.materialUrl = materialUrl;
+        this.materialUrl = mtlUrl;
+        this.positionX = positionX;
+        this.positionY = positionY;
     }
 }

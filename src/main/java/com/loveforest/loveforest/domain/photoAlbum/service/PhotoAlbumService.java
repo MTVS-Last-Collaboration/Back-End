@@ -4,7 +4,6 @@ import com.loveforest.loveforest.domain.photoAlbum.dto.AIServerRequest;
 import com.loveforest.loveforest.domain.photoAlbum.dto.PhotoAlbumRequestDTO;
 import com.loveforest.loveforest.domain.photoAlbum.dto.PhotoAlbumResponseDTO;
 import com.loveforest.loveforest.domain.photoAlbum.entity.PhotoAlbum;
-import com.loveforest.loveforest.domain.photoAlbum.exception.AIServerPhotoException;
 import com.loveforest.loveforest.domain.photoAlbum.exception.PhotoNotFoundException;
 import com.loveforest.loveforest.domain.photoAlbum.exception.PhotoUploadFailedException;
 import com.loveforest.loveforest.domain.photoAlbum.repository.PhotoAlbumRepository;
@@ -22,14 +21,17 @@ import org.springframework.core.io.buffer.DataBufferUtils;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.web.reactive.function.client.WebClientResponseException;
 
+import java.io.IOException;
 import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Base64;
+import java.util.Comparator;
 import java.util.List;
 
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -52,45 +54,108 @@ public class PhotoAlbumService {
 
 
     /**
-     * 사진 등록 (3D 변환 없이 원본 이미지 저장)
+     * 사진 등록 (메타데이터 포함)
      */
     public String savePhoto(PhotoAlbumRequestDTO request, Long userId) {
-        validateImage(request.getBase64Image());
+        validateImage(request.getPhoto());
+        validatePhotoDate(request.getPhotoDate());
 
-        // S3에 원본 이미지 업로드
-        String imageUrl = uploadOriginalImage(request.getBase64Image());
+        String imageUrl = uploadOriginalImage(request.getPhoto());
 
-        // DB에 저장 (3D 모델 관련 필드는 null 처리)
-        savePhotoData(imageUrl, null, null, null, request, userId);
+        User user = userRepository.findById(userId)
+                .orElseThrow(UserNotFoundException::new);
+
+        PhotoAlbum photoAlbum = new PhotoAlbum(
+                request.getTitle(),
+                request.getContent(),
+                request.getPhotoDate(),
+                imageUrl,
+                null, // objectUrl
+                null, // pngUrl
+                null, // materialUrl
+                null, // positionX
+                null, // positionY
+                user
+        );
+
+        photoAlbumRepository.save(photoAlbum);
+        log.info("사진 저장 완료 - 제목: {}, 작성자: {}", request.getTitle(), user.getNickname());
 
         return imageUrl;
     }
 
     /**
+     * 사진 날짜 유효성 검증
+     */
+    private void validatePhotoDate(LocalDateTime photoDate) {
+        if (photoDate == null || photoDate.isAfter(LocalDateTime.now())) {
+            throw new InvalidInputException();
+        }
+    }
+
+    /**
+     * 이미지 유효성 검사
+     */
+    private void validateImage(MultipartFile photo) {
+        if (photo == null || photo.isEmpty()) {
+            throw new InvalidInputException();
+        }
+
+        String contentType = photo.getContentType();
+        if (contentType == null || !contentType.startsWith("image/")) {
+            throw new InvalidInputException();
+        }
+    }
+
+    /**
      * 3D 모델 변환
      */
-    public List<String> convertPhotoTo3D(Long photoId, Long userId) {
+    public List<String> convert3DModel(Long photoId, Long userId, Double positionX, Double positionY) {
         PhotoAlbum photoAlbum = photoAlbumRepository.findById(photoId)
                 .orElseThrow(PhotoNotFoundException::new);
 
-        // 권한 확인
         if (!photoAlbum.getUser().getId().equals(userId)) {
             throw new UnauthorizedException();
         }
 
-        // AI 서버에 3D 변환 요청
-        PhotoAlbumRequestDTO request = new PhotoAlbumRequestDTO(
-                photoAlbum.getImageUrl(), photoAlbum.getPositionX(), photoAlbum.getPositionY()
-        );
-        List<byte[]> modelFiles = convert3DModel(request);
+        try {
+            List<byte[]> modelFiles = requestAIServerConversion(photoAlbum.getImageUrl(), positionX, positionY);
+            List<String> modelUrls = upload3DModelFiles(modelFiles);
 
-        // S3에 모델 업로드 및 URL 반환
-        List<String> modelUrls = upload3DModelFiles(modelFiles);
+            photoAlbum.updateModelUrlsAndPosition(
+                    modelUrls.get(0), // obj
+                    modelUrls.get(1), // png
+                    modelUrls.get(2), // mtl
+                    positionX,
+                    positionY
+            );
 
-        // DB 업데이트
-        updatePhotoWithModelUrls(photoAlbum, modelUrls);
+            photoAlbumRepository.save(photoAlbum);
+            return modelUrls;
 
-        return modelUrls;
+        } catch (Exception e) {
+            log.error("3D 변환 실패: {}", e.getMessage());
+            throw new PhotoUploadFailedException();
+        }
+    }
+
+    private List<byte[]> requestAIServerConversion(String imageUrl, Double positionX, Double positionY) {
+        WebClient webClient = webClientBuilder.baseUrl(aiServerUrl)
+                .codecs(configurer -> configurer.defaultCodecs().maxInMemorySize(20 * 1024 * 1024)) // 20MB로 증가
+                .build();
+
+        AIServerRequest request = new AIServerRequest(imageUrl, positionX, positionY);
+
+        return webClient.post()
+                .uri("/convert_3d_model")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(request)
+                .retrieve()
+                .bodyToFlux(DataBuffer.class)
+                .map(this::toByteArray)
+                .collectList()
+                .timeout(Duration.ofMinutes(2))
+                .block();
     }
 
     private List<String> upload3DModelFiles(List<byte[]> modelFiles) {
@@ -99,42 +164,6 @@ public class PhotoAlbumService {
         modelUrls.add(s3Service.uploadFile(modelFiles.get(1), ".png", "image/png", modelFiles.get(1).length));
         modelUrls.add(s3Service.uploadFile(modelFiles.get(2), ".mtl", "application/octet-stream", modelFiles.get(2).length));
         return modelUrls;
-    }
-
-    private void updatePhotoWithModelUrls(PhotoAlbum photoAlbum, List<String> modelUrls) {
-        photoAlbum.updateModelUrls(
-                modelUrls.get(0), // objUrl
-                modelUrls.get(1), // pngUrl
-                modelUrls.get(2)  // mtlUrl
-        );
-        photoAlbumRepository.save(photoAlbum);
-    }
-
-
-    private void savePhotoData(String imageUrl, String objUrl, String pngUrl, String mtlUrl,
-                               PhotoAlbumRequestDTO request, Long userId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(UserNotFoundException::new);
-
-        PhotoAlbum photoAlbum = new PhotoAlbum(
-                imageUrl, objUrl, pngUrl, mtlUrl,
-                request.getPositionX(), request.getPositionY(), user
-        );
-
-        photoAlbumRepository.save(photoAlbum);
-    }
-
-
-
-
-
-    /**
-     * 실패 시 업로드된 파일들 정리
-     */
-    private void cleanupFailedUploads(List<String> uploadedUrls) {
-        for (String url : uploadedUrls) {
-            s3Service.deleteFile(url);
-        }
     }
 
     /**
@@ -166,68 +195,30 @@ public class PhotoAlbumService {
     }
 
 
-    /**
-     * 이미지 유효성 검사
-     */
-    private void validateImage(String base64Image) {
-        if (base64Image == null || base64Image.isEmpty()) {
-            log.error("이미지가 비어있음 또는 null");
-            throw new InvalidInputException();
-        }
-        if (!base64Image.matches("^[A-Za-z0-9+/=]+$")) {
-            log.error("이미지 형식이 유효하지 않음: {}", base64Image);
-            throw new InvalidInputException();
-        }
-    }
+
 
     /**
      * 원본 이미지 업로드
      */
-    private String uploadOriginalImage(String base64Image) {
-        byte[] imageData = Base64.getDecoder().decode(base64Image); // Base64 디코딩
-        String contentType = "image/jpeg"; // 이미지의 MIME 타입 설정
-        long contentLength = imageData.length; // 파일 크기 계산
-
-        return s3Service.uploadFile(
-                imageData,           // 파일 데이터
-                ".jpg",              // 파일 확장자
-                contentType,         // MIME 타입
-                contentLength        // 파일 크기
-        );
-    }
-    /**
-     * AI 서버에 3D 모델 변환 요청하여 .obj, .png, .mtl 파일을 List<byte[]>로 반환
-     */
-    private List<byte[]> convert3DModel(PhotoAlbumRequestDTO request) {
-        WebClient webClient = webClientBuilder.baseUrl(aiServerUrl)
-                .codecs(configurer -> configurer.defaultCodecs().maxInMemorySize(10 * 1024 * 1024)) // 10MB 설정
-                .build();
-
-        AIServerRequest aiRequest = new AIServerRequest(
-                request.getBase64Image(),
-                request.getPositionX(),
-                request.getPositionY()
-        );
-
+    private String uploadOriginalImage(MultipartFile photo) {
         try {
-            return webClient.post()
-                    .uri("/convert_3d_model")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .bodyValue(aiRequest)
-                    .accept(MediaType.MULTIPART_MIXED)
-                    .retrieve()
-                    .bodyToFlux(DataBuffer.class)
-                    .map(this::toByteArray) // DataBuffer -> byte[] 변환
-                    .collectList() // List<byte[]>로 수집
-                    .block(Duration.ofSeconds(100)); // 10초 내 완료되지 않으면 타임아웃 발생
-
-        } catch (WebClientResponseException e) {
-            log.error("AI 서버 오류: {}", e.getMessage(), e);
-            throw new AIServerPhotoException();
-        } catch (Exception e) {
-            log.error("사진 업로드 처리 중 오류: {}", e.getMessage(), e);
+            String extension = getExtension(photo.getOriginalFilename());
+            return s3Service.uploadFile(
+                    photo.getBytes(),
+                    extension,
+                    photo.getContentType(),
+                    photo.getSize()
+            );
+        } catch (IOException e) {
             throw new PhotoUploadFailedException();
         }
+    }
+
+    private String getExtension(String filename) {
+        return Optional.ofNullable(filename)
+                .filter(f -> f.contains("."))
+                .map(f -> f.substring(f.lastIndexOf(".")))
+                .orElse(".jpg");
     }
 
 
@@ -239,49 +230,18 @@ public class PhotoAlbumService {
         return bytes;
     }
 
-
     /**
-     * DB에 사진 정보 저장
+     * 사진 조회 기능 수정
      */
-    private PhotoAlbumResponseDTO savePhotoAlbumData(
-            String imageUrl,
-            String objUrl,
-            String pngUrl,
-            String mtlUrl,
-            PhotoAlbumRequestDTO request,
-            Long userId) {
-
-        User user = userRepository.findById(userId)
-                .orElseThrow(UserNotFoundException::new);
-
-        PhotoAlbum photoAlbum = new PhotoAlbum(
-                imageUrl,
-                objUrl,
-                pngUrl,
-                mtlUrl,
-                request.getPositionX(),
-                request.getPositionY(),
-                user
-        );
-
-        PhotoAlbum savedPhotoAlbum = photoAlbumRepository.save(photoAlbum);
-
-        return new PhotoAlbumResponseDTO(
-                savedPhotoAlbum.getId(),
-                savedPhotoAlbum.getImageUrl(),
-                savedPhotoAlbum.getObjectUrl(),
-                savedPhotoAlbum.getPngUrl(),
-                savedPhotoAlbum.getMaterialUrl(),
-                savedPhotoAlbum.getPositionX(),
-                savedPhotoAlbum.getPositionY()
-        );
-    }
-
     @Transactional(readOnly = true)
     public List<PhotoAlbumResponseDTO> getPhotos(Long userId) {
         return photoAlbumRepository.findByUserId(userId).stream()
+                .sorted(Comparator.comparing(PhotoAlbum::getPhotoDate).reversed()) //날짜 기준 내림차순 정렬
                 .map(photo -> new PhotoAlbumResponseDTO(
                         photo.getId(),
+                        photo.getTitle(),
+                        photo.getContent(),
+                        photo.getPhotoDate(),
                         photo.getImageUrl(),
                         photo.getObjectUrl(),
                         photo.getPngUrl(),

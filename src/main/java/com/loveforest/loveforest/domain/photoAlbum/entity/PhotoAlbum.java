@@ -17,32 +17,31 @@ public class PhotoAlbum {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
-    private String title; // 제목 추가
+    @Column(name = "title", nullable = false)
+    private String title;
 
-    @Column(nullable = false)
-    private String content; // 내용 추가
+    @Column(name = "content", nullable = false)
+    private String content;
 
-    @Column(nullable = false)
-    private LocalDate photoDate; // 날짜 추가
+    @Column(name = "photo_date", nullable = false)
+    private LocalDate photoDate;
 
+    @Column(name = "image_url", nullable = false)
+    private String imageUrl;
 
-    @Column(nullable = false)
-    private String imageUrl;  // S3에 저장된 원본 이미지 URL
-
-    @Column(nullable = false)
+    @Column(nullable = true)
     private String objectUrl; // S3에 저장된 3D .obj 파일 URL
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     private String pngUrl; // S3에 저장된 .png 파일 URL (텍스처)
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     private String materialUrl; // S3에 저장된 .mtl 파일 URL (재질)
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     private Double positionX;
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     private Double positionY;
 
     @ManyToOne(fetch = FetchType.LAZY)

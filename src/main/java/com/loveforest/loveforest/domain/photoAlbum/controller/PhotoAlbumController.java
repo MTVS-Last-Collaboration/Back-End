@@ -19,6 +19,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Slf4j
@@ -35,11 +36,21 @@ public class PhotoAlbumController {
     @Operation(summary = "사진 등록", description = "새로운 사진을 등록합니다.")
     @ApiResponse(responseCode = "200", description = "사진 등록 성공")
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<ApiResponseDTO<String>> savePhoto(@AuthenticationPrincipal LoginInfo loginInfo, @Valid @ModelAttribute PhotoAlbumRequestDTO request) {
+    public ResponseEntity<ApiResponseDTO<String>> savePhoto(@AuthenticationPrincipal LoginInfo loginInfo,
+                                                            @RequestPart("title") String title,
+                                                            @RequestPart("content") String content,
+                                                            @RequestPart("photoDate") String photoDate,
+                                                            @RequestPart("photo") MultipartFile photo) {
 
         if (loginInfo == null) {
             throw new LoginRequiredException();
         }
+
+        // `photoDate`를 LocalDate로 변환
+        LocalDate parsedDate = LocalDate.parse(photoDate);
+
+        // DTO 생성
+        PhotoAlbumRequestDTO request = new PhotoAlbumRequestDTO(title, content, parsedDate, photo);
 
         String imageUrl = photoAlbumService.savePhoto(request, loginInfo.getUserId());
 

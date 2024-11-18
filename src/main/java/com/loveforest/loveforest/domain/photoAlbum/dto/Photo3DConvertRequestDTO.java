@@ -2,8 +2,12 @@ package com.loveforest.loveforest.domain.photoAlbum.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
+@NoArgsConstructor
+@AllArgsConstructor
 @Getter
 @Schema(description = "3D 변환 요청 DTO")
 public class Photo3DConvertRequestDTO {

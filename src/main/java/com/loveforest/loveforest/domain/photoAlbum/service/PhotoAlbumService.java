@@ -31,11 +31,8 @@ import java.io.IOException;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -179,7 +176,9 @@ public class PhotoAlbumService {
                 .codecs(configurer -> configurer.defaultCodecs().maxInMemorySize(20 * 1024 * 1024)) // 20MB로 증가
                 .build();
 
-        AIServerRequest request = new AIServerRequest(imageUrl, positionX, positionY);
+        String base64Image = downloadAndEncodeImage(imageUrl);
+
+        AIServerRequest request = new AIServerRequest(base64Image, positionX, positionY);
 
         return webClient.post()
                 .uri("/convert_3d_model")
@@ -191,6 +190,19 @@ public class PhotoAlbumService {
                 .collectList()
                 .timeout(Duration.ofMinutes(2))
                 .block();
+    }
+
+    private String downloadAndEncodeImage(String imageUrl) {
+        try {
+            // S3에서 이미지 다운로드
+            byte[] imageBytes = s3Service.downloadFile(imageUrl);
+
+            // Base64로 인코딩
+            return Base64.getEncoder().encodeToString(imageBytes);
+        } catch (Exception e) {
+            log.error("이미지 다운로드 및 Base64 인코딩 실패: {}", e.getMessage());
+            throw new PhotoUploadFailedException();
+        }
     }
 
     /**

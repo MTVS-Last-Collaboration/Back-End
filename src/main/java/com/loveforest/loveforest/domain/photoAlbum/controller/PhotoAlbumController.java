@@ -7,6 +7,9 @@ import com.loveforest.loveforest.domain.photoAlbum.dto.PhotoAlbumResponseDTO;
 import com.loveforest.loveforest.domain.photoAlbum.service.PhotoAlbumService;
 import com.loveforest.loveforest.domain.user.exception.LoginRequiredException;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -33,7 +36,32 @@ public class PhotoAlbumController {
     /**
      * 사진 등록 (3D 변환 없이 원본 이미지 저장)
      */
-    @Operation(summary = "사진 등록", description = "새로운 사진을 등록합니다.")
+    @Operation(
+            summary = "3D 모델 변환",
+            description = "저장된 사진을 기반으로 3D 오브젝트를 생성합니다.",
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "3D 변환 성공",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    schema = @Schema(implementation = ApiResponseDTO.class),
+                                    examples = @ExampleObject(
+                                            value = """
+                        {
+                          "message": "3D 모델 변환이 완료되었습니다.",
+                          "data": [
+                            "https://loveforest.s3.ap-northeast-2.amazonaws.com/30b8fee9-9f5c-4578-8d82-cfb83f524e2a.obj",
+                            "https://loveforest.s3.ap-northeast-2.amazonaws.com/12ca0b9e-f19c-4dd8-8cc3-7611af098cb5.png",
+                            "https://loveforest.s3.ap-northeast-2.amazonaws.com/416d9c9f-7a66-458f-88be-0668cdd1da1f.mtl"
+                          ]
+                        }
+                    """
+                                    )
+                            )
+                    )
+            }
+    )
     @ApiResponse(responseCode = "200", description = "사진 등록 성공")
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponseDTO<PhotoAlbumResponseDTO>> savePhoto(@AuthenticationPrincipal LoginInfo loginInfo,

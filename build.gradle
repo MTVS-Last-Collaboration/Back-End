@@ -72,11 +72,6 @@ dependencies {
     implementation platform('software.amazon.awssdk:bom:2.21.1')
     implementation 'software.amazon.awssdk:s3'
 
-//    // Netty DNS resolver for MacOS
-//    implementation 'io.netty:netty-resolver-dns-native-macos:4.1.107.Final:osx-arch64'
-
-
-
 }
 
 tasks.named('test') {

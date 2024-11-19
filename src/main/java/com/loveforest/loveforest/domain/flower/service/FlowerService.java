@@ -2,8 +2,10 @@ package com.loveforest.loveforest.domain.flower.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.loveforest.loveforest.domain.couple.exception.CoupleNotFoundException;
 import com.loveforest.loveforest.domain.flower.dto.FlowerMoodResponseDTO;
 import com.loveforest.loveforest.domain.flower.dto.VoiceAnalysisRequestDTO;
+import com.loveforest.loveforest.domain.flower.dto.VoiceMessageStatusDTO;
 import com.loveforest.loveforest.domain.flower.entity.Flower;
 import com.loveforest.loveforest.domain.flower.exception.*;
 import com.loveforest.loveforest.domain.flower.repository.FlowerRepository;
@@ -28,6 +30,7 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.Base64;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -206,58 +209,49 @@ public class FlowerService {
      */
     @Transactional
     public void saveVoiceMessage(Long userId, MultipartFile voiceFile) {
-        if (voiceFile == null || voiceFile.isEmpty()) {
-            throw new InvalidInputException(ErrorCode.INVALID_VOICE_MESSAGE);
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(UserNotFoundException::new);
+
+        // 커플 확인
+        if (user.getCouple() == null) {
+            throw new CoupleNotFoundException();
         }
 
-        // 파일 형식 검증
-        String contentType = voiceFile.getContentType();
-        if (contentType == null || !contentType.startsWith("audio/")) {
-            throw new InvalidInputException(ErrorCode.INVALID_VOICE_MESSAGE);
-        }
+        Flower flower = flowerRepository.findByUserId(userId)
+                .orElseThrow(FlowerNotFoundException::new);
+
 
         try {
-            Flower flower = flowerRepository.findByUserId(userId)
-                    .orElseThrow(FlowerNotFoundException::new);
-
-            // 기존 음성 메시지가 있다면 S3에서 삭제
+            // 기존 음성 파일이 있다면 삭제
             if (flower.getVoiceUrl() != null) {
-                try {
-                    s3Service.deleteFile(flower.getVoiceUrl());
-                } catch (Exception e) {
-                    log.warn("기존 음성 메시지 삭제 실패: {}", e.getMessage());
-                }
+                s3Service.deleteFile(flower.getVoiceUrl());
             }
 
-            // 파일 확장자 추출
-            String originalFilename = voiceFile.getOriginalFilename();
-            String extension = originalFilename != null ?
-                    originalFilename.substring(originalFilename.lastIndexOf(".")) : ".mp3";
-
-
-            // S3에 업로드
+            // 새로운 음성 파일 업로드
             String voiceUrl = s3Service.uploadFile(
-                    voiceFile.getBytes(),  // byte[] 로 변환
-                    extension,
-                    contentType,
+                    voiceFile.getBytes(),
+                    getExtension(voiceFile.getOriginalFilename()),
+                    voiceFile.getContentType(),
                     voiceFile.getSize()
             );
 
-
-            // Flower 엔티티 업데이트
+            // 꽃 상태 업데이트
             flower.updateVoiceMessage(voiceUrl);
             flowerRepository.save(flower);
 
-            log.info("음성 메시지 저장 완료 - 사용자 ID: {}, URL: {}, 크기: {}, 타입: {}",
-                    userId, voiceUrl, voiceFile.getSize(), contentType);
-
+            log.info("음성 메시지 저장 완료 - 사용자: {}, URL: {}", userId, voiceUrl);
         } catch (IOException e) {
-            log.error("음성 파일 처리 중 IO 오류 발생: {}", e.getMessage());
+            log.error("음성 파일 처리 실패", e);
             throw new VoiceMessageUploadFailedException();
-        } catch (Exception e) {
-            log.error("음성 메시지 저장 중 오류 발생: {}", e.getMessage());
-            throw e;
         }
+    }
+
+    private String getExtension(String filename) {
+        return Optional.ofNullable(filename)
+                .filter(f -> f.contains("."))
+                .map(f -> f.substring(f.lastIndexOf(".")))
+                .orElse(".m4a");  // 기본 확장자 설정
     }
 
     /**
@@ -266,16 +260,52 @@ public class FlowerService {
      * @param userId 사용자 ID
      * @return 저장된 음성 메시지 URL
      */
-    @Transactional(readOnly = true)
-    public String getVoiceMessage(Long userId) {
-        Flower flower = flowerRepository.findByUserId(userId)
+    @Transactional
+    public String getPartnerVoiceMessage(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(UserNotFoundException::new);
+
+        if (user.getCouple() == null) {
+            throw new CoupleNotFoundException();
+        }
+
+        // 파트너의 Flower 조회
+        Flower partnerFlower = flowerRepository.findByUser_Couple_IdAndUserIdNot(
+                        user.getCouple().getId(), userId)
                 .orElseThrow(FlowerNotFoundException::new);
 
-        if (flower.getVoiceUrl() == null) {
+        // 녹음이 완료되지 않았거나 URL이 없는 경우
+        if (!partnerFlower.isRecordComplete() || partnerFlower.getVoiceUrl() == null) {
             throw new VoiceMessageNotFoundException();
         }
 
-        return flower.getVoiceUrl();
+        // 청취 완료 처리
+        partnerFlower.markAsListened();
+        flowerRepository.save(partnerFlower);
+
+        return partnerFlower.getVoiceUrl();
+    }
+
+    @Transactional(readOnly = true)
+    public VoiceMessageStatusDTO getCoupleVoiceMessageStatus(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(UserNotFoundException::new);
+
+        if (user.getCouple() == null) {
+            throw new CoupleNotFoundException();
+        }
+
+        // 파트너의 Flower 조회
+        Flower partnerFlower = flowerRepository.findByUser_Couple_IdAndUserIdNot(
+                        user.getCouple().getId(), userId)
+                .orElseThrow(FlowerNotFoundException::new);
+
+        return new VoiceMessageStatusDTO(
+                partnerFlower.isRecordComplete(),
+                partnerFlower.isListenComplete(),
+                partnerFlower.getVoiceSavedAt(),
+                partnerFlower.getListenedAt()
+        );
     }
 
     /**

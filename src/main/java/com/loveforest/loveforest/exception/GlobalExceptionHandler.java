@@ -15,6 +15,7 @@ import com.loveforest.loveforest.domain.pet.exception.MaxLevelReachedException;
 import com.loveforest.loveforest.domain.pet.exception.PetNotFoundException;
 import com.loveforest.loveforest.domain.photoAlbum.dto.ApiResponseDTO;
 import com.loveforest.loveforest.domain.photoAlbum.exception.DuplicatePhotoPositionException;
+import com.loveforest.loveforest.domain.photoAlbum.exception.Photo3DConvertFailedException;
 import com.loveforest.loveforest.domain.photoAlbum.exception.PhotoNotFoundException;
 import com.loveforest.loveforest.domain.photoAlbum.exception.PhotoUploadFailedException;
 import com.loveforest.loveforest.domain.room.exception.*;
@@ -124,6 +125,18 @@ public class GlobalExceptionHandler {
         errorResponse.setTimestamp(LocalDateTime.now());
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(ApiResponseDTO.success("사진을 찾을 수 없습니다.", errorResponse));
+    }
+
+    @ExceptionHandler(Photo3DConvertFailedException.class)
+    public ResponseEntity<ApiResponseDTO<ErrorResponse>> handlePhoto3DConvertFailedException(
+            Photo3DConvertFailedException e) {
+        log.error("3D 변환 실패", e);
+        ErrorResponse errorResponse = new ErrorResponse();
+        errorResponse.setStatus(HttpStatus.SERVICE_UNAVAILABLE.value());
+        errorResponse.setMessage("3D 변환 실패했습니다.");
+        errorResponse.setTimestamp(LocalDateTime.now());
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                .body(ApiResponseDTO.success("3D 변환 실패했습니다.", errorResponse));
     }
 
     // 게시판 관련 예외 처리

@@ -15,9 +15,4 @@ public class AIServerRequest {
         this.positionX = positionX;
         this.positionY = positionY;
     }
-
-    // getter/setter
-    public String getBase64Image() { return base64Image; }
-    public Double getPositionX() { return positionX; }
-    public Double getPositionY() { return positionY; }
 }

@@ -4,6 +4,7 @@ import com.loveforest.loveforest.domain.photoAlbum.dto.AIServerRequest;
 import com.loveforest.loveforest.domain.photoAlbum.dto.PhotoAlbumRequestDTO;
 import com.loveforest.loveforest.domain.photoAlbum.dto.PhotoAlbumResponseDTO;
 import com.loveforest.loveforest.domain.photoAlbum.entity.PhotoAlbum;
+import com.loveforest.loveforest.domain.photoAlbum.exception.Photo3DConvertFailedException;
 import com.loveforest.loveforest.domain.photoAlbum.exception.PhotoNotFoundException;
 import com.loveforest.loveforest.domain.photoAlbum.exception.PhotoUploadFailedException;
 import com.loveforest.loveforest.domain.photoAlbum.repository.PhotoAlbumRepository;
@@ -56,6 +57,10 @@ public class PhotoAlbumService {
 
     /**
      * 사진 등록 (메타데이터 포함)
+     *
+     * @param request 사진 정보를 담은 DTO (제목, 내용, 사진 날짜, 파일 등)
+     * @param userId  현재 사용자 ID
+     * @return 저장된 사진 정보가 포함된 PhotoAlbumResponseDTO
      */
     public PhotoAlbumResponseDTO savePhoto(PhotoAlbumRequestDTO request, Long userId) {
         validateImage(request.getPhoto());
@@ -147,7 +152,7 @@ public class PhotoAlbumService {
 
         } catch (Exception e) {
             log.error("3D 변환 실패: {}", e.getMessage());
-            throw new PhotoUploadFailedException();
+            throw new Photo3DConvertFailedException();
         }
     }
 

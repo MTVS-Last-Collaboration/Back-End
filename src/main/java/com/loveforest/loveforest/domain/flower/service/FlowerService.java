@@ -1,5 +1,7 @@
 package com.loveforest.loveforest.domain.flower.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.loveforest.loveforest.domain.flower.dto.FlowerMoodResponseDTO;
 import com.loveforest.loveforest.domain.flower.dto.VoiceAnalysisRequestDTO;
 import com.loveforest.loveforest.domain.flower.entity.Flower;
@@ -122,7 +124,7 @@ public class FlowerService {
         WebClient webClient = webClientBuilder.baseUrl(serverUrl).build();
 
         try {
-            return webClient.post()
+            String rawResponse = webClient.post()
                     .uri("/analyze_sentiment")
                     .contentType(MediaType.APPLICATION_JSON)
                     .bodyValue(voiceData)
@@ -133,6 +135,18 @@ public class FlowerService {
                         throw new AiServerFlowerException();
                     })
                     .block();
+            // 응답 JSON 파싱
+            ObjectMapper objectMapper = new ObjectMapper();
+            JsonNode rootNode = objectMapper.readTree(rawResponse);
+            String mood = rootNode.path("mood").asText();
+
+            // 만약 중첩된 JSON 문자열이 있다면 다시 파싱
+            if (mood.startsWith("{") && mood.endsWith("}")) {
+                JsonNode nestedNode = objectMapper.readTree(mood);
+                return nestedNode.path("mood").asText();
+            }
+
+            return mood;
         } catch (Exception ex) {
             log.error("기분 상태 분석 중 오류 발생: {}", ex.getMessage());
             throw new MoodAnalysisException();

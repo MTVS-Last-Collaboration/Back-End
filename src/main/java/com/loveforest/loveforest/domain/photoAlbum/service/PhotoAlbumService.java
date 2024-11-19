@@ -1,5 +1,7 @@
 package com.loveforest.loveforest.domain.photoAlbum.service;
 
+import com.loveforest.loveforest.domain.couple.entity.Couple;
+import com.loveforest.loveforest.domain.couple.exception.CoupleNotFoundException;
 import com.loveforest.loveforest.domain.photoAlbum.dto.AIServerRequest;
 import com.loveforest.loveforest.domain.photoAlbum.dto.PhotoAlbumRequestDTO;
 import com.loveforest.loveforest.domain.photoAlbum.dto.PhotoAlbumResponseDTO;
@@ -71,6 +73,12 @@ public class PhotoAlbumService {
         User user = userRepository.findById(userId)
                 .orElseThrow(UserNotFoundException::new);
 
+        // 사용자의 커플 정보 가져오기
+        Couple couple = user.getCouple();
+        if (couple == null) {
+            throw new CoupleNotFoundException();
+        }
+
         PhotoAlbum photoAlbum = new PhotoAlbum(
                 request.getTitle(),
                 request.getContent(),
@@ -81,11 +89,13 @@ public class PhotoAlbumService {
                 null, // materialUrl
                 null, // positionX
                 null, // positionY
-                user
+                user,
+                couple
         );
 
         photoAlbumRepository.save(photoAlbum);
-        log.info("사진 저장 완료 - 제목: {}, 작성자: {}", request.getTitle(), user.getNickname());
+        log.info("사진 저장 완료 - 제목: {}, 작성자: {}, 커플ID: {}",
+                request.getTitle(), user.getNickname(), couple.getId());
 
         return new PhotoAlbumResponseDTO(photoAlbum.getId(), photoAlbum.getTitle(), photoAlbum.getContent(), photoAlbum.getPhotoDate(),
                 imageUrl, null, null, null, null, null);
@@ -205,23 +215,30 @@ public class PhotoAlbumService {
      */
     @Transactional
     public void deletePhoto(Long photoId, Long userId) {
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(UserNotFoundException::new);
+
         PhotoAlbum photo = photoAlbumRepository.findById(photoId)
                 .orElseThrow(PhotoNotFoundException::new);
 
-        // 권한 확인
-        if (!photo.getUser().getId().equals(userId)) {
+        // 같은 커플인지 확인
+        if (!photo.getCouple().getId().equals(user.getCouple().getId())) {
             throw new UnauthorizedException();
         }
 
         try {
             // S3에서 이미지와 3D 모델 파일 삭제
             s3Service.deleteFile(photo.getImageUrl());
-            s3Service.deleteFile(photo.getObjectUrl());
+            if (photo.getObjectUrl() != null) {
+                s3Service.deleteFile(photo.getObjectUrl());
+            }
 
             // DB에서 데이터 삭제
             photoAlbumRepository.delete(photo);
 
-            log.info("사진 및 3D 모델 삭제 완료 - photoId: {}", photoId);
+            log.info("사진 삭제 완료 - photoId: {}, coupleId: {}",
+                    photoId, photo.getCouple().getId());
         } catch (Exception e) {
             log.error("사진 삭제 중 오류 발생 - photoId: {}", photoId, e);
             throw new PhotoNotFoundException();
@@ -277,13 +294,23 @@ public class PhotoAlbumService {
 
     /**
      * 사진 조회 (날짜 기준 내림차순)
-     *
+     * 커플에 속한 두 사용자가 올린 모든 사진을 조회합니다.
      * @param userId 현재 사용자 ID
      * @return 조회된 사진 리스트
      */
     @Transactional(readOnly = true)
     public List<PhotoAlbumResponseDTO> getPhotos(Long userId) {
-        return photoAlbumRepository.findByUserId(userId).stream()
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(UserNotFoundException::new);
+
+        Couple couple = user.getCouple();
+        if (couple == null) {
+            throw new CoupleNotFoundException();
+        }
+
+        return photoAlbumRepository.findByCoupleIdOrderByPhotoDateDesc(couple.getId())
+                .stream()
                 .sorted(Comparator.comparing(PhotoAlbum::getPhotoDate).reversed()) //날짜 기준 내림차순 정렬
                 .map(photo -> new PhotoAlbumResponseDTO(
                         photo.getId(),

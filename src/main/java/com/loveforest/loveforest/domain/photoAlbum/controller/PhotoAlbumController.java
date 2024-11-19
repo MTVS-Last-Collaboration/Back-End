@@ -36,7 +36,7 @@ public class PhotoAlbumController {
     @Operation(summary = "사진 등록", description = "새로운 사진을 등록합니다.")
     @ApiResponse(responseCode = "200", description = "사진 등록 성공")
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<ApiResponseDTO<String>> savePhoto(@AuthenticationPrincipal LoginInfo loginInfo,
+    public ResponseEntity<ApiResponseDTO<PhotoAlbumResponseDTO>> savePhoto(@AuthenticationPrincipal LoginInfo loginInfo,
                                                             @RequestPart("title") String title,
                                                             @RequestPart("content") String content,
                                                             @RequestPart("photoDate") String photoDate,
@@ -52,10 +52,10 @@ public class PhotoAlbumController {
         // DTO 생성
         PhotoAlbumRequestDTO request = new PhotoAlbumRequestDTO(title, content, parsedDate, photo);
 
-        String imageUrl = photoAlbumService.savePhoto(request, loginInfo.getUserId());
+        PhotoAlbumResponseDTO responseDTO = photoAlbumService.savePhoto(request, loginInfo.getUserId());
 
-        log.info("사진 등록 완료 - 제목: {}, 이미지 URL: {}", request.getTitle(), imageUrl);
-        return ResponseEntity.ok(ApiResponseDTO.success("사진이 성공적으로 등록되었습니다.", imageUrl));
+        log.info("사진 등록 완료 - 제목: {}, 이미지 URL: {}", request.getTitle(), responseDTO.getImageUrl());
+        return ResponseEntity.ok(ApiResponseDTO.success("사진이 성공적으로 등록되었습니다.", responseDTO));
     }
 
     /**

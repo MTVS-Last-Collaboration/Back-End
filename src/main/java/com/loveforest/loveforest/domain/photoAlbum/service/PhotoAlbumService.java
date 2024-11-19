@@ -57,7 +57,7 @@ public class PhotoAlbumService {
     /**
      * 사진 등록 (메타데이터 포함)
      */
-    public String savePhoto(PhotoAlbumRequestDTO request, Long userId) {
+    public PhotoAlbumResponseDTO savePhoto(PhotoAlbumRequestDTO request, Long userId) {
         validateImage(request.getPhoto());
         validatePhotoDate(request.getPhotoDate());
 
@@ -82,7 +82,8 @@ public class PhotoAlbumService {
         photoAlbumRepository.save(photoAlbum);
         log.info("사진 저장 완료 - 제목: {}, 작성자: {}", request.getTitle(), user.getNickname());
 
-        return imageUrl;
+        return new PhotoAlbumResponseDTO(photoAlbum.getId(), photoAlbum.getTitle(), photoAlbum.getContent(), photoAlbum.getPhotoDate(),
+                imageUrl, null, null, null, null, null);
     }
 
     /**

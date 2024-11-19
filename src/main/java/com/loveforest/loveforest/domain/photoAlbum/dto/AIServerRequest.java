@@ -7,10 +7,10 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class AIServerRequest {
     private String base64Image;
-    private Double positionX;
-    private Double positionY;
+    private int positionX;
+    private int positionY;
 
-    public AIServerRequest(String base64Image, Double positionX, Double positionY) {
+    public AIServerRequest(String base64Image, int positionX, int positionY) {
         this.base64Image = base64Image;
         this.positionX = positionX;
         this.positionY = positionY;

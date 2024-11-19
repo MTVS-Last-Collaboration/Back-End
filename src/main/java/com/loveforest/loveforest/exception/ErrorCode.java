@@ -83,7 +83,7 @@ public enum ErrorCode {
     PHOTO_NOT_FOUND(HttpStatus.NOT_FOUND, "Photo Not Found", "해당 사진을 찾을 수 없습니다.", "PHOTO-001"),
     PHOTO_UPLOAD_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "Photo Upload Failed", "사진 업로드에 실패했습니다.", "PHOTO-002"),
     DUPLICATE_PHOTO_POSITION(HttpStatus.CONFLICT, "Duplicate Photo Position", "해당 위치에 이미 사진이 존재합니다.", "PHOTO-003"),
-    AI_SERVER_ERROR_PHOTO(HttpStatus.INTERNAL_SERVER_ERROR, "AI Server Error", "AI 서버에서 오류가 발생했습니다.", "PHOTO-004"),
+    PHOTO_3D_CONVERT_FAILED(HttpStatus.SERVICE_UNAVAILABLE, "3D Convert Failed", "3D 변환에 실패했습니다.", "PHOTO-004"),
 
     // Shop 관련 에러
     ITEM_NOT_FOUND(HttpStatus.NOT_FOUND, "Item Not Found", "상품을 찾을 수 없습니다.", "SHOP-001"),

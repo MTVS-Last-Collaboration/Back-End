@@ -103,7 +103,7 @@ public class FlowerController {
         log.info("음성 분석 완료 - 사용자 ID: {}, 기분 상태: {}, 파일 저장: {}",
                 loginInfo.getUserId(),
                 response.getMood(),
-                "긍정".equals(response.getMood()));
+                "긍정".equals(response.getMood()) || "중립".equals(response.getMood()));
 
         return ResponseEntity.ok(response);
     }

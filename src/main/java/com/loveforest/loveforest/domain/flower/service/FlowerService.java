@@ -1,5 +1,7 @@
 package com.loveforest.loveforest.domain.flower.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.loveforest.loveforest.domain.flower.dto.FlowerMoodResponseDTO;
 import com.loveforest.loveforest.domain.flower.dto.VoiceAnalysisRequestDTO;
 import com.loveforest.loveforest.domain.flower.entity.Flower;
@@ -41,6 +43,11 @@ public class FlowerService {
     @Value("${ai.server.url}")
     private String serverUrl;
 
+    /**
+     * 사용자에게 새로운 꽃을 생성
+     *
+     * @param user 사용자 정보
+     */
     @Transactional
     public void createFlowerForUser(User user) {
         // 이미 꽃이 있는지 확인
@@ -52,6 +59,13 @@ public class FlowerService {
         flowerRepository.save(flower);
     }
 
+    /**
+     * 사용자의 음성 데이터를 분석하여 기분 상태를 반환
+     *
+     * @param userId    사용자 ID
+     * @param voiceFile 업로드된 음성 파일
+     * @return 분석된 기분 상태와 사용자 닉네임이 포함된 DTO
+     */
     @Transactional
     public FlowerMoodResponseDTO analyzeMood(Long userId, MultipartFile voiceFile) {
         User user = userRepository.findById(userId)
@@ -70,7 +84,7 @@ public class FlowerService {
             throw new VoiceMessageUploadFailedException();
         }
 
-        // AI 서버 분석 요청 및 처리...
+        // AI 서버 분석 요청 및 처리
         String mood = analyzeWithAIServer(voiceData);
 
 
@@ -100,11 +114,17 @@ public class FlowerService {
         return new FlowerMoodResponseDTO(mood, user.getNickname());
     }
 
+    /**
+     * AI 서버와 통신하여 기분 상태 분석
+     *
+     * @param voiceData AI 서버로 전송할 음성 데이터
+     * @return 분석된 기분 상태 (긍정/중립/부정 등)
+     */
     private String analyzeWithAIServer(VoiceAnalysisRequestDTO voiceData) {
         WebClient webClient = webClientBuilder.baseUrl(serverUrl).build();
 
         try {
-            return webClient.post()
+            String rawResponse = webClient.post()
                     .uri("/analyze_sentiment")
                     .contentType(MediaType.APPLICATION_JSON)
                     .bodyValue(voiceData)
@@ -115,12 +135,30 @@ public class FlowerService {
                         throw new AiServerFlowerException();
                     })
                     .block();
+            // 응답 JSON 파싱
+            ObjectMapper objectMapper = new ObjectMapper();
+            JsonNode rootNode = objectMapper.readTree(rawResponse);
+            String mood = rootNode.path("mood").asText();
+
+            // 만약 중첩된 JSON 문자열이 있다면 다시 파싱
+            if (mood.startsWith("{") && mood.endsWith("}")) {
+                JsonNode nestedNode = objectMapper.readTree(mood);
+                return nestedNode.path("mood").asText();
+            }
+
+            return mood;
         } catch (Exception ex) {
             log.error("기분 상태 분석 중 오류 발생: {}", ex.getMessage());
             throw new MoodAnalysisException();
         }
     }
 
+    /**
+     * 사용자 꽃 이름 변경
+     *
+     * @param userId  사용자 ID
+     * @param newName 새로운 꽃 이름
+     */
     @Transactional
     public void setFlowerName(Long userId, String newName) {
         validateFlowerName(newName);
@@ -132,6 +170,11 @@ public class FlowerService {
         flowerRepository.save(flower);
     }
 
+    /**
+     * 꽃 이름 유효성 검증
+     *
+     * @param name 새로운 꽃 이름
+     */
     private void validateFlowerName(String name) {
         if (name == null || name.trim().isEmpty()) {
             throw new InvalidInputException(ErrorCode.INVALID_FLOWER_NAME);
@@ -141,6 +184,12 @@ public class FlowerService {
         }
     }
 
+
+    /**
+     * 사용자 꽃의 기분 카운트 초기화 (새로운 씨앗 시작)
+     *
+     * @param userId 사용자 ID
+     */
     @Transactional
     public void startNewSeed(Long userId) {
         Flower flower = flowerRepository.findByUserId(userId)
@@ -149,6 +198,12 @@ public class FlowerService {
         flowerRepository.save(flower);
     }
 
+    /**
+     * 음성 메시지 저장
+     *
+     * @param userId    사용자 ID
+     * @param voiceFile 업로드된 음성 파일
+     */
     @Transactional
     public void saveVoiceMessage(Long userId, MultipartFile voiceFile) {
         if (voiceFile == null || voiceFile.isEmpty()) {
@@ -205,6 +260,12 @@ public class FlowerService {
         }
     }
 
+    /**
+     * 음성 메시지 URL 가져오기
+     *
+     * @param userId 사용자 ID
+     * @return 저장된 음성 메시지 URL
+     */
     @Transactional(readOnly = true)
     public String getVoiceMessage(Long userId) {
         Flower flower = flowerRepository.findByUserId(userId)
@@ -217,7 +278,9 @@ public class FlowerService {
         return flower.getVoiceUrl();
     }
 
-    // 매일 자정에 실행
+    /**
+     * 만료된 음성 메시지 삭제 (매일 자정 실행)
+     */
     @Scheduled(cron = "0 0 0 * * *")
     @Transactional
     public void deleteExpiredVoiceMessages() {

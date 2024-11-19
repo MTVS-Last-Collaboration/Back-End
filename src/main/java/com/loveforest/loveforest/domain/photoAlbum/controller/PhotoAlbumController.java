@@ -92,7 +92,7 @@ public class PhotoAlbumController {
     )
     @PostMapping("/convert/{photoId}")
     public ResponseEntity<ApiResponseDTO<List<String>>> convertTo3DModel(@AuthenticationPrincipal LoginInfo loginInfo, @PathVariable("photoId") Long photoId,
-            @RequestParam Double positionX, @RequestParam Double positionY) {
+            @RequestParam Integer positionX, @RequestParam Integer positionY) {
 
         List<String> modelUrls = photoAlbumService.convert3DModel(
                 photoId,

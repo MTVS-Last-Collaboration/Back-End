@@ -44,10 +44,10 @@ public class PhotoAlbum {
     private String materialUrl; // S3에 저장된 .mtl 파일 URL (재질)
 
     @Column(nullable = true)
-    private Double positionX;
+    private Integer positionX;
 
     @Column(nullable = true)
-    private Double positionY;
+    private Integer positionY;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
@@ -56,7 +56,7 @@ public class PhotoAlbum {
     // 생성자 수정
     public PhotoAlbum(String title, String content, LocalDate photoDate,
                       String imageUrl, String objectUrl, String pngUrl, String materialUrl,
-                      Double positionX, Double positionY, User user, Couple couple) {
+                      Integer positionX, Integer positionY, User user, Couple couple) {
         this.title = title;
         this.content = content;
         this.photoDate = photoDate;
@@ -70,7 +70,7 @@ public class PhotoAlbum {
         this.couple = couple;
     }
 
-    public void updateModelUrlsAndPosition(String objUrl, String pngUrl, String mtlUrl, Double positionX, Double positionY) {
+    public void updateModelUrlsAndPosition(String objUrl, String pngUrl, String mtlUrl, Integer positionX, Integer positionY) {
         this.objectUrl = objUrl;
         this.pngUrl = pngUrl;
         this.materialUrl = mtlUrl;

@@ -134,7 +134,7 @@ public class PhotoAlbumService {
      * @param positionY  Y 좌표
      * @return 변환된 3D 모델의 URL 리스트
      */
-    public List<String> convert3DModel(Long photoId, Long userId, Double positionX, Double positionY) {
+    public List<String> convert3DModel(Long photoId, Long userId, Integer positionX, Integer positionY) {
         PhotoAlbum photoAlbum = photoAlbumRepository.findById(photoId)
                 .orElseThrow(PhotoNotFoundException::new);
 
@@ -171,7 +171,7 @@ public class PhotoAlbumService {
      * @param positionY Y 좌표
      * @return 변환된 3D 모델의 파일 데이터 리스트
      */
-    private List<byte[]> requestAIServerConversion(String imageUrl, Double positionX, Double positionY) {
+    private List<byte[]> requestAIServerConversion(String imageUrl, int positionX, int positionY) {
         WebClient webClient = webClientBuilder.baseUrl(aiServerUrl)
                 .codecs(configurer -> configurer.defaultCodecs().maxInMemorySize(20 * 1024 * 1024)) // 20MB로 증가
                 .build();

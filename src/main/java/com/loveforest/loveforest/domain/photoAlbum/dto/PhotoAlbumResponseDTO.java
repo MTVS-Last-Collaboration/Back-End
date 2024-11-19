@@ -36,8 +36,8 @@ public class PhotoAlbumResponseDTO {
     private String materialUrl;
 
     @Schema(description = "X 좌표", example = "100.0")
-    private Double positionX;
+    private Integer positionX;
 
     @Schema(description = "Y 좌표", example = "200.0")
-    private Double positionY;
+    private Integer positionY;
 }

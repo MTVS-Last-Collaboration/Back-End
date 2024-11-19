@@ -1,5 +1,6 @@
 package com.loveforest.loveforest.domain.photoAlbum.entity;
 
+import com.loveforest.loveforest.domain.couple.entity.Couple;
 import com.loveforest.loveforest.domain.user.entity.User;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -16,6 +17,10 @@ public class PhotoAlbum {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "couple_id") // couple_id 추가
+    private Couple couple; // 커플 엔티티 참조 추가
 
     @Column(name = "title", nullable = false)
     private String title;
@@ -51,7 +56,7 @@ public class PhotoAlbum {
     // 생성자 수정
     public PhotoAlbum(String title, String content, LocalDate photoDate,
                       String imageUrl, String objectUrl, String pngUrl, String materialUrl,
-                      Double positionX, Double positionY, User user) {
+                      Double positionX, Double positionY, User user, Couple couple) {
         this.title = title;
         this.content = content;
         this.photoDate = photoDate;
@@ -62,6 +67,7 @@ public class PhotoAlbum {
         this.positionX = positionX;
         this.positionY = positionY;
         this.user = user;
+        this.couple = couple;
     }
 
     public void updateModelUrlsAndPosition(String objUrl, String pngUrl, String mtlUrl, Double positionX, Double positionY) {

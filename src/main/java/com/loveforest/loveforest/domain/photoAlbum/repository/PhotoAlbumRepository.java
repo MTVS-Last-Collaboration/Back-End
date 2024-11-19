@@ -13,4 +13,6 @@ public interface PhotoAlbumRepository extends JpaRepository<PhotoAlbum, Long> {
     @Query("SELECT p FROM PhotoAlbum p JOIN FETCH p.user WHERE p.user.id = :userId ORDER BY p.id DESC")
     List<PhotoAlbum> findByUserId(@Param("userId") Long userId);
 
+    List<PhotoAlbum> findByCoupleIdOrderByPhotoDateDesc(Long coupleId);
+
 }

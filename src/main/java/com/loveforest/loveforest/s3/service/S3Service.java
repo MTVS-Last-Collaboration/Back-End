@@ -55,6 +55,20 @@ public class S3Service {
         }
     }
 
+    public byte[] downloadFile(String fileUrl) {
+        String fileName = extractFileNameFromUrl(fileUrl);
+
+        try {
+            return s3Client.getObjectAsBytes(builder -> builder
+                            .bucket(bucket)
+                            .key(fileName))
+                    .asByteArray();
+        } catch (Exception e) {
+            log.error("파일 다운로드 실패: {}", e.getMessage());
+            throw new RuntimeException("파일 다운로드에 실패했습니다.");
+        }
+    }
+
     /**
      * 파일 삭제 메서드
      */

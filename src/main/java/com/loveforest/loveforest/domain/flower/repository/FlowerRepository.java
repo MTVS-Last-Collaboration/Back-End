@@ -11,4 +11,6 @@ public interface FlowerRepository extends JpaRepository<Flower, Long> {
     Optional<Flower> findByUserId(Long userId);
 
     List<Flower> findAllByVoiceUrlIsNotNull();
+
+    Optional<Flower> findByUser_Couple_IdAndUserIdNot(Long coupleId, Long userId);
 }

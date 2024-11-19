@@ -4,6 +4,7 @@ import com.loveforest.loveforest.domain.auth.dto.LoginInfo;
 import com.loveforest.loveforest.domain.flower.dto.FlowerMoodResponseDTO;
 import com.loveforest.loveforest.domain.flower.dto.FlowerRequestDTO;
 import com.loveforest.loveforest.domain.flower.dto.VoiceAnalysisRequestDTO;
+import com.loveforest.loveforest.domain.flower.dto.VoiceMessageStatusDTO;
 import com.loveforest.loveforest.domain.flower.service.FlowerService;
 import com.loveforest.loveforest.domain.user.exception.LoginRequiredException;
 import com.loveforest.loveforest.exception.ErrorCode;
@@ -179,38 +180,49 @@ public class FlowerController {
     }
 
     /**
-     * 음성 메시지 조회
+     * 음성 메시지 청취 API
      */
-    @Operation(summary = "음성 메시지 조회",
-            description = "저장된 음성 메시지의 URL을 조회합니다. 음성 메시지는 자정이 되면 자동으로 삭제됩니다.")
+    @Operation(summary = "음성 메시지 청취", description = "저장된 음성 메시지를 청취하고 청취 완료 상태로 변경합니다.")
     @ApiResponses({
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "음성 메시지 URL 조회 성공",
-                    content = @Content(
-                            mediaType = "application/json",
-                            schema = @Schema(type = "string", example = "https://s3.amazonaws.com/bucket/voice/123.mp3")
-                    )
-            ),
-            @ApiResponse(
-                    responseCode = "404",
-                    description = "음성 메시지를 찾을 수 없음",
-                    content = @Content(
-                            mediaType = "application/json",
-                            schema = @Schema(implementation = ErrorResponse.class)
-                    )
-            )
+            @ApiResponse(responseCode = "200", description = "음성 메시지 URL 반환 성공"),
+            @ApiResponse(responseCode = "404", description = "음성 메시지를 찾을 수 없음"),
+            @ApiResponse(responseCode = "403", description = "접근 권한 없음")
     })
-    @GetMapping("/voice")
-    public ResponseEntity<String> getVoiceMessage(@AuthenticationPrincipal LoginInfo loginInfo) {
+    @GetMapping("/voice/{flowerId}")
+    public ResponseEntity<String> listenVoiceMessage(
+            @AuthenticationPrincipal LoginInfo loginInfo) {
+
         if (loginInfo == null) {
             throw new LoginRequiredException();
         }
 
-        log.info("음성 메시지 조회 요청 - 사용자 ID: {}", loginInfo.getUserId());
-        String voiceUrl = flowerService.getVoiceMessage(loginInfo.getUserId());
-        log.info("음성 메시지 조회 완료 - 사용자 ID: {}", loginInfo.getUserId());
+        log.info("음성 메시지 청취 요청 - 사용자 ID: {}, 꽃 ID: {}", loginInfo.getUserId());
+
+        String voiceUrl = flowerService.getPartnerVoiceMessage(loginInfo.getUserId());
 
         return ResponseEntity.ok(voiceUrl);
+    }
+
+    /**
+     * 음성 메시지 조회
+     */
+    @Operation(summary = "음성 메시지 상태 조회", description = "음성 메시지의 녹음 완료 및 청취 완료 상태를 조회합니다.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "상태 조회 성공"),
+            @ApiResponse(responseCode = "404", description = "꽃을 찾을 수 없음")
+    })
+    @GetMapping("/voice/status/{flowerId}")
+    public ResponseEntity<VoiceMessageStatusDTO> getVoiceMessageStatus(
+            @AuthenticationPrincipal LoginInfo loginInfo) {
+
+        if (loginInfo == null) {
+            throw new LoginRequiredException();
+        }
+
+        log.info("음성 메시지 상태 조회 요청 - 사용자 ID: {}", loginInfo.getUserId());
+
+        VoiceMessageStatusDTO status = flowerService.getCoupleVoiceMessageStatus(loginInfo.getUserId());
+
+        return ResponseEntity.ok(status);
     }
 }

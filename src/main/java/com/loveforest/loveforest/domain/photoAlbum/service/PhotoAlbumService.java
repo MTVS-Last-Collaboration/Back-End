@@ -88,6 +88,8 @@ public class PhotoAlbumService {
 
     /**
      * 사진 날짜 유효성 검증
+     *
+     * @param photoDate 업로드 요청에 포함된 사진 날짜
      */
     private void validatePhotoDate(LocalDate photoDate) {
         if (photoDate == null || photoDate.isAfter(LocalDate.now())) {
@@ -97,6 +99,8 @@ public class PhotoAlbumService {
 
     /**
      * 이미지 유효성 검사
+     *
+     * @param photo 업로드 요청에 포함된 MultipartFile 사진
      */
     private void validateImage(MultipartFile photo) {
         if (photo == null || photo.isEmpty()) {
@@ -111,6 +115,12 @@ public class PhotoAlbumService {
 
     /**
      * 3D 모델 변환
+     *
+     * @param photoId    변환할 사진 ID
+     * @param userId     현재 사용자 ID
+     * @param positionX  X 좌표
+     * @param positionY  Y 좌표
+     * @return 변환된 3D 모델의 URL 리스트
      */
     public List<String> convert3DModel(Long photoId, Long userId, Double positionX, Double positionY) {
         PhotoAlbum photoAlbum = photoAlbumRepository.findById(photoId)
@@ -141,6 +151,14 @@ public class PhotoAlbumService {
         }
     }
 
+    /**
+     * AI 서버에 변환 요청
+     *
+     * @param imageUrl  변환할 원본 이미지 URL
+     * @param positionX X 좌표
+     * @param positionY Y 좌표
+     * @return 변환된 3D 모델의 파일 데이터 리스트
+     */
     private List<byte[]> requestAIServerConversion(String imageUrl, Double positionX, Double positionY) {
         WebClient webClient = webClientBuilder.baseUrl(aiServerUrl)
                 .codecs(configurer -> configurer.defaultCodecs().maxInMemorySize(20 * 1024 * 1024)) // 20MB로 증가
@@ -160,6 +178,12 @@ public class PhotoAlbumService {
                 .block();
     }
 
+    /**
+     * 변환된 3D 모델 파일을 S3에 업로드
+     *
+     * @param modelFiles 변환된 3D 모델의 파일 데이터 리스트
+     * @return 업로드된 3D 모델의 URL 리스트
+     */
     private List<String> upload3DModelFiles(List<byte[]> modelFiles) {
         List<String> modelUrls = new ArrayList<>();
         modelUrls.add(s3Service.uploadFile(modelFiles.get(0), ".obj", "application/octet-stream", modelFiles.get(0).length));
@@ -170,6 +194,9 @@ public class PhotoAlbumService {
 
     /**
      * 사진 삭제
+     *
+     * @param photoId 삭제할 사진 ID
+     * @param userId  현재 사용자 ID
      */
     @Transactional
     public void deletePhoto(Long photoId, Long userId) {
@@ -196,11 +223,11 @@ public class PhotoAlbumService {
         }
     }
 
-
-
-
     /**
      * 원본 이미지 업로드
+     *
+     * @param photo 업로드할 사진 파일
+     * @return 업로드된 이미지의 URL
      */
     private String uploadOriginalImage(MultipartFile photo) {
         try {
@@ -216,6 +243,12 @@ public class PhotoAlbumService {
         }
     }
 
+    /**
+     * 파일명에서 확장자를 추출
+     *
+     * @param filename 파일명
+     * @return 추출된 확장자
+     */
     private String getExtension(String filename) {
         return Optional.ofNullable(filename)
                 .filter(f -> f.contains("."))
@@ -224,7 +257,12 @@ public class PhotoAlbumService {
     }
 
 
-    // DataBuffer를 byte[]로 변환하는 메서드
+    /**
+     * DataBuffer를 byte[]로 변환
+     *
+     * @param dataBuffer 변환할 DataBuffer
+     * @return 변환된 byte[]
+     */
     private byte[] toByteArray(DataBuffer dataBuffer) {
         byte[] bytes = new byte[dataBuffer.readableByteCount()];
         dataBuffer.read(bytes);
@@ -233,7 +271,10 @@ public class PhotoAlbumService {
     }
 
     /**
-     * 사진 조회 기능 수정
+     * 사진 조회 (날짜 기준 내림차순)
+     *
+     * @param userId 현재 사용자 ID
+     * @return 조회된 사진 리스트
      */
     @Transactional(readOnly = true)
     public List<PhotoAlbumResponseDTO> getPhotos(Long userId) {

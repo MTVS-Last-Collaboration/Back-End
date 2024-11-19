@@ -182,13 +182,62 @@ public class FlowerController {
     /**
      * 음성 메시지 청취 API
      */
-    @Operation(summary = "음성 메시지 청취", description = "저장된 음성 메시지를 청취하고 청취 완료 상태로 변경합니다.")
+    @Operation(
+            summary = "음성 메시지 청취",
+            description = "현재 로그인한 사용자의 파트너가 저장한 음성 메시지를 청취합니다. " +
+                    "메시지 청취 시 자동으로 청취 완료 상태로 변경됩니다."
+    )
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "음성 메시지 URL 반환 성공"),
-            @ApiResponse(responseCode = "404", description = "음성 메시지를 찾을 수 없음"),
-            @ApiResponse(responseCode = "403", description = "접근 권한 없음")
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "음성 메시지 URL 반환 성공",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(type = "string", example = "https://s3.amazonaws.com/bucket-name/voice-messages/abc123.m4a"),
+                            examples = @ExampleObject(
+                                    value = "\"https://s3.amazonaws.com/bucket-name/voice-messages/abc123.m4a\"",
+                                    description = "음성 메시지가 저장된 S3 URL"
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "음성 메시지가 존재하지 않거나 아직 녹음되지 않은 경우",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorResponse.class),
+                            examples = @ExampleObject(
+                                    value = """
+                {
+                    "status": 404,
+                    "errorType": "VoiceMessageNotFound",
+                    "message": "음성 메시지를 찾을 수 없습니다.",
+                    "code": "FLOWER-007"
+                }
+                """
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "권한이 없는 경우 (커플이 아닌 경우)",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorResponse.class),
+                            examples = @ExampleObject(
+                                    value = """
+                {
+                    "status": 403,
+                    "errorType": "Unauthorized",
+                    "message": "접근 권한이 없습니다.",
+                    "code": "LOVEFOREST-401"
+                }
+                """
+                            )
+                    )
+            )
     })
-    @GetMapping("/voice/{flowerId}")
+    @GetMapping("/voice")
     public ResponseEntity<String> listenVoiceMessage(
             @AuthenticationPrincipal LoginInfo loginInfo) {
 
@@ -206,12 +255,69 @@ public class FlowerController {
     /**
      * 음성 메시지 조회
      */
-    @Operation(summary = "음성 메시지 상태 조회", description = "음성 메시지의 녹음 완료 및 청취 완료 상태를 조회합니다.")
+    @Operation(
+            summary = "음성 메시지 상태 조회",
+            description = "현재 커플의 음성 메시지 상태를 조회합니다. " +
+                    "녹음 완료 여부, 청취 완료 여부, 저장 시간, 청취 시간 정보를 포함합니다."
+    )
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "상태 조회 성공"),
-            @ApiResponse(responseCode = "404", description = "꽃을 찾을 수 없음")
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "상태 조회 성공",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = VoiceMessageStatusDTO.class),
+                            examples = @ExampleObject(
+                                    value = """
+                {
+                    "recordComplete": true,
+                    "listenComplete": false,
+                    "savedAt": "2024-03-19T15:30:00",
+                    "listenedAt": null
+                }
+                """,
+                                    description = "음성 메시지가 저장되었으나 아직 청취되지 않은 상태"
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "꽃을 찾을 수 없는 경우",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorResponse.class),
+                            examples = @ExampleObject(
+                                    value = """
+                {
+                    "status": 404,
+                    "errorType": "FlowerNotFound",
+                    "message": "해당 사용자의 꽃을 찾을 수 없습니다.",
+                    "code": "FLOWER-004"
+                }
+                """
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "커플이 아닌 경우",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorResponse.class),
+                            examples = @ExampleObject(
+                                    value = """
+                {
+                    "status": 403,
+                    "errorType": "CoupleNotFound",
+                    "message": "커플 관계가 존재하지 않습니다.",
+                    "code": "COUPLE-001"
+                }
+                """
+                            )
+                    )
+            )
     })
-    @GetMapping("/voice/status/{flowerId}")
+    @GetMapping("/voice/status")
     public ResponseEntity<VoiceMessageStatusDTO> getVoiceMessageStatus(
             @AuthenticationPrincipal LoginInfo loginInfo) {
 

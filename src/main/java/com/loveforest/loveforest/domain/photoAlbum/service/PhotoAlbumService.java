@@ -152,8 +152,11 @@ public class PhotoAlbumService {
         }
 
         try {
-            List<String> modelFiles = requestAIServerConversion(photoAlbum.getImageUrl(), positionX, positionY);
-            List<String> modelUrls = saveModelFiles(modelFiles);
+            // AI 서버에 변환 요청
+            Map<String, byte[]> fileParts = requestAIServerConversion(photoAlbum.getImageUrl(), positionX, positionY);
+
+            // S3에 파일 저장
+            List<String> modelUrls = saveModelFiles(fileParts);
 
             photoAlbum.updateModelUrlsAndPosition(
                     modelUrls.get(0), // obj
@@ -180,7 +183,7 @@ public class PhotoAlbumService {
      * @param positionY Y 좌표
      * @return 변환된 3D 모델의 파일 데이터 리스트
      */
-    public List<String> requestAIServerConversion(String imageUrl, int positionX, int positionY) {
+    public Map<String, byte[]> requestAIServerConversion(String imageUrl, int positionX, int positionY) {
         WebClient webClient = webClientBuilder.baseUrl(aiServerUrl).build();
 
         String base64Image = downloadAndEncodeImage(imageUrl);
@@ -188,6 +191,8 @@ public class PhotoAlbumService {
 
         try {
             log.info("AI 서버 요청 시작: {}", request);
+            log.info("AI 서버 요청 데이터 - Image URL: {}, PositionX: {}, PositionY: {}", imageUrl, positionX, positionY);
+            log.info("AI 서버 요청 Base64 이미지 길이: {}", base64Image.length());
 
             byte[] rawResponse = webClient.post()
                     .uri("/convert_3d_model")
@@ -195,6 +200,7 @@ public class PhotoAlbumService {
                     .bodyValue(request)
                     .accept(MediaType.MULTIPART_MIXED)  // multipart/mixed 형식 지정
                     .retrieve()
+
                     .onStatus(
                             status -> !status.is2xxSuccessful(),
                             clientResponse -> clientResponse.bodyToMono(String.class)
@@ -207,46 +213,9 @@ public class PhotoAlbumService {
             if (rawResponse == null) {
                 throw new Photo3DConvertFailedException();
             }
+            log.info("AI 서버 응답 데이터 길이: {}", rawResponse.length);
 
-            // multipart 응답 파싱
-            Map<String, byte[]> fileParts = parseMultipartResponse(rawResponse);
-
-            // 파일들을 S3에 업로드
-            List<String> urls = new ArrayList<>();
-
-            if (fileParts.containsKey("output_file.obj")) {
-                urls.add(s3Service.uploadFile(
-                        fileParts.get("output_file.obj"),
-                        ".obj",
-                        "application/x-tgif",
-                        fileParts.get("output_file.obj").length
-                ));
-            }
-
-            if (fileParts.containsKey("output_file.png")) {
-                urls.add(s3Service.uploadFile(
-                        fileParts.get("output_file.png"),
-                        ".png",
-                        "image/png",
-                        fileParts.get("output_file.png").length
-                ));
-            }
-
-            if (fileParts.containsKey("output_file.mtl")) {
-                urls.add(s3Service.uploadFile(
-                        fileParts.get("output_file.mtl"),
-                        ".mtl",
-                        "application/octet-stream",
-                        fileParts.get("output_file.mtl").length
-                ));
-            }
-
-            if (urls.size() != 3) {
-                throw new Photo3DConvertFailedException();
-            }
-
-            log.info("AI 서버 응답 처리 완료. 파일 개수: {}", urls.size());
-            return urls;
+            return parseMultipartResponse(rawResponse);
 
         } catch (Exception e) {
             log.error("AI 서버 변환 실패: {}", e.getMessage());
@@ -254,119 +223,142 @@ public class PhotoAlbumService {
         }
     }
 
+//    private Map<String, byte[]> parseMultipartResponse(byte[] responseData) {
+//        Map<String, byte[]> fileParts = new HashMap<>();
+//        String boundary = "myboundary";
+//        String responseStr = new String(responseData, StandardCharsets.ISO_8859_1);
+//        String[] parts = responseStr.split("--" + boundary);
+//
+//        for (String part : parts) {
+//            if (part.contains("Content-Disposition")) {
+//                String[] headerAndBody = part.split("\r\n\r\n", 2);
+//                if (headerAndBody.length < 2) continue;
+//
+//                String headers = headerAndBody[0];
+//                byte[] body = headerAndBody[1].getBytes(StandardCharsets.ISO_8859_1);
+//
+//                if (headers.contains("output_file.obj")) {
+//                    fileParts.put("output_file.obj", body);
+//                } else if (headers.contains("output_file.png")) {
+//                    fileParts.put("output_file.png", body);
+//                } else if (headers.contains("output_file.mtl")) {
+//                    fileParts.put("output_file.mtl", body);
+//                }
+//            }
+//        }
+//
+//        String objContent = new String(fileParts.get("output_file.obj"), StandardCharsets.UTF_8);
+//        log.info("obj 파일 내용 일부: {}", objContent.substring(0, Math.min(objContent.length(), 200))); // 일부만 출력
+//
+//        String pngContent = new String(fileParts.get("output_file.png"), StandardCharsets.UTF_8);
+//        log.info("png 파일 내용 일부: {}", pngContent.substring(0, Math.min(objContent.length(), 200))); // 일부만 출력
+//
+//        String mtlContent = new String(fileParts.get("output_file.mtl"), StandardCharsets.UTF_8);
+//        log.info("mtl 파일 내용 일부: {}", mtlContent.substring(0, Math.min(objContent.length(), 200))); // 일부만 출력
+//
+//
+//        if (!objContent.contains("v ")) {
+//            throw new Photo3DConvertFailedException();
+//        }
+//        return fileParts;
+//    }
+
     private Map<String, byte[]> parseMultipartResponse(byte[] responseData) {
         Map<String, byte[]> fileParts = new HashMap<>();
-        String boundary = "myboundary";
-        String responseStr = new String(responseData, StandardCharsets.ISO_8859_1);
-        String[] parts = responseStr.split("--" + boundary);
+        String boundary = "myboundary"; // 서버에서 설정한 boundary 값
+        String responseStr = new String(responseData, StandardCharsets.ISO_8859_1); // 원시 데이터를 문자열로 변환
+        String[] parts = responseStr.split("--" + boundary); // boundary를 기준으로 파트 분리
 
         for (String part : parts) {
             if (part.contains("Content-Disposition")) {
                 String[] headerAndBody = part.split("\r\n\r\n", 2);
-                if (headerAndBody.length < 2) continue;
-
-                String headers = headerAndBody[0];
-                byte[] body = headerAndBody[1].getBytes(StandardCharsets.ISO_8859_1);
-
-                if (headers.contains("output_file.obj")) {
-                    fileParts.put("output_file.obj", body);
-                } else if (headers.contains("output_file.png")) {
-                    fileParts.put("output_file.png", body);
-                } else if (headers.contains("output_file.mtl")) {
-                    fileParts.put("output_file.mtl", body);
-                }
-            }
-        }
-
-        return fileParts;
-    }
-
-
-
-    private Map<String, byte[]> parseMultipartMixedResponse(WebClient.ResponseSpec responseSpec) {
-        String boundary = "myboundary";
-        Map<String, byte[]> fileParts = new HashMap<>();
-
-        byte[] responseData = responseSpec.bodyToMono(byte[].class).block();
-        if (responseData == null) {
-            throw new Photo3DConvertFailedException();
-        }
-
-        String responseStr = new String(responseData, StandardCharsets.ISO_8859_1);
-        String[] parts = responseStr.split("--" + boundary);
-
-        for (String part : parts) {
-            if (part.contains("Content-Disposition")) {
-                // 헤더와 본문 분리
-                String[] headerAndBody = part.split("\r\n\r\n", 2);
-                if (headerAndBody.length < 2) continue;
+                if (headerAndBody.length < 2) continue; // 잘못된 형식 무시
 
                 String headers = headerAndBody[0];
                 byte[] body = headerAndBody[1].getBytes(StandardCharsets.ISO_8859_1);
 
                 // 파일 이름 추출
-                if (headers.contains("output_file.obj")) {
-                    fileParts.put("output_file.obj", body);
-                } else if (headers.contains("output_file.png")) {
-                    fileParts.put("output_file.png", body);
-                } else if (headers.contains("output_file.mtl")) {
-                    fileParts.put("output_file.mtl", body);
+                String fileName = null;
+                if (headers.contains("filename=\"")) {
+                    int startIdx = headers.indexOf("filename=\"") + 10;
+                    int endIdx = headers.indexOf("\"", startIdx);
+                    fileName = headers.substring(startIdx, endIdx);
+                }
+
+                if (fileName != null) {
+                    fileParts.put(fileName, body); // 파일 데이터를 바로 저장
                 }
             }
-        }
-
-        // 필요한 모든 파일이 있는지 확인
-        if (!fileParts.containsKey("output_file.obj") ||
-                !fileParts.containsKey("output_file.png") ||
-                !fileParts.containsKey("output_file.mtl")) {
-            log.error("일부 필수 파일이 누락됨: obj={}, png={}, mtl={}",
-                    fileParts.containsKey("output_file.obj"),
-                    fileParts.containsKey("output_file.png"),
-                    fileParts.containsKey("output_file.mtl"));
-            throw new Photo3DConvertFailedException();
         }
 
         return fileParts;
     }
 
 
-
-
     /**
      * 3D 모델 파일 저장
+     *
+     * @return 저장된 파일의 S3 URL 리스트
      */
-    private List<String> saveModelFiles(List<String> modelData) {
+//    private List<String> saveModelFiles(List<String> modelData) {
+//        List<String> urls = new ArrayList<>();
+//        try {
+//            log.info("저장할 모델 데이터 개수: {}", modelData.size());
+//
+//            for (int i = 0; i < modelData.size(); i++) {
+//                log.info("모델 데이터 [{}] 길이: {}", i, modelData.get(i).length());
+//
+//                String extension = switch (i) {
+//                    case 0 -> ".obj";
+//                    case 1 -> ".png";
+//                    case 2 -> ".mtl";
+//                    default -> throw new IllegalStateException("Unexpected value: " + i);
+//                };
+//
+//                String contentType = switch (i) {
+//                    case 0, 2 -> "application/octet-stream";
+//                    case 1 -> "image/png";
+//                    default -> "application/octet-stream";
+//                };
+//
+//                // Base64 데이터가 유효한지 확인
+//                if (!isValidBase64(modelData.get(i))) {
+//                    log.error("모델 데이터 [{}]가 Base64 형식이 아님: {}", i, modelData.get(i));
+//                    throw new PhotoUploadFailedException();
+//                }
+//
+//                // Base64 디코딩
+//                byte[] fileBytes = Base64.getDecoder().decode(modelData.get(i));
+//                log.info("Base64 디코딩 성공 - 모델 데이터 [{}]", i);
+//
+//                // S3 업로드
+//                String url = s3Service.uploadFile(fileBytes, extension, contentType, fileBytes.length);
+//                urls.add(url);
+//                log.info("S3 업로드 완료 - URL: {}", url);
+//            }
+//
+//            return urls;
+//        } catch (Exception e) {
+//            log.error("모델 파일 저장 중 에러 발생: {}", e.getMessage());
+//            throw new PhotoUploadFailedException();
+//        }
+//    }
+
+    private List<String> saveModelFiles(Map<String, byte[]> fileParts) {
         List<String> urls = new ArrayList<>();
         try {
-            for (int i = 0; i < modelData.size(); i++) {
-                String extension = switch (i) {
-                    case 0 -> ".obj";
-                    case 1 -> ".png";
-                    case 2 -> ".mtl";
-                    default -> throw new IllegalStateException("Unexpected value: " + i);
-                };
-                String contentType = switch (i) {
-                    case 0, 2 -> "application/octet-stream";
-                    case 1 -> "image/png";
-                    default -> "application/octet-stream";
-                };
+            fileParts.forEach((fileName, fileData) -> {
+                log.info("파일명: {}, 데이터 크기: {} bytes", fileName, fileData.length);
 
-                // Base64 형식이 아닌 경우 처리
-                byte[] fileBytes;
-                if (isBase64(modelData.get(i))) {
-                    fileBytes = Base64.getDecoder().decode(modelData.get(i));
-                } else {
-                    // Base64가 아니면 raw 바이너리 데이터로 처리
-                    fileBytes = modelData.get(i).getBytes(StandardCharsets.ISO_8859_1);
-                }
+                String extension = getFileExtension(fileName); // 파일 확장자 추출
+                String contentType = determineContentType(extension); // Content-Type 설정
 
-                urls.add(s3Service.uploadFile(
-                        fileBytes,
-                        extension,
-                        contentType,
-                        fileBytes.length
-                ));
-            }
+                // S3 업로드
+                String url = s3Service.uploadFile(fileData, extension, contentType, fileData.length);
+                urls.add(url);
+                log.info("S3 업로드 완료 - URL: {}", url);
+            });
+
             return urls;
         } catch (Exception e) {
             log.error("모델 파일 저장 중 에러 발생: {}", e.getMessage());
@@ -374,19 +366,39 @@ public class PhotoAlbumService {
         }
     }
 
+    private String getFileExtension(String fileName) {
+        return fileName.substring(fileName.lastIndexOf('.')); // 파일 확장자 추출
+    }
+
+    private String determineContentType(String extension) {
+        return switch (extension.toLowerCase()) {
+            case ".obj" -> "application/object";
+            case ".png" -> "image/png";
+            case ".mtl" -> "application/material";
+            default -> "application/octet-stream";
+        };
+    }
+
+
+
+
+
     /**
      * Base64 문자열 여부를 확인하는 유틸리티 메서드
      *
-     * @param value 확인할 문자열
      * @return Base64 여부
      */
-    private boolean isBase64(String value) {
-        try {
-            Base64.getDecoder().decode(value);
-            return true;
-        } catch (IllegalArgumentException e) {
+    private boolean isValidBase64(String base64) {
+        if (base64 == null || base64.isEmpty()) {
             return false;
         }
+        // 길이가 4의 배수인지 확인
+        if (base64.length() % 4 != 0) {
+            return false;
+        }
+        // Base64 패턴 매칭
+        String base64Pattern = "^[A-Za-z0-9+/]+={0,2}$";
+        return base64.matches(base64Pattern);
     }
 
     /**

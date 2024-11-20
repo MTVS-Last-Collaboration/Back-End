@@ -22,17 +22,20 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.core.io.buffer.DataBufferUtils;
 import org.springframework.http.MediaType;
+import org.springframework.http.codec.multipart.Part;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Mono;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.time.Duration;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.*;
 
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -50,6 +53,8 @@ public class PhotoAlbumService {
 
     @Value("${cloud.aws.s3.bucket}")
     private String bucketName;
+
+    private final AtomicInteger counter = new AtomicInteger(0);
 
 
 
@@ -143,8 +148,8 @@ public class PhotoAlbumService {
         }
 
         try {
-            List<byte[]> modelFiles = requestAIServerConversion(photoAlbum.getImageUrl(), positionX, positionY);
-            List<String> modelUrls = upload3DModelFiles(modelFiles);
+            List<String> modelFiles = requestAIServerConversion(photoAlbum.getImageUrl(), positionX, positionY);
+            List<String> modelUrls = saveModelFiles(modelFiles);
 
             photoAlbum.updateModelUrlsAndPosition(
                     modelUrls.get(0), // obj
@@ -171,33 +176,155 @@ public class PhotoAlbumService {
      * @param positionY Y 좌표
      * @return 변환된 3D 모델의 파일 데이터 리스트
      */
-    private List<byte[]> requestAIServerConversion(String imageUrl, int positionX, int positionY) {
-        WebClient webClient = webClientBuilder.baseUrl(aiServerUrl)
-                .codecs(configurer -> configurer.defaultCodecs().maxInMemorySize(20 * 1024 * 1024)) // 20MB로 증가
-                .build();
+    public List<String> requestAIServerConversion(String imageUrl, int positionX, int positionY) {
+        WebClient webClient = webClientBuilder.baseUrl(aiServerUrl).build();
 
         String base64Image = downloadAndEncodeImage(imageUrl);
-
         AIServerRequest request = new AIServerRequest(base64Image, positionX, positionY);
 
-        return webClient.post()
-                .uri("/convert_3d_model")
-                .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(request)
-                .retrieve()
-                .bodyToFlux(DataBuffer.class)
-                .map(this::toByteArray)
+        try {
+            log.info("AI 서버에 요청: {}", request);
+
+            WebClient.ResponseSpec responseSpec = webClient.post()
+                    .uri("/convert_3d_model")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue(request)
+                    .retrieve()
+                    .onStatus(
+                            status -> !status.is2xxSuccessful(),
+                            response -> response.bodyToMono(String.class)
+                                    .doOnNext(body -> log.error("AI 서버 응답 오류: {}", body))
+                                    .then(Mono.error(new Photo3DConvertFailedException()))
+                    );
+
+            log.info("AI 서버 응답 데이터: {}", responseSpec.bodyToMono(String.class).block());
+            return processMultipartResponse(responseSpec);
+
+        } catch (Exception e) {
+            log.error("AI 서버 변환 실패: {}", e.getMessage());
+            throw new Photo3DConvertFailedException();
+        }
+    }
+
+
+
+    private Map<String, byte[]> parseMultipartMixedResponse(WebClient.ResponseSpec responseSpec) {
+        String boundary = "myboundary"; // Python API에서 사용하는 boundary와 동일하게 설정
+        return responseSpec.bodyToFlux(DataBuffer.class)
+                .map(dataBuffer -> {
+                    try {
+                        byte[] bytes = new byte[dataBuffer.readableByteCount()];
+                        dataBuffer.read(bytes);
+                        return bytes;
+                    } finally {
+                        DataBufferUtils.release(dataBuffer);
+                    }
+                })
                 .collectList()
-                .timeout(Duration.ofMinutes(2))
+                .map(dataBuffers -> splitMultipartMixed(dataBuffers, boundary))
                 .block();
     }
 
+    private Map<String, byte[]> splitMultipartMixed(List<byte[]> dataBuffers, String boundary) {
+        Map<String, byte[]> fileParts = new HashMap<>();
+        byte[] boundaryBytes = ("--" + boundary).getBytes(StandardCharsets.UTF_8);
+
+        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+        for (byte[] part : dataBuffers) {
+            buffer.writeBytes(part);
+        }
+
+        String content = new String(buffer.toByteArray(), StandardCharsets.UTF_8);
+        String[] parts = content.split(new String(boundaryBytes));
+
+        for (String part : parts) {
+            if (part.contains("Content-Disposition")) {
+                String[] headersAndBody = part.split("\r\n\r\n", 2);
+                if (headersAndBody.length > 1) {
+                    String headers = headersAndBody[0];
+                    String body = headersAndBody[1];
+
+                    if (headers.contains("output_file.obj")) {
+                        fileParts.put("output_file.obj", body.getBytes(StandardCharsets.UTF_8));
+                    } else if (headers.contains("output_file.png")) {
+                        fileParts.put("output_file.png", body.getBytes(StandardCharsets.UTF_8));
+                    } else if (headers.contains("output_file.mtl")) {
+                        fileParts.put("output_file.mtl", body.getBytes(StandardCharsets.UTF_8));
+                    }
+                }
+            }
+        }
+
+        return fileParts;
+    }
+
+
+    private List<String> processMultipartResponse(WebClient.ResponseSpec responseSpec) {
+        // multipart 응답을 파싱
+        Map<String, byte[]> parts = parseMultipartMixedResponse(responseSpec);
+
+        if (!parts.containsKey("output_file.obj") ||
+                !parts.containsKey("output_file.png") ||
+                !parts.containsKey("output_file.mtl")) {
+            throw new Photo3DConvertFailedException();
+        }
+
+        // 각 파일을 S3에 업로드
+        List<String> urls = new ArrayList<>();
+        urls.add(s3Service.uploadFile(
+                parts.get("output_file.obj"),
+                ".obj",
+                "application/x-tgif",
+                parts.get("output_file.obj").length
+        ));
+        // png, mtl 파일도 동일하게 처리
+
+        return urls;
+    }
+
+
+    /**
+     * 3D 모델 파일 저장
+     */
+    private List<String> saveModelFiles(List<String> modelData) {
+        List<String> urls = new ArrayList<>();
+        try {
+            for (int i = 0; i < modelData.size(); i++) {
+                String extension = switch (i) {
+                    case 0 -> ".obj";
+                    case 1 -> ".png";
+                    case 2 -> ".mtl";
+                    default -> throw new IllegalStateException("Unexpected value: " + i);
+                };
+                String contentType = switch (i) {
+                    case 0, 2 -> "application/octet-stream";
+                    case 1 -> "image/png";
+                    default -> "application/octet-stream";
+                };
+
+                // String을 byte[]로 변환
+                byte[] fileBytes = Base64.getDecoder().decode(modelData.get(i));
+
+                urls.add(s3Service.uploadFile(
+                        fileBytes,  // 바이트 배열로 변환된 데이터
+                        extension,
+                        contentType,
+                        fileBytes.length  // 실제 파일의 바이트 크기
+                ));
+            }
+            return urls;
+        } catch (Exception e) {
+            log.error("모델 파일 저장 중 에러 발생: {}", e.getMessage());
+            throw new PhotoUploadFailedException();
+        }
+    }
+
+    /**
+     * S3에서 이미지 다운로드 및 Base64 인코딩
+     */
     private String downloadAndEncodeImage(String imageUrl) {
         try {
-            // S3에서 이미지 다운로드
             byte[] imageBytes = s3Service.downloadFile(imageUrl);
-
-            // Base64로 인코딩
             return Base64.getEncoder().encodeToString(imageBytes);
         } catch (Exception e) {
             log.error("이미지 다운로드 및 Base64 인코딩 실패: {}", e.getMessage());
@@ -205,19 +332,6 @@ public class PhotoAlbumService {
         }
     }
 
-    /**
-     * 변환된 3D 모델 파일을 S3에 업로드
-     *
-     * @param modelFiles 변환된 3D 모델의 파일 데이터 리스트
-     * @return 업로드된 3D 모델의 URL 리스트
-     */
-    private List<String> upload3DModelFiles(List<byte[]> modelFiles) {
-        List<String> modelUrls = new ArrayList<>();
-        modelUrls.add(s3Service.uploadFile(modelFiles.get(0), ".obj", "application/octet-stream", modelFiles.get(0).length));
-        modelUrls.add(s3Service.uploadFile(modelFiles.get(1), ".png", "image/png", modelFiles.get(1).length));
-        modelUrls.add(s3Service.uploadFile(modelFiles.get(2), ".mtl", "application/octet-stream", modelFiles.get(2).length));
-        return modelUrls;
-    }
 
     /**
      * 사진 삭제
@@ -290,19 +404,6 @@ public class PhotoAlbumService {
                 .orElse(".jpg");
     }
 
-
-    /**
-     * DataBuffer를 byte[]로 변환
-     *
-     * @param dataBuffer 변환할 DataBuffer
-     * @return 변환된 byte[]
-     */
-    private byte[] toByteArray(DataBuffer dataBuffer) {
-        byte[] bytes = new byte[dataBuffer.readableByteCount()];
-        dataBuffer.read(bytes);
-        DataBufferUtils.release(dataBuffer);  // DataBuffer 메모리 해제
-        return bytes;
-    }
 
     /**
      * 사진 조회 (날짜 기준 내림차순)

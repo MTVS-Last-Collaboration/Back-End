@@ -21,4 +21,10 @@ public class VoiceMessageStatusDTO {
 
     @Schema(description = "청취 시간")
     private LocalDateTime listenedAt;
+
+    @Schema(description = "중립 또는 긍정 받은 횟수")
+    private int moodCount;
+
+    @Schema(description = "꽃 닉네임")
+    private String flowerName;
 }

@@ -304,7 +304,9 @@ public class FlowerService {
                 partnerFlower.isRecordComplete(),
                 partnerFlower.isListenComplete(),
                 partnerFlower.getVoiceSavedAt(),
-                partnerFlower.getListenedAt()
+                partnerFlower.getListenedAt(),
+                partnerFlower.getMoodCount(),
+                partnerFlower.getName()
         );
     }
 

@@ -38,8 +38,17 @@ public class S3Service {
                     .contentLength(contentLength)  // 파일 크기 설정
                     .build();
 
-            s3Client.putObject(putObjRequest,
-                    RequestBody.fromBytes(fileData));
+            s3Client.putObject(putObjRequest, RequestBody.fromBytes(fileData));
+
+            byte[] uploadedData = s3Client.getObjectAsBytes(builder -> builder
+                            .bucket(bucket)
+                            .key(fileName))
+                    .asByteArray();
+
+            if (!java.util.Arrays.equals(fileData, uploadedData)) {
+                log.error("S3 업로드 데이터 검증 실패: 업로드된 데이터와 원본이 일치하지 않음");
+                throw new PhotoUploadFailedException();
+            }
 
             GetUrlRequest urlRequest = GetUrlRequest.builder()
                     .bucket(bucket)

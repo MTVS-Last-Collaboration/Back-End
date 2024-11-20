@@ -85,6 +85,12 @@ public enum ErrorCode {
     DUPLICATE_PHOTO_POSITION(HttpStatus.CONFLICT, "Duplicate Photo Position", "해당 위치에 이미 사진이 존재합니다.", "PHOTO-003"),
     PHOTO_3D_CONVERT_FAILED(HttpStatus.SERVICE_UNAVAILABLE, "3D Convert Failed", "3D 변환에 실패했습니다.", "PHOTO-004"),
 
+    // exhibition 관련 에러
+    EXHIBITION_NOT_FOUND(HttpStatus.NOT_FOUND, "Exhibition Not Found", "전시된 오브젝트를 찾을 수 없습니다.", "EXHIBITION-001"),
+    EXHIBITION_ALREADY_EXISTS(HttpStatus.CONFLICT, "Exhibition Already Exists", "이미 전시된 오브젝트가 있습니다.", "EXHIBITION-002"),
+    INVALID_EXHIBITION_POSITION(HttpStatus.BAD_REQUEST, "Invalid Exhibition Position", "잘못된 전시 위치입니다.", "EXHIBITION-003"),
+    MODEL_NOT_READY(HttpStatus.BAD_REQUEST, "Model Not Ready", "3D 모델이 아직 생성되지 않았습니다.", "EXHIBITION-004"),
+
     // Shop 관련 에러
     ITEM_NOT_FOUND(HttpStatus.NOT_FOUND, "Item Not Found", "상품을 찾을 수 없습니다.", "SHOP-001"),
     INSUFFICIENT_POINTS(HttpStatus.BAD_REQUEST, "Insufficient Points", "포인트가 부족합니다.", "SHOP-002"),

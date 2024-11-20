@@ -14,10 +14,7 @@ import com.loveforest.loveforest.domain.flower.exception.*;
 import com.loveforest.loveforest.domain.pet.exception.MaxLevelReachedException;
 import com.loveforest.loveforest.domain.pet.exception.PetNotFoundException;
 import com.loveforest.loveforest.domain.photoAlbum.dto.ApiResponseDTO;
-import com.loveforest.loveforest.domain.photoAlbum.exception.DuplicatePhotoPositionException;
-import com.loveforest.loveforest.domain.photoAlbum.exception.Photo3DConvertFailedException;
-import com.loveforest.loveforest.domain.photoAlbum.exception.PhotoNotFoundException;
-import com.loveforest.loveforest.domain.photoAlbum.exception.PhotoUploadFailedException;
+import com.loveforest.loveforest.domain.photoAlbum.exception.*;
 import com.loveforest.loveforest.domain.room.exception.*;
 import com.loveforest.loveforest.domain.user.exception.EmailAlreadyExistsException;
 import com.loveforest.loveforest.domain.user.exception.InvalidPasswordException;
@@ -371,6 +368,30 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(PreviousMissionIncompleteException.class)
     public ResponseEntity<ErrorResponse> handlePreviousMissionIncompleteException(PreviousMissionIncompleteException ex) {
         log.error("이전 미션 미완료: {}", ex.getMessage());
+        return buildErrorResponse(
+                ex.getErrorCode().getStatus(),
+                ex.getErrorCode().getErrorType(),
+                ex.getErrorCode().getDescription(),
+                ex.getErrorCode().getCode()
+        );
+    }
+
+    // 사진첩 관련 에외 처리
+
+    @ExceptionHandler(ExhibitionNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleExhibitionNotFoundException(ExhibitionNotFoundException ex) {
+        log.error("전시된 오브젝트를 찾을 수 없음: {}", ex.getMessage());
+        return buildErrorResponse(
+                ex.getErrorCode().getStatus(),
+                ex.getErrorCode().getErrorType(),
+                ex.getErrorCode().getDescription(),
+                ex.getErrorCode().getCode()
+        );
+    }
+
+    @ExceptionHandler(ExhibitionAlreadyExistsException.class)
+    public ResponseEntity<ErrorResponse> handleExhibitionAlreadyExistsException(ExhibitionAlreadyExistsException ex) {
+        log.error("이미 전시된 오브젝트가 존재함: {}", ex.getMessage());
         return buildErrorResponse(
                 ex.getErrorCode().getStatus(),
                 ex.getErrorCode().getErrorType(),

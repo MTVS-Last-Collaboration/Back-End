@@ -23,6 +23,9 @@ public class Flower {
     @Column(nullable = false)
     private int moodCount = 0; // 중이상 상태 횟수
 
+    @Column(nullable = false)
+    private int consecutiveNegativeCount = 0; // 연속 부정 카운트
+
     // 음성 메시지 S3 URL 추가
     @Column(name = "voice_url")
     private String voiceUrl;
@@ -61,6 +64,18 @@ public class Flower {
         this.name = newName;
     }
 
+    public void updateMoodState(String mood) {
+        if ("부정".equals(mood)) {
+            consecutiveNegativeCount++;
+            if (consecutiveNegativeCount >= 3) {
+                this.recordComplete = true;
+            }
+        } else {
+            // 부정이 아닌 경우 연속 카운트 리셋
+            consecutiveNegativeCount = 0;
+        }
+    }
+
     // 음성 메시지 저장 시
     public void updateVoiceMessage(String url) {
         this.voiceUrl = url;
@@ -83,6 +98,7 @@ public class Flower {
         this.recordComplete = false;
         this.listenComplete = false;
         this.listenedAt = null;
+        this.consecutiveNegativeCount = 0;
     }
 
 }

@@ -90,6 +90,9 @@ public class FlowerService {
         // AI 서버 분석 요청 및 처리
         String mood = analyzeWithAIServer(voiceData);
 
+        // 기분 상태 업데이트
+        flower.updateMoodState(mood);
+
 
         // 기분 상태가 '상' 또는 '중'인 경우에만 moodCount 증가
         if ("긍정".equals(mood) || "중립".equals(mood)) {

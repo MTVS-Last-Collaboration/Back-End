@@ -281,7 +281,7 @@ public class FlowerController {
                     "mySavedAt": "2024-03-19T15:30:00",
                     "myListenedAt": null,
                     "myMoodCount": 0,
-                    "myFlowerName": "My Flower",
+                    "myFlowerName": "My Flower"
                 }
                 """,
                                     description = "음성 메시지가 저장되었으나 아직 청취되지 않은 상태"

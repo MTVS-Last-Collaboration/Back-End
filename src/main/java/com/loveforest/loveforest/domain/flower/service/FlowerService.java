@@ -303,13 +303,22 @@ public class FlowerService {
                         user.getCouple().getId(), userId)
                 .orElseThrow(FlowerNotFoundException::new);
 
+        Flower myFlower = flowerRepository.findByUserId(userId)
+                .orElseThrow(FlowerNotFoundException::new);
+
         return new VoiceMessageStatusDTO(
                 partnerFlower.isRecordComplete(),
                 partnerFlower.isListenComplete(),
                 partnerFlower.getVoiceSavedAt(),
                 partnerFlower.getListenedAt(),
                 partnerFlower.getMoodCount(),
-                partnerFlower.getName()
+                partnerFlower.getName(),
+                myFlower.isRecordComplete(),
+                myFlower.isListenComplete(),
+                myFlower.getVoiceSavedAt(),
+                myFlower.getListenedAt(),
+                myFlower.getMoodCount(),
+                myFlower.getName()
         );
     }
 

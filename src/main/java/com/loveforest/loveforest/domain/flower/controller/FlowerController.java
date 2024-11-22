@@ -256,7 +256,7 @@ public class FlowerController {
      * 음성 메시지 조회
      */
     @Operation(
-            summary = "음성 메시지 상태 조회",
+            summary = "사용자와 사용자의 파트너 음성 메시지 상태 조회",
             description = "현재 커플의 음성 메시지 상태를 조회합니다. " +
                     "녹음 완료 여부, 청취 완료 여부, 저장 시간, 청취 시간 정보를 포함합니다."
     )
@@ -270,12 +270,18 @@ public class FlowerController {
                             examples = @ExampleObject(
                                     value = """
                 {
-                    "recordComplete": true,
-                    "listenComplete": false,
-                    "savedAt": "2024-03-19T15:30:00",
-                    "listenedAt": null,
-                    "moodCount": 0,
-                    "flowerName": "My Flower"
+                    "partnerRecordComplete": true,
+                    "partnerListenComplete": false,
+                    "partnerSavedAt": "2024-03-19T15:30:00",
+                    "partnerListenedAt": null,
+                    "partnerMoodCount": 0,
+                    "partnerFlowerName": "My Flower",
+                    "myRecordComplete": true,
+                    "myListenComplete": false,
+                    "mySavedAt": "2024-03-19T15:30:00",
+                    "myListenedAt": null,
+                    "myMoodCount": 0,
+                    "myFlowerName": "My Flower",
                 }
                 """,
                                     description = "음성 메시지가 저장되었으나 아직 청취되지 않은 상태"

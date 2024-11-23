@@ -138,6 +138,28 @@ public class UserService {
         return tokens;
     }
 
+    public String getPartnerNickname(User user) {
+        if (user.getCouple() == null) {
+            return null;
+        }
+
+        // 커플에서 파트너 찾기
+        return user.getCouple().getUsers().stream()
+                .filter(u -> !u.getId().equals(user.getId()))
+                .findFirst()
+                .map(User::getNickname)
+                .orElse(null);
+    }
+
+    public String getMyNickname(User user) {
+        if (user.getCouple() == null) {
+            return null;
+        }
+
+        // 커플에서 파트너 찾기
+        return user.getNickname();
+    }
+
 
     /**
      * 로그아웃 처리 메서드

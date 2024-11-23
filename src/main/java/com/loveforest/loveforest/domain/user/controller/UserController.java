@@ -2,6 +2,8 @@ package com.loveforest.loveforest.domain.user.controller;
 
 import com.loveforest.loveforest.domain.auth.dto.LoginInfo;
 import com.loveforest.loveforest.domain.user.dto.*;
+import com.loveforest.loveforest.domain.user.entity.User;
+import com.loveforest.loveforest.domain.user.repository.UserRepository;
 import com.loveforest.loveforest.domain.user.service.UserService;
 import com.loveforest.loveforest.exception.ErrorResponse;
 import com.loveforest.loveforest.exception.common.UnauthorizedException;
@@ -30,6 +32,7 @@ import java.util.Map;
 public class UserController {
 
     private final UserService userService;
+    private final UserRepository userRepository;
 
     /**
      * 회원가입
@@ -94,8 +97,14 @@ public class UserController {
             headers.set("Authorization", "Bearer " + tokens.get("accessToken"));
             headers.set("Refresh-Token", tokens.get("refreshToken"));
             String coupleCode = userService.getCoupleCode(requestDTO.getEmail());
+
+            User user = userRepository.findByEmail(requestDTO.getEmail());
+            String partnerNickname = userService.getPartnerNickname(user);
+            String myNickname = userService.getMyNickname(user);
             LoginResponseDTO loginResponseDTO = new LoginResponseDTO();
             loginResponseDTO.setCoupleCode(coupleCode);
+            loginResponseDTO.setPartnerNickname(partnerNickname);
+            loginResponseDTO.setMyNickname(myNickname);
 
             // 응답 시 헤더에 추가된 토큰을 반환
             return ResponseEntity.ok().headers(headers).body(loginResponseDTO);

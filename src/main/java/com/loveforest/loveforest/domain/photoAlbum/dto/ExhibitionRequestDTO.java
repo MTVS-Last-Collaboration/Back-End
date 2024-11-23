@@ -16,14 +16,14 @@ public class ExhibitionRequestDTO {
 
     @Schema(description = "X축 위치 값", example = "10.5", required = true)
     @NotNull(message = "X축 위치는 필수입니다")
-    private Double positionX; // Integer -> Double로 변경
+    private Integer positionX; // Integer -> Double로 변경
 
     @Schema(description = "Y축 위치 값", example = "20.3", required = true)
     @NotNull(message = "Y축 위치는 필수입니다")
-    private Double positionY; // Integer -> Double로 변경
+    private Integer positionY; // Integer -> Double로 변경
 
     @Builder
-    public ExhibitionRequestDTO(Long photoId, Double positionX, Double positionY) {
+    public ExhibitionRequestDTO(Long photoId, Integer positionX, Integer positionY) {
         this.photoId = photoId;
         this.positionX = positionX;
         this.positionY = positionY;

@@ -1,6 +1,7 @@
 package com.loveforest.loveforest.domain.room.entity;
 
 import jakarta.persistence.*;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -46,6 +47,15 @@ public class FurnitureLayout {
 
     // 위치와 회전 각도 설정 메서드 추가
     public void setPosition(int positionX, int positionY, int rotation) {
+        this.positionX = positionX;
+        this.positionY = positionY;
+        this.rotation = rotation;
+    }
+
+    @Builder
+    public FurnitureLayout(Room room, Furniture furniture, int positionX, int positionY, int rotation) {
+        this.room = room;
+        this.furniture = furniture;
         this.positionX = positionX;
         this.positionY = positionY;
         this.rotation = rotation;

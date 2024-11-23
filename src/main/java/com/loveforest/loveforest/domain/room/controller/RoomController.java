@@ -2,7 +2,9 @@ package com.loveforest.loveforest.domain.room.controller;
 
 import com.loveforest.loveforest.domain.auth.dto.LoginInfo;
 import com.loveforest.loveforest.domain.room.dto.*;
+import com.loveforest.loveforest.domain.room.service.RoomCollectionService;
 import com.loveforest.loveforest.domain.room.service.RoomServiceImpl;
+import com.loveforest.loveforest.domain.room.service.SharedRoomService;
 import com.loveforest.loveforest.domain.user.exception.LoginRequiredException;
 import com.loveforest.loveforest.exception.ErrorResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -19,6 +21,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Slf4j
 @RestController
 @RequestMapping("/api/rooms")
@@ -27,6 +32,8 @@ import org.springframework.web.bind.annotation.*;
 public class RoomController {
 
     private final RoomServiceImpl roomServiceImpl;
+    private final RoomCollectionService collectionService;
+    private final SharedRoomService sharedRoomService;
 
 
     /**
@@ -582,5 +589,130 @@ public class RoomController {
 
         log.info("다른 커플의 방 조회 완료 - 커플: {}", coupleId);
         return ResponseEntity.ok(new PublicRoomApiResponseDTO(response));
+    }
+
+    /**
+     * 컬렉션 관련 API
+     */
+    @Operation(summary = "현재 방 상태 저장", description = "현재 방 상태를 컬렉션에 저장합니다.")
+    @PostMapping("/collection/current")
+    public ResponseEntity<Void> saveCurrentRoom(@AuthenticationPrincipal LoginInfo loginInfo) {
+        if (loginInfo == null) {
+            throw new LoginRequiredException();
+        }
+
+        log.info("현재 방 상태 저장 요청 - 커플 ID: {}", loginInfo.getCoupleId());
+        collectionService.saveCurrentRoom(loginInfo.getCoupleId());
+
+        return ResponseEntity.ok().build();
+    }
+
+    @Operation(summary = "프리셋 방 저장", description = "선택한 프리셋 방을 컬렉션에 저장합니다.")
+    @PostMapping("/collection/preset/{presetId}")
+    public ResponseEntity<Void> savePresetRoom(
+            @AuthenticationPrincipal LoginInfo loginInfo,
+            @PathVariable Long presetId) {
+        if (loginInfo == null) {
+            throw new LoginRequiredException();
+        }
+
+        log.info("프리셋 방 저장 요청 - 커플 ID: {}, 프리셋 ID: {}",
+                loginInfo.getCoupleId(), presetId);
+        collectionService.savePresetRoom(loginInfo.getCoupleId(), presetId);
+
+        return ResponseEntity.ok().build();
+    }
+
+    @Operation(summary = "공유 방 저장", description = "공유된 다른 커플의 방을 컬렉션에 저장합니다.")
+    @PostMapping("/collection/shared/{sharedRoomId}")
+    public ResponseEntity<Void> saveSharedRoom(
+            @AuthenticationPrincipal LoginInfo loginInfo,
+            @PathVariable Long sharedRoomId) {
+        if (loginInfo == null) {
+            throw new LoginRequiredException();
+        }
+
+        log.info("공유 방 저장 요청 - 커플 ID: {}, 공유방 ID: {}",
+                loginInfo.getCoupleId(), sharedRoomId);
+        collectionService.saveSharedRoom(loginInfo.getCoupleId(), sharedRoomId);
+
+        return ResponseEntity.ok().build();
+    }
+
+    @Operation(summary = "저장된 방 목록 조회",
+            description = "컬렉션에 저장된 모든 방 상태를 조회합니다.")
+    @GetMapping("/collection")
+    public ResponseEntity<List<CollectionRoomResponseDTO>> getSavedRooms(
+            @AuthenticationPrincipal LoginInfo loginInfo) {
+        if (loginInfo == null) {
+            throw new LoginRequiredException();
+        }
+
+        log.info("저장된 방 목록 조회 요청 - 커플 ID: {}", loginInfo.getCoupleId());
+        List<CollectionRoomResponseDTO> rooms =
+                collectionService.getSavedRooms(loginInfo.getCoupleId());
+
+        return ResponseEntity.ok(rooms);
+    }
+
+    @Operation(summary = "저장된 방 상태 적용",
+            description = "컬렉션에서 선택한 방 상태를 현재 방에 적용합니다.")
+    @PostMapping("/collection/apply/{collectionRoomId}")
+    public ResponseEntity<Void> applyRoomState(
+            @AuthenticationPrincipal LoginInfo loginInfo,
+            @PathVariable Long collectionRoomId) {
+        if (loginInfo == null) {
+            throw new LoginRequiredException();
+        }
+
+        log.info("저장된 방 상태 적용 요청 - 커플 ID: {}, 컬렉션룸 ID: {}",
+                loginInfo.getCoupleId(), collectionRoomId);
+        collectionService.applyRoomState(loginInfo.getCoupleId(), collectionRoomId);
+
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * 공유 관련 API
+     */
+    @Operation(summary = "방 공유 설정", description = "현재 방의 공유 상태를 설정합니다.")
+    @PostMapping("/sharing")
+    public ResponseEntity<Void> setRoomSharing(@AuthenticationPrincipal LoginInfo loginInfo, @RequestParam boolean isShared) {
+        if (loginInfo == null) {
+            throw new LoginRequiredException();
+        }
+
+        log.info("방 공유 설정 요청 - 커플 ID: {}, 공유 상태: {}",
+                loginInfo.getCoupleId(), isShared);
+        sharedRoomService.setRoomSharing(loginInfo.getCoupleId(), isShared);
+
+        return ResponseEntity.ok().build();
+    }
+
+    @Operation(summary = "공유된 방 목록 조회", description = "다른 커플들이 공유한 방 목록을 조회합니다.")
+    @GetMapping("/shared")
+    public ResponseEntity<List<SharedRoomResponseDTO>> getSharedRooms(@AuthenticationPrincipal LoginInfo loginInfo) {
+        if (loginInfo == null) {
+            throw new LoginRequiredException();
+        }
+
+        log.info("공유된 방 목록 조회 요청 - 커플 ID: {}", loginInfo.getCoupleId());
+        List<SharedRoomResponseDTO> rooms =
+                sharedRoomService.getSharedRooms(loginInfo.getCoupleId());
+
+        return ResponseEntity.ok(rooms);
+    }
+
+    @Operation(summary = "프리셋 방 목록 조회", description = "서비스에서 제공하는 프리셋 방 목록을 조회합니다.")
+    @GetMapping("/presets")
+    public ResponseEntity<List<PresetRoomResponseDTO>> getPresetRooms(
+            @AuthenticationPrincipal LoginInfo loginInfo) {
+        if (loginInfo == null) {
+            throw new LoginRequiredException();
+        }
+
+        log.info("프리셋 방 목록 조회 요청");
+        // 프리셋 서비스 구현 필요
+        return ResponseEntity.ok(new ArrayList<>());
     }
 }

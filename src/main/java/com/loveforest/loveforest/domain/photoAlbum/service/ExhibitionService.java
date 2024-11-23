@@ -11,6 +11,8 @@ import com.loveforest.loveforest.domain.photoAlbum.exception.ModelNotReadyExcept
 import com.loveforest.loveforest.domain.photoAlbum.exception.PhotoNotFoundException;
 import com.loveforest.loveforest.domain.photoAlbum.repository.ExhibitionRepository;
 import com.loveforest.loveforest.domain.photoAlbum.repository.PhotoAlbumRepository;
+import com.loveforest.loveforest.domain.user.entity.User;
+import com.loveforest.loveforest.domain.user.exception.UserNotFoundException;
 import com.loveforest.loveforest.domain.user.repository.UserRepository;
 import com.loveforest.loveforest.exception.common.UnauthorizedException;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +21,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -27,6 +31,7 @@ public class ExhibitionService {
 
     private final ExhibitionRepository exhibitionRepository;
     private final PhotoAlbumRepository photoAlbumRepository;
+    private final UserRepository userRepository;
 
     @Transactional
     public ExhibitionResponseDTO createExhibition(ExhibitionRequestDTO request, Long userId) {
@@ -76,6 +81,19 @@ public class ExhibitionService {
 
         // 관련된 PhotoAlbum의 전시 상태 초기화는 필요하지 않음
         // 3D 모델 파일들은 유지됨
+    }
+
+    @Transactional(readOnly = true)
+    public List<ExhibitionResponseDTO> getExhibitionList(Long userId) {
+        // 사용자 확인
+        User user = userRepository.findById(userId)
+                .orElseThrow(UserNotFoundException::new);
+
+        // 사용자의 커플 ID로 전시 목록 조회
+        return exhibitionRepository.findAllByCoupleId(user.getCouple().getId())
+                .stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
     }
 
     private void validateExistingExhibition(Long photoId) {

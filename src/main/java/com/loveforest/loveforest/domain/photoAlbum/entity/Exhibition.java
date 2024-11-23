@@ -37,4 +37,8 @@ public class Exhibition {
         this.positionY = positionY;
         this.exhibitedAt = exhibitedAt;
     }
+
+    public Long getCoupleId() {
+        return this.photo != null ? this.photo.getCouple().getId() : null;
+    }
 }

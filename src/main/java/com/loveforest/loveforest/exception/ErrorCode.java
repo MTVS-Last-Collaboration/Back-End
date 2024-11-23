@@ -41,6 +41,11 @@ public enum ErrorCode {
     FLOOR_NOT_FOUND(HttpStatus.NOT_FOUND, "Floor Not Found", "해당 바닥을 찾을 수 없습니다.", "ROOM-011"),
     FLOOR_NOT_IN_INVENTORY(HttpStatus.BAD_REQUEST, "Floor Not In Inventory", "보유하지 않은 바닥입니다.", "ROOM-012"),
     INVALID_ROOM_ACCESS(HttpStatus.BAD_REQUEST, "Invalid Room Access", "잘못된 방 접근입니다.", "ROOM-013"),
+    PRESET_NOT_FOUND(HttpStatus.NOT_FOUND, "Preset Not Found", "프리셋을 찾을 수 없습니다.", "ROOM-101"),
+    ROOM_NOT_SHARED(HttpStatus.BAD_REQUEST, "Room Not Shared", "공유되지 않은 방입니다.", "ROOM-102"),
+    INVALID_OPERATION(HttpStatus.BAD_REQUEST, "Invalid Operation", "잘못된 작업입니다.", "ROOM-103"),
+    COLLECTION_ROOM_NOT_FOUND(HttpStatus.NOT_FOUND, "Collection Room Not Found", "저장된 방을 찾을 수 없습니다.", "ROOM-104"),
+    ROOM_SERIALIZATION_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "Room Serialization Error", "방 상태 직렬화/역직렬화 중 오류가 발생했습니다.", "ROOM-105"),
 
     // Chat 관련 에러
     CHAT_NOT_FOUND(HttpStatus.NOT_FOUND, "Chat Not Found", "대화 이력이 존재하지 않습니다.", "CHAT-001"),

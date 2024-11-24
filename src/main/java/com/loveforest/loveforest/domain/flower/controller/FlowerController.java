@@ -161,7 +161,9 @@ public class FlowerController {
                                 {
                                     "message": "새로운 씨앗 키우기가 완료되었습니다.",
                                     "moodCount": 0,
-                                    "flowerName": "My Flower"
+                                    "flowerName": "My Flower",
+                                    "recordComplete": false,
+                                    "listenComplete": false
                                 }
                                 """)
                             )

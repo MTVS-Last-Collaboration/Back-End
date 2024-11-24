@@ -2,6 +2,7 @@ package com.loveforest.loveforest.domain.room.controller;
 
 import com.loveforest.loveforest.domain.auth.dto.LoginInfo;
 import com.loveforest.loveforest.domain.room.dto.*;
+import com.loveforest.loveforest.domain.room.service.PresetRoomService;
 import com.loveforest.loveforest.domain.room.service.RoomCollectionService;
 import com.loveforest.loveforest.domain.room.service.RoomServiceImpl;
 import com.loveforest.loveforest.domain.room.service.SharedRoomService;
@@ -34,7 +35,7 @@ public class RoomController {
     private final RoomServiceImpl roomServiceImpl;
     private final RoomCollectionService collectionService;
     private final SharedRoomService sharedRoomService;
-
+    private final PresetRoomService presetRoomService;
 
     /**
      * 방 가구 배치 API
@@ -703,7 +704,67 @@ public class RoomController {
         return ResponseEntity.ok(rooms);
     }
 
-    @Operation(summary = "프리셋 방 목록 조회", description = "서비스에서 제공하는 프리셋 방 목록을 조회합니다.")
+    @Operation(
+            summary = "프리셋 방 목록 조회",
+            description = "서비스에서 제공하는 모든 프리셋 방 목록을 조회합니다.",
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "프리셋 방 목록 조회 성공",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    schema = @Schema(implementation = PresetRoomResponseDTO.class),
+                                    examples = @ExampleObject(value = """
+                                [
+                                    {
+                                        "presetId": 1,
+                                        "name": "클래식 룸",
+                                        "wallpaper": {
+                                            "id": 1,
+                                            "name": "모던 벽지",
+                                            "wallpaperNumber": 1
+                                        },
+                                        "floor": {
+                                            "id": 1,
+                                            "name": "원목 바닥",
+                                            "floorNumber": 1
+                                        },
+                                        "furnitureLayouts": [
+                                            {
+                                                "furnitureId": 1,
+                                                "name": "클래식 소파",
+                                                "positionX": 100,
+                                                "positionY": 200,
+                                                "rotation": 90
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "presetId": 2,
+                                        "name": "모던 룸",
+                                        "wallpaper": {
+                                            "id": 2,
+                                            "name": "북유럽 벽지",
+                                            "wallpaperNumber": 2
+                                        },
+                                        "floor": {
+                                            "id": 2,
+                                            "name": "대리석 바닥",
+                                            "floorNumber": 2
+                                        },
+                                        "furnitureLayouts": []
+                                    }
+                                ]
+                                """)
+                            )
+                    ),
+                    @ApiResponse(
+                            responseCode = "401",
+                            description = "로그인이 필요합니다.",
+                            content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+                    )
+            }
+    )
     @GetMapping("/presets")
     public ResponseEntity<List<PresetRoomResponseDTO>> getPresetRooms(
             @AuthenticationPrincipal LoginInfo loginInfo) {
@@ -711,8 +772,10 @@ public class RoomController {
             throw new LoginRequiredException();
         }
 
-        log.info("프리셋 방 목록 조회 요청");
-        // 프리셋 서비스 구현 필요
-        return ResponseEntity.ok(new ArrayList<>());
+        log.info("프리셋 방 목록 조회 요청 - 사용자 ID: {}", loginInfo.getUserId());
+        List<PresetRoomResponseDTO> presetRooms = presetRoomService.getAllPresetRooms();
+
+        return ResponseEntity.ok(presetRooms);
     }
+
 }

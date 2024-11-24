@@ -13,9 +13,10 @@ import com.loveforest.loveforest.domain.room.repository.PresetRoomRepository;
 import com.loveforest.loveforest.domain.room.repository.RoomRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Service
 @Transactional
@@ -91,5 +92,20 @@ public class PresetRoomService {
         }
 
         roomRepository.save(room);
+    }
+
+    /**
+     * 모든 프리셋 방 목록 조회
+     */
+    public List<PresetRoomResponseDTO> getAllPresetRooms() {
+        List<PresetRoom> presetRooms = presetRoomRepository.findAll();
+
+        // 엔티티를 DTO로 변환
+        List<PresetRoomResponseDTO> responseDTOs = presetRooms.stream()
+                .map(PresetRoomResponseDTO::from)
+                .toList();
+
+        log.info("총 {}개의 프리셋 방을 조회했습니다.", responseDTOs.size());
+        return responseDTOs;
     }
 }

@@ -13,6 +13,7 @@ import com.loveforest.loveforest.domain.room.repository.PresetRoomRepository;
 import com.loveforest.loveforest.domain.room.repository.RoomRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,10 +22,10 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 @Slf4j
 public class PresetRoomService {
+
     private final RoomRepository roomRepository;
     private final PresetRoomRepository presetRoomRepository;
-    private final ObjectMapper objectMapper;
-    private RoomService roomService;
+    private final RoomService roomService;
 
     @Transactional
     public PresetRoomResponseDTO saveRoomAsPreset(Long roomId, String presetName) {

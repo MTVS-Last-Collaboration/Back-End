@@ -1,7 +1,9 @@
 package com.loveforest.loveforest.domain.room.service;
 
 import com.loveforest.loveforest.domain.room.dto.*;
-import org.springframework.transaction.annotation.Transactional;
+import com.loveforest.loveforest.domain.room.entity.Room;
+
+import java.util.Optional;
 
 /**
  * 모든 방 데코레이션 작업을 위한 통합 인터페이스
@@ -25,4 +27,6 @@ public interface RoomService {
     RoomResponseDTO getRoomStatus(Long coupleId);
 
     PublicRoomResponseDTO getPublicRoomInfo(Long coupleId, Long requesterId);
+
+    Optional<Room> findById(Long roomId);
 }

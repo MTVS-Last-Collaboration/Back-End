@@ -12,4 +12,5 @@ public interface RoomRepository extends JpaRepository<Room, Long> {
 
     @Query("SELECT r FROM Room r JOIN r.sharing s WHERE s.isShared = true")
     List<Room> findBySharing_IsSharedTrue();
+
 }

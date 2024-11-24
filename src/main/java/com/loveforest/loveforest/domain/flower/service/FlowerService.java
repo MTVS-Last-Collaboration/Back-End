@@ -205,6 +205,7 @@ public class FlowerService {
 
         // 상태 초기화
         flower.resetMoodCount();
+        flower.resetComplete();
         flowerRepository.save(flower);
 
         log.info("새로운 씨앗 시작 - 사용자 ID: {}, 초기화된 MoodCount: {}", userId, flower.getMoodCount());
@@ -213,7 +214,9 @@ public class FlowerService {
         return new StartNewSeedResponseDTO(
                 "새로운 씨앗 키우기가 완료되었습니다.",
                 flower.getMoodCount(),
-                flower.getName()
+                flower.getName(),
+                flower.isRecordComplete(),
+                flower.isListenComplete()
         );
     }
 

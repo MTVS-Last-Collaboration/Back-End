@@ -645,7 +645,7 @@ public class RoomController {
     @PostMapping("/collection/preset/{presetId}")
     public ResponseEntity<Void> savePresetRoom(
             @AuthenticationPrincipal LoginInfo loginInfo,
-            @PathVariable Long presetId) {
+            @PathVariable("presetId") Long presetId) {
         if (loginInfo == null) {
             throw new LoginRequiredException();
         }
@@ -765,7 +765,7 @@ public class RoomController {
     @PostMapping("/collection/apply/{collectionRoomId}")
     public ResponseEntity<Void> applyRoomState(
             @AuthenticationPrincipal LoginInfo loginInfo,
-            @PathVariable Long collectionRoomId) {
+            @PathVariable("collectionRoomId") Long collectionRoomId) {
         if (loginInfo == null) {
             throw new LoginRequiredException();
         }

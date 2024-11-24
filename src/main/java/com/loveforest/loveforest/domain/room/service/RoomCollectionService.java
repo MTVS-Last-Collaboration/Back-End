@@ -1,5 +1,7 @@
 package com.loveforest.loveforest.domain.room.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.loveforest.loveforest.domain.couple.entity.Couple;
 import com.loveforest.loveforest.domain.couple.exception.CoupleNotFoundException;
 import com.loveforest.loveforest.domain.couple.repository.CoupleRepository;
@@ -18,7 +20,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -57,10 +61,13 @@ public class RoomCollectionService {
 
         RoomCollection collection = getOrCreateCollection(coupleId);
 
-        // 프리셋의 roomData를 직접 사용
+        // 프리셋의 방 상태를 JSON으로 변환
+        String roomStateJson = createRoomStateJson(preset);
+
+        // 컬렉션 룸 생성 및 저장
         CollectionRoom collectionRoom = new CollectionRoom(
                 collection,
-                preset.getRoomData(),
+                roomStateJson,
                 RoomStateSource.PRESET
         );
 
@@ -69,6 +76,46 @@ public class RoomCollectionService {
 
         log.info("프리셋 방 상태 저장 완료 - 커플 ID: {}, 프리셋 ID: {}", coupleId, presetId);
     }
+
+    /**
+     * PresetRoom의 상태를 JSON으로 변환하는 헬퍼 메서드
+     */
+    private String createRoomStateJson(PresetRoom preset) {
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            Map<String, Object> roomState = new HashMap<>();
+
+            // 벽지 정보
+            if (preset.getWallpaper() != null) {
+                roomState.put("wallpaperId", preset.getWallpaper().getId());
+            }
+
+            // 바닥 정보
+            if (preset.getFloor() != null) {
+                roomState.put("floorId", preset.getFloor().getId());
+            }
+
+            // 가구 배치 정보
+            List<Map<String, Object>> furnitureLayouts = preset.getFurnitureLayouts().stream()
+                    .map(layout -> {
+                        Map<String, Object> layoutInfo = new HashMap<>();
+                        layoutInfo.put("furnitureId", layout.getFurniture().getId());
+                        layoutInfo.put("positionX", layout.getPositionX());
+                        layoutInfo.put("positionY", layout.getPositionY());
+                        layoutInfo.put("rotation", layout.getRotation());
+                        return layoutInfo;
+                    })
+                    .collect(Collectors.toList());
+
+            roomState.put("furnitureLayouts", furnitureLayouts);
+
+            return objectMapper.writeValueAsString(roomState);
+        } catch (JsonProcessingException e) {
+            log.error("방 상태 JSON 변환 실패", e);
+            throw new InvalidOperationException();
+        }
+    }
+
 
     /**
      * 공유된 방 상태 저장

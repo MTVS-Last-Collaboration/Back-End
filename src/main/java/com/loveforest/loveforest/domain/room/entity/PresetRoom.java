@@ -1,33 +1,51 @@
 package com.loveforest.loveforest.domain.room.entity;
 
+import com.loveforest.loveforest.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "tbl_preset_room")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class PresetRoom {
+public class PresetRoom extends BaseTimeEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(nullable = false)
-    private String name;
+    private String name;  // 프리셋 이름
 
-    @Column(columnDefinition = "JSON", nullable = false)
-    private String roomData;
+    // 벽지 정보
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "wallpaper_id")
+    private Wallpaper wallpaper;
 
-    @Column(nullable = false)
-    private LocalDateTime createdAt;
+    // 바닥 정보
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "floor_id")
+    private Floor floor;
 
-    public PresetRoom(String name, String roomData) {
+    // 가구 배치 정보
+    @OneToMany(mappedBy = "presetRoom", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<PresetFurnitureLayout> furnitureLayouts = new ArrayList<>();
+
+    @Builder
+    public PresetRoom(String name, Wallpaper wallpaper, Floor floor) {
         this.name = name;
-        this.roomData = roomData;
-        this.createdAt = LocalDateTime.now();
+        this.wallpaper = wallpaper;
+        this.floor = floor;
+    }
+
+    public void addFurnitureLayout(PresetFurnitureLayout layout) {
+        this.furnitureLayouts.add(layout);
+        layout.setPresetRoom(this);
     }
 }

@@ -60,6 +60,11 @@ public class Flower {
         this.moodCount = 0;
     }
 
+    public void resetComplete() {
+        this.recordComplete = false;
+        this.listenComplete = false;
+    }
+
     public void updateName(String newName) {
         this.name = newName;
     }

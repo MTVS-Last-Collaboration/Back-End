@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.loveforest.loveforest.domain.couple.exception.CoupleNotFoundException;
 import com.loveforest.loveforest.domain.flower.dto.FlowerMoodResponseDTO;
+import com.loveforest.loveforest.domain.flower.dto.StartNewSeedResponseDTO;
 import com.loveforest.loveforest.domain.flower.dto.VoiceAnalysisRequestDTO;
 import com.loveforest.loveforest.domain.flower.dto.VoiceMessageStatusDTO;
 import com.loveforest.loveforest.domain.flower.entity.Flower;
@@ -197,11 +198,23 @@ public class FlowerService {
      * @param userId 사용자 ID
      */
     @Transactional
-    public void startNewSeed(Long userId) {
+    public StartNewSeedResponseDTO startNewSeed(Long userId) {
+        // 사용자와 꽃 데이터 조회
         Flower flower = flowerRepository.findByUserId(userId)
-                .orElseThrow(UserNotFoundException::new);
+                .orElseThrow(FlowerNotFoundException::new);
+
+        // 상태 초기화
         flower.resetMoodCount();
         flowerRepository.save(flower);
+
+        log.info("새로운 씨앗 시작 - 사용자 ID: {}, 초기화된 MoodCount: {}", userId, flower.getMoodCount());
+
+        // 응답 DTO 생성
+        return new StartNewSeedResponseDTO(
+                "새로운 씨앗 키우기가 완료되었습니다.",
+                flower.getMoodCount(),
+                flower.getName()
+        );
     }
 
     /**

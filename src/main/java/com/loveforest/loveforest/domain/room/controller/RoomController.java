@@ -593,9 +593,24 @@ public class RoomController {
     }
 
     /**
-     * 컬렉션 관련 API
+     * 현재 방 상태 저장 API
      */
-    @Operation(summary = "현재 방 상태 저장", description = "현재 방 상태를 컬렉션에 저장합니다.")
+    @Operation(
+            summary = "현재 방 상태 저장",
+            description = "현재 방의 상태를 컬렉션에 저장합니다.",
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "현재 방 상태 저장 성공",
+                            content = @Content(mediaType = "application/json")
+                    ),
+                    @ApiResponse(
+                            responseCode = "401",
+                            description = "로그인 필요",
+                            content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+                    )
+            }
+    )
     @PostMapping("/collection/current")
     public ResponseEntity<Void> saveCurrentRoom(@AuthenticationPrincipal LoginInfo loginInfo) {
         if (loginInfo == null) {
@@ -608,7 +623,25 @@ public class RoomController {
         return ResponseEntity.ok().build();
     }
 
-    @Operation(summary = "프리셋 방 저장", description = "선택한 프리셋 방을 컬렉션에 저장합니다.")
+    /**
+     * 프리셋 방 저장 API
+     */
+    @Operation(
+            summary = "프리셋 방 저장",
+            description = "선택한 프리셋 방을 컬렉션에 저장합니다.",
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "프리셋 방 저장 성공",
+                            content = @Content(mediaType = "application/json")
+                    ),
+                    @ApiResponse(
+                            responseCode = "401",
+                            description = "로그인 필요",
+                            content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+                    )
+            }
+    )
     @PostMapping("/collection/preset/{presetId}")
     public ResponseEntity<Void> savePresetRoom(
             @AuthenticationPrincipal LoginInfo loginInfo,
@@ -624,7 +657,25 @@ public class RoomController {
         return ResponseEntity.ok().build();
     }
 
-    @Operation(summary = "공유 방 저장", description = "공유된 다른 커플의 방을 컬렉션에 저장합니다.")
+    /**
+     * 공유된 방 저장 API
+     */
+    @Operation(
+            summary = "공유된 방 저장",
+            description = "공유된 다른 커플의 방을 컬렉션에 저장합니다.",
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "공유된 방 저장 성공",
+                            content = @Content(mediaType = "application/json")
+                    ),
+                    @ApiResponse(
+                            responseCode = "401",
+                            description = "로그인 필요",
+                            content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+                    )
+            }
+    )
     @PostMapping("/collection/shared/{sharedRoomId}")
     public ResponseEntity<Void> saveSharedRoom(
             @AuthenticationPrincipal LoginInfo loginInfo,
@@ -640,8 +691,44 @@ public class RoomController {
         return ResponseEntity.ok().build();
     }
 
-    @Operation(summary = "저장된 방 목록 조회",
-            description = "컬렉션에 저장된 모든 방 상태를 조회합니다.")
+    /**
+     * 저장된 방 목록 조회 API
+     */
+    @Operation(
+            summary = "저장된 방 목록 조회",
+            description = "컬렉션에 저장된 모든 방 상태를 조회합니다.",
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "저장된 방 목록 조회 성공",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    schema = @Schema(implementation = CollectionRoomResponseDTO.class),
+                                    examples = @ExampleObject(value = """
+                                [
+                                    {
+                                        "roomId": 1,
+                                        "name": "클래식 룸",
+                                        "wallpaper": "모던 벽지",
+                                        "floor": "원목 바닥"
+                                    },
+                                    {
+                                        "roomId": 2,
+                                        "name": "모던 룸",
+                                        "wallpaper": "북유럽 벽지",
+                                        "floor": "대리석 바닥"
+                                    }
+                                ]
+                                """)
+                            )
+                    ),
+                    @ApiResponse(
+                            responseCode = "401",
+                            description = "로그인 필요",
+                            content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+                    )
+            }
+    )
     @GetMapping("/collection")
     public ResponseEntity<List<CollectionRoomResponseDTO>> getSavedRooms(
             @AuthenticationPrincipal LoginInfo loginInfo) {
@@ -656,8 +743,25 @@ public class RoomController {
         return ResponseEntity.ok(rooms);
     }
 
-    @Operation(summary = "저장된 방 상태 적용",
-            description = "컬렉션에서 선택한 방 상태를 현재 방에 적용합니다.")
+    /**
+     * 저장된 방 상태 적용 API
+     */
+    @Operation(
+            summary = "저장된 방 상태 적용",
+            description = "컬렉션에서 선택한 방 상태를 현재 방에 적용합니다.",
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "저장된 방 상태 적용 성공",
+                            content = @Content(mediaType = "application/json")
+                    ),
+                    @ApiResponse(
+                            responseCode = "401",
+                            description = "로그인 필요",
+                            content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+                    )
+            }
+    )
     @PostMapping("/collection/apply/{collectionRoomId}")
     public ResponseEntity<Void> applyRoomState(
             @AuthenticationPrincipal LoginInfo loginInfo,
@@ -674,7 +778,10 @@ public class RoomController {
     }
 
     /**
-     * 공유 관련 API
+     * 방 공유 설정
+     * @param loginInfo
+     * @param isShared
+     * @return
      */
     @Operation(summary = "방 공유 설정", description = "현재 방의 공유 상태를 설정합니다.")
     @PostMapping("/sharing")
@@ -690,6 +797,11 @@ public class RoomController {
         return ResponseEntity.ok().build();
     }
 
+    /**
+     *  공유된 방 목록 조회
+     * @param loginInfo
+     * @return
+     */
     @Operation(summary = "공유된 방 목록 조회", description = "다른 커플들이 공유한 방 목록을 조회합니다.")
     @GetMapping("/shared")
     public ResponseEntity<List<SharedRoomResponseDTO>> getSharedRooms(@AuthenticationPrincipal LoginInfo loginInfo) {
@@ -704,6 +816,11 @@ public class RoomController {
         return ResponseEntity.ok(rooms);
     }
 
+    /**
+     * 프리셋 방 목록 조회
+     * @param loginInfo
+     * @return
+     */
     @Operation(
             summary = "프리셋 방 목록 조회",
             description = "서비스에서 제공하는 모든 프리셋 방 목록을 조회합니다.",

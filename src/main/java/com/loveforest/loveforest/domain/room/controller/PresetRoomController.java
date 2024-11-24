@@ -82,7 +82,7 @@ public class PresetRoomController {
             )
     })
     @PostMapping("/save/{roomId}")
-    public ResponseEntity<PresetRoom> saveRoomAsPreset(
+    public ResponseEntity<PresetRoomResponseDTO> saveRoomAsPreset(
             @PathVariable("roomId") Long roomId,
             @RequestParam String presetName,
             @AuthenticationPrincipal LoginInfo loginInfo) {
@@ -90,7 +90,7 @@ public class PresetRoomController {
             throw new LoginRequiredException();
         }
 
-        PresetRoom preset = presetRoomService.saveRoomAsPreset(roomId, presetName);
+        PresetRoomResponseDTO preset = presetRoomService.saveRoomAsPreset(roomId, presetName);
         return ResponseEntity.ok(preset);
     }
 

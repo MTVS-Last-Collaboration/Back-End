@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -327,6 +328,12 @@ public class RoomServiceImpl implements RoomService {
                 .style(styleDTO)
                 .furnitureLayouts(furnitureLayouts)
                 .build();
+    }
+
+    @Override
+    public Optional<Room> findById(Long roomId) {
+
+        return roomRepository.findById(roomId);
     }
 
     private PublicRoomResponseDTO.PublicFurnitureDTO convertToPublicFurnitureDTO(FurnitureLayout layout) {

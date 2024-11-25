@@ -35,6 +35,9 @@ LoveForest는 커플들을 위한 메타버스 플랫폼으로, 커플만의 가
 ## 📐 설계 및 아키텍처
 ![image](https://github.com/user-attachments/assets/77563ad3-b313-429a-8cab-862387bf82a7)
 
+## 서비스 사용자 플로우차트
+![image](https://github.com/user-attachments/assets/38cbb760-dff1-49d6-9fe7-6cc6b55f0b11)
+
 
 ### 시스템 아키텍처
 - **Layered Architecture** 적용

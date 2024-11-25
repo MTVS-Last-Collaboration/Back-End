@@ -8,7 +8,9 @@ import com.loveforest.loveforest.domain.room.dto.FurnitureLayoutDTO;
 import com.loveforest.loveforest.domain.room.dto.RoomStateDTO;
 import com.loveforest.loveforest.domain.room.exception.FurnitureNotFoundException;
 import com.loveforest.loveforest.domain.room.exception.RoomSerializationException;
+import com.loveforest.loveforest.domain.room.repository.FloorRepository;
 import com.loveforest.loveforest.domain.room.repository.FurnitureRepository;
+import com.loveforest.loveforest.domain.room.repository.WallpaperRepository;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -62,11 +64,11 @@ public class Room {
     }
 
     // JSON으로 현재 상태 직렬화
-    @JsonIgnore // JSON 순환 참조 방지
+    @JsonIgnore
     public String serializeState() {
         RoomStateDTO state = new RoomStateDTO(
-                this.wallpaper,
-                this.floor,
+                this.wallpaper != null ? this.wallpaper.getId() : null, // Wallpaper ID
+                this.floor != null ? this.floor.getId() : null,         // Floor ID
                 this.furnitureLayouts.stream()
                         .map(FurnitureLayoutDTO::from)
                         .collect(Collectors.toList())
@@ -74,18 +76,35 @@ public class Room {
         try {
             return new ObjectMapper().writeValueAsString(state);
         } catch (JsonProcessingException e) {
-            throw new RoomSerializationException("방 상태 직렬화 실패", e);
+            throw new RoomSerializationException();
         }
     }
 
 
+
     @Transactional
-    public void restoreState(String roomData, FurnitureRepository furnitureRepository) {
+    public void restoreState(String roomData, FurnitureRepository furnitureRepository,
+                             WallpaperRepository wallpaperRepository, FloorRepository floorRepository) {
         try {
             RoomStateDTO state = new ObjectMapper().readValue(roomData, RoomStateDTO.class);
-            this.wallpaper = state.getWallpaper();
-            this.floor = state.getFloor();
 
+            // Wallpaper 복원
+            if (state.getWallpaperId() != null) {
+                this.wallpaper = wallpaperRepository.findById(state.getWallpaperId())
+                        .orElseThrow(RoomSerializationException::new);
+            } else {
+                this.wallpaper = null;
+            }
+
+            // Floor 복원
+            if (state.getFloorId() != null) {
+                this.floor = floorRepository.findById(state.getFloorId())
+                        .orElseThrow(RoomSerializationException::new);
+            } else {
+                this.floor = null;
+            }
+
+            // FurnitureLayouts 복원
             this.furnitureLayouts.clear();
             state.getFurnitureLayouts().forEach(layoutDTO -> {
                 Furniture furniture = furnitureRepository.findById(layoutDTO.getFurnitureId())
@@ -93,9 +112,10 @@ public class Room {
                 this.furnitureLayouts.add(layoutDTO.toEntity(this, furniture));
             });
         } catch (JsonProcessingException e) {
-            throw new RoomSerializationException("방 상태 복원 실패", e);
+            throw new RoomSerializationException();
         }
     }
+
 
 
     // 커플을 인자로 받는 생성자 추가

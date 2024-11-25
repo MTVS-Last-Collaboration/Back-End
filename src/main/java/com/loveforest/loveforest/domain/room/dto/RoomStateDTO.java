@@ -14,8 +14,8 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 public class RoomStateDTO {
-    private Wallpaper wallpaper;
-    private Floor floor;
+    private Long wallpaperId;
+    private Long floorId;
     private List<FurnitureLayoutDTO> furnitureLayouts;
 
     public void setFurnitureLayouts(List<FurnitureLayoutDTO> furnitureLayouts) {

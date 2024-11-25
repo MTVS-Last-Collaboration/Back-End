@@ -37,6 +37,8 @@ public class RoomCollectionService {
     private final CoupleRepository coupleRepository;
     private final RoomPreviewMapper roomPreviewMapper;
     private final FurnitureRepository furnitureRepository;
+    private final WallpaperRepository wallpaperRepository;
+    private final FloorRepository floorRepository;
 
     /**
      * 컬렉션에 현재 방 상태 저장
@@ -148,14 +150,25 @@ public class RoomCollectionService {
         CollectionRoom savedRoom = collectionRoomRepository.findById(collectionRoomId)
                 .orElseThrow(CollectionRoomNotFoundException::new);
 
+        // 커플 접근 권한 검증
         validateCoupleAccess(coupleId, savedRoom);
 
+        // 현재 커플의 방 가져오기
         Room currentRoom = roomRepository.findByCoupleId(coupleId)
                 .orElseThrow(RoomNotFoundException::new);
 
-        currentRoom.restoreState(savedRoom.getRoomData(), furnitureRepository);
+        // 저장된 방 상태를 현재 방으로 복원
+        currentRoom.restoreState(
+                savedRoom.getRoomData(),
+                furnitureRepository,
+                wallpaperRepository, // 추가된 wallpaperRepository 전달
+                floorRepository      // 추가된 floorRepository 전달
+        );
+
+        // 복원된 방 상태 저장
         roomRepository.save(currentRoom);
     }
+
 
     /**
      * 저장된 방 상태 조회

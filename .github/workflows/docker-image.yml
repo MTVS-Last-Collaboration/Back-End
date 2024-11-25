@@ -32,6 +32,12 @@ jobs:
     - name: Build with Gradle
       run: ./gradlew clean build -x test
 
+    - name: Export Environment Variables
+      run: |
+        echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> $GITHUB_ENV
+        echo "DATABASE_USERNAME=${{ secrets.DATABASE_USERNAME }}" >> $GITHUB_ENV
+        echo "DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }}" >> $GITHUB_ENV
+
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v1
       with:
@@ -78,9 +84,3 @@ jobs:
         region: ${{ secrets.AWS_REGION }}    ## ap-northeast-2
         deployment_package: deploy/deploy.zip
         wait_for_environment_recovery: 200
-
-    - name: Export Environment Variables
-      run: |
-        echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> $GITHUB_ENV
-        echo "DATABASE_USERNAME=${{ secrets.DATABASE_USERNAME }}" >> $GITHUB_ENV
-        echo "DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }}" >> $GITHUB_ENV

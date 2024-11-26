@@ -2,9 +2,7 @@ package com.loveforest.loveforest.domain.room.entity;
 
 import com.loveforest.loveforest.domain.room.enums.RoomStateSource;
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.time.LocalDateTime;
 
@@ -12,6 +10,8 @@ import java.time.LocalDateTime;
 @Table(name = "tbl_collection_room")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Builder
+@AllArgsConstructor
 public class CollectionRoom {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -27,6 +27,9 @@ public class CollectionRoom {
 
     @Column(columnDefinition = "JSON", nullable = false)
     private String roomData;
+
+    @Column(name = "thumbnail_url")
+    private String thumbnailUrl;
 
     @Column(nullable = false)
     private LocalDateTime savedAt;

@@ -47,6 +47,10 @@ public enum ErrorCode {
     COLLECTION_ROOM_NOT_FOUND(HttpStatus.NOT_FOUND, "Collection Room Not Found", "저장된 방을 찾을 수 없습니다.", "ROOM-104"),
     ROOM_SERIALIZATION_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "Room Serialization Error", "방 상태 직렬화/역직렬화 중 오류가 발생했습니다.", "ROOM-105"),
     PRESET_SAVE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "Preset Save Failed", "프리셋 저장에 실패했습니다.", "ROOM-106"),
+    ROOM_IMAGE_UPLOAD_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "Room Image Upload Failed", "방 이미지 업로드에 실패했습니다.", "ROOM-014"),
+    INVALID_IMAGE_FORMAT(HttpStatus.BAD_REQUEST, "Invalid Image Format", "지원하지 않는 이미지 형식입니다.", "ROOM-016"),
+    IMAGE_SIZE_EXCEEDED(HttpStatus.BAD_REQUEST, "Image Size Exceeded", "이미지 크기가 제한을 초과했습니다.", "ROOM-017"),
+    IMAGE_NOT_FOUND(HttpStatus.NOT_FOUND, "Image Not Found", "방 이미지를 찾을 수 없습니다.", "ROOM-018"),
 
     // Chat 관련 에러
     CHAT_NOT_FOUND(HttpStatus.NOT_FOUND, "Chat Not Found", "대화 이력이 존재하지 않습니다.", "CHAT-001"),

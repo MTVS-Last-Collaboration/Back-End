@@ -11,11 +11,17 @@ import com.loveforest.loveforest.domain.room.repository.*;
 import com.loveforest.loveforest.domain.user.entity.User;
 import com.loveforest.loveforest.domain.user.repository.UserInventoryRepository;
 import com.loveforest.loveforest.exception.CustomException;
+import com.loveforest.loveforest.exception.ErrorCode;
+import com.loveforest.loveforest.exception.common.InvalidInputException;
+import com.loveforest.loveforest.s3.service.S3Service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -36,6 +42,12 @@ public class RoomServiceImpl implements RoomService {
     private final UserInventoryRepository userInventoryRepository;
     private final FurnitureLayoutRepository furnitureLayoutRepository;
     private final CoupleRepository coupleRepository;
+    private final S3Service s3Service;
+
+    private static final long MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+    private static final List<String> ALLOWED_CONTENT_TYPES = Arrays.asList(
+            "image/jpeg", "image/png", "image/jpg"
+    );
 
 
     @Override
@@ -237,7 +249,9 @@ public class RoomServiceImpl implements RoomService {
                 room.getCouple().getId(),
                 furnitureLayouts,
                 floorDTO,
-                wallpaperDTO
+                wallpaperDTO,
+                room.getThumbnailUrl()
+
         );
     }
 
@@ -327,6 +341,7 @@ public class RoomServiceImpl implements RoomService {
                 .coupleName(coupleName)
                 .style(styleDTO)
                 .furnitureLayouts(furnitureLayouts)
+                .thumbnailUrl(room.getThumbnailUrl())  // 썸네일 URL 추가
                 .build();
     }
 
@@ -399,6 +414,81 @@ public class RoomServiceImpl implements RoomService {
                 throw new RoomCreationFailedException();
             }
             throw e;
+        }
+    }
+
+    // 방 저장 시 썸네일 처리
+    private String saveThumbnail(MultipartFile file) {
+        try {
+            String extension = getExtension(file.getOriginalFilename());
+            return s3Service.uploadFile(
+                    file.getBytes(),
+                    extension,
+                    file.getContentType(),
+                    file.getSize()
+            );
+        } catch (IOException e) {
+            throw new RoomImageUploadException();
+        }
+    }
+
+    // 기존 썸네일 삭제
+    private void deletePreviousThumbnail(String thumbnailUrl) {
+        if (thumbnailUrl != null) {
+            s3Service.deleteFile(thumbnailUrl);
+        }
+    }
+
+    // 이미지 유효성 검사
+    private void validateImage(MultipartFile file) {
+        if (file == null || file.isEmpty()) {
+            throw new InvalidInputException();
+        }
+
+        // 파일 타입 검사
+        String contentType = file.getContentType();
+        if (contentType == null || !ALLOWED_CONTENT_TYPES.contains(contentType)) {
+            log.error("지원하지 않는 이미지 형식: {}", contentType);
+            throw new CustomException(ErrorCode.INVALID_IMAGE_FORMAT);
+        }
+
+        // 파일 크기 검사
+        if (file.getSize() > MAX_FILE_SIZE) {
+            log.error("파일 크기 초과: {}bytes", file.getSize());
+            throw new CustomException(ErrorCode.IMAGE_SIZE_EXCEEDED);
+        }
+    }
+
+    // 파일 확장자 추출
+    private String getExtension(String filename) {
+        return Optional.ofNullable(filename)
+                .filter(f -> f.contains("."))
+                .map(f -> f.substring(f.lastIndexOf(".")))
+                .orElse(".jpg");
+    }
+
+    // 방 이미지 업데이트
+    @Transactional
+    public void updateRoomImage(Long coupleId, MultipartFile thumbnailFile) {
+        Room room = findRoomByCouple(coupleId);
+
+        try {
+            // 기존 이미지가 있다면 삭제
+            deletePreviousThumbnail(room.getThumbnailUrl());
+
+            // 새 이미지 저장
+            if (thumbnailFile != null && !thumbnailFile.isEmpty()) {
+                validateImage(thumbnailFile);
+                String newImageUrl = saveThumbnail(thumbnailFile);
+                room.updateThumbnail(newImageUrl);
+                roomRepository.save(room);
+
+                log.info("방 이미지 업데이트 완료 - 커플 ID: {}, 새 이미지 URL: {}",
+                        coupleId, newImageUrl);
+            }
+        } catch (Exception e) {
+            log.error("방 이미지 업데이트 실패", e);
+            throw new RoomImageUploadException();
         }
     }
 

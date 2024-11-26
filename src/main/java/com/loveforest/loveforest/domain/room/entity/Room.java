@@ -55,6 +55,14 @@ public class Room {
     @OneToOne(mappedBy = "room", cascade = CascadeType.ALL, orphanRemoval = true)
     private RoomSharing sharing;
 
+    @Column(name = "thumbnail_url")
+    private String thumbnailUrl;  // S3에 저장된 방 썸네일 이미지 URL
+
+    public void updateThumbnail(String thumbnailUrl) {
+        this.thumbnailUrl = thumbnailUrl;
+    }
+
+
     // 공유 설정 메서드
     public void updateSharing(boolean isShared) {
         if (this.sharing == null) {

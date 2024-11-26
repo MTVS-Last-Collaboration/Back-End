@@ -25,8 +25,10 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @RestController
@@ -600,22 +602,78 @@ public class RoomController {
      */
     @Operation(
             summary = "현재 방 상태 저장",
-            description = "현재 방의 상태를 컬렉션에 저장합니다.",
+            description = """
+            현재 방의 상태를 컬렉션에 저장합니다. 저장된 방은 추후 다시 불러올 수 있으며, 
+            방의 썸네일 이미지를 함께 업로드할 수 있습니다.
+            썸네일 이미지는 선택적으로 제공 가능하며, 최대 크기와 지원 형식을 준수해야 합니다.
+        """,
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    description = "썸네일 이미지를 포함한 현재 방 상태 저장 요청",
+                    content = @Content(
+                            mediaType = MediaType.MULTIPART_FORM_DATA_VALUE,
+                            schema = @Schema(implementation = MultipartFile.class)
+                    ),
+                    required = false
+            ),
             responses = {
                     @ApiResponse(
                             responseCode = "200",
                             description = "현재 방 상태 저장 성공",
-                            content = @Content(mediaType = "application/json")
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    schema = @Schema(implementation = RoomOperationResponseDTO.class),
+                                    examples = @ExampleObject(value = """
+                                    {
+                                        "message": "방 상태가 성공적으로 저장되었습니다.",
+                                        "timestamp": "2024-11-25T15:30:00",
+                                        "data": {
+                                            "savedAt": "2024-11-25T15:30:00",
+                                            "thumbnailUrl": "https://s3.amazonaws.com/example/room_thumbnail.jpg"
+                                        }
+                                    }
+                                    """)
+                            )
                     ),
                     @ApiResponse(
                             responseCode = "401",
                             description = "로그인 필요",
-                            content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    schema = @Schema(implementation = ErrorResponse.class),
+                                    examples = @ExampleObject(value = """
+                                    {
+                                        "status": 401,
+                                        "errorType": "Unauthorized",
+                                        "message": "로그인이 필요합니다.",
+                                        "code": "USER-004"
+                                    }
+                                    """)
+                            )
+                    ),
+                    @ApiResponse(
+                            responseCode = "400",
+                            description = """
+                            잘못된 요청:
+                            - 이미지가 지원되지 않는 형식일 경우
+                            - 이미지 파일 크기가 초과된 경우
+                        """,
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    schema = @Schema(implementation = ErrorResponse.class),
+                                    examples = @ExampleObject(value = """
+                                    {
+                                        "status": 400,
+                                        "errorType": "Invalid Image Format",
+                                        "message": "지원하지 않는 이미지 형식입니다.",
+                                        "code": "ROOM-016"
+                                    }
+                                    """)
+                            )
                     )
             }
     )
     @PostMapping("/collection/current")
-    public ResponseEntity<Void> saveCurrentRoom(@AuthenticationPrincipal LoginInfo loginInfo,
+    public ResponseEntity<RoomOperationResponseDTO> saveCurrentRoom(@AuthenticationPrincipal LoginInfo loginInfo,
                                                 @RequestParam(value = "thumbnail",required = false) MultipartFile thumbnail) {
         if (loginInfo == null) {
             throw new LoginRequiredException();
@@ -624,9 +682,9 @@ public class RoomController {
         log.info("현재 방 상태 저장 요청 - 커플 ID: {}, 이미지 크기: {}",
                 loginInfo.getCoupleId(),
                 thumbnail != null ? thumbnail.getSize() : 0);
-        collectionService.saveCurrentRoom(loginInfo.getCoupleId(), thumbnail);
+        RoomOperationResponseDTO response = collectionService.saveCurrentRoom(loginInfo.getCoupleId(), thumbnail);
 
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok(response);
     }
 
     /**
@@ -698,7 +756,7 @@ public class RoomController {
     })
     @PostMapping(value = "/collection/preset/{presetId}",
             consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<Void> savePresetRoom(
+    public ResponseEntity<RoomOperationResponseDTO> savePresetRoom(
             @AuthenticationPrincipal LoginInfo loginInfo,
             @PathVariable("presetId") Long presetId,
             @RequestParam(value = "thumbnail", required = false) MultipartFile thumbnail) {
@@ -710,14 +768,13 @@ public class RoomController {
                 loginInfo.getCoupleId(),
                 presetId,
                 thumbnail != null && !thumbnail.isEmpty());
-        collectionService.savePresetRoom(
+        RoomOperationResponseDTO response = collectionService.savePresetRoom(
                 loginInfo.getCoupleId(),
                 presetId,
                 thumbnail
         );
 
-
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok(response);
     }
 
     /**
@@ -789,7 +846,7 @@ public class RoomController {
     })
     @PostMapping(value = "/collection/shared/{sharedRoomId}",
             consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<Void> saveSharedRoom(
+    public ResponseEntity<RoomOperationResponseDTO> saveSharedRoom(
             @AuthenticationPrincipal LoginInfo loginInfo,
             @PathVariable("sharedRoomId") Long sharedRoomId,
             @RequestParam(value = "thumbnail", required = false) MultipartFile thumbnail) {
@@ -802,13 +859,13 @@ public class RoomController {
                 sharedRoomId,
                 thumbnail != null && !thumbnail.isEmpty());
 
-        collectionService.saveSharedRoom(
+        RoomOperationResponseDTO response = collectionService.saveSharedRoom(
                 loginInfo.getCoupleId(),
                 sharedRoomId,
                 thumbnail
         );
 
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok(response);
     }
 
     /**
@@ -883,7 +940,7 @@ public class RoomController {
             }
     )
     @PostMapping("/collection/apply/{collectionRoomId}")
-    public ResponseEntity<Void> applyRoomState(
+    public ResponseEntity<RoomOperationResponseDTO> applyRoomState(
             @AuthenticationPrincipal LoginInfo loginInfo,
             @PathVariable("collectionRoomId") Long collectionRoomId) {
         if (loginInfo == null) {
@@ -894,7 +951,9 @@ public class RoomController {
                 loginInfo.getCoupleId(), collectionRoomId);
         collectionService.applyRoomState(loginInfo.getCoupleId(), collectionRoomId);
 
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok(RoomOperationResponseDTO.builder("저장된 방 상태가 성공적으로 적용되었습니다.")
+                .addData("collectionRoomId", collectionRoomId)
+                .build());
     }
 
     /**
@@ -905,16 +964,16 @@ public class RoomController {
      */
     @Operation(summary = "방 공유 설정", description = "현재 방의 공유 상태를 설정합니다.")
     @PostMapping("/sharing")
-    public ResponseEntity<Void> setRoomSharing(@AuthenticationPrincipal LoginInfo loginInfo, @RequestParam boolean isShared) {
+    public ResponseEntity<RoomOperationResponseDTO> setRoomSharing(@AuthenticationPrincipal LoginInfo loginInfo, @RequestParam boolean isShared) {
         if (loginInfo == null) {
             throw new LoginRequiredException();
         }
 
         log.info("방 공유 설정 요청 - 커플 ID: {}, 공유 상태: {}",
                 loginInfo.getCoupleId(), isShared);
-        sharedRoomService.setRoomSharing(loginInfo.getCoupleId(), isShared);
+        RoomOperationResponseDTO response = sharedRoomService.setRoomSharing(loginInfo.getCoupleId(), isShared);
 
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok(response);
     }
 
     /**

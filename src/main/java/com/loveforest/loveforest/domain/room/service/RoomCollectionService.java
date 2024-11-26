@@ -6,6 +6,7 @@ import com.loveforest.loveforest.domain.couple.entity.Couple;
 import com.loveforest.loveforest.domain.couple.exception.CoupleNotFoundException;
 import com.loveforest.loveforest.domain.couple.repository.CoupleRepository;
 import com.loveforest.loveforest.domain.room.dto.CollectionRoomResponseDTO;
+import com.loveforest.loveforest.domain.room.dto.RoomOperationResponseDTO;
 import com.loveforest.loveforest.domain.room.entity.CollectionRoom;
 import com.loveforest.loveforest.domain.room.entity.PresetRoom;
 import com.loveforest.loveforest.domain.room.entity.Room;
@@ -50,15 +51,15 @@ public class RoomCollectionService {
     /**
      * 컬렉션에 현재 방 상태 저장
      */
-    public void saveCurrentRoom(Long coupleId, MultipartFile thumbnail) {
+    public RoomOperationResponseDTO saveCurrentRoom(Long coupleId, MultipartFile thumbnail) {
         Room currentRoom = roomRepository.findByCoupleId(coupleId)
                 .orElseThrow(RoomNotFoundException::new);
 
         RoomCollection collection = getOrCreateCollection(coupleId);
 
         String imageUrl = null;
-        if(thumbnail != null && !thumbnail.isEmpty()) {
-            try{
+        if (thumbnail != null && !thumbnail.isEmpty()) {
+            try {
                 validateImage(thumbnail);
                 imageUrl = uploadImage(thumbnail);
             } catch (Exception e) {
@@ -79,20 +80,21 @@ public class RoomCollectionService {
 
         log.info("현재 방 상태 저장 완료 - 커플 ID: {}, 이미지: {}",
                 coupleId, imageUrl != null ? "저장됨" : "없음");
+
+        return RoomOperationResponseDTO.forSaveState(imageUrl);
     }
 
     /**
      * 프리셋 방 상태 저장
      */
     @Transactional
-    public void savePresetRoom(Long coupleId, Long presetId, MultipartFile thumbnail) {
+    public RoomOperationResponseDTO savePresetRoom(Long coupleId, Long presetId, MultipartFile thumbnail) {
         PresetRoom preset = presetRoomRepository.findById(presetId)
                 .orElseThrow(PresetNotFoundException::new);
 
         RoomCollection collection = getOrCreateCollection(coupleId);
         String imageUrl = processAndUploadImage(thumbnail);
 
-        // 컬렉션 룸 생성 및 저장
         CollectionRoom collectionRoom = CollectionRoom.builder()
                 .collection(collection)
                 .roomData(createRoomStateJson(preset))
@@ -105,6 +107,8 @@ public class RoomCollectionService {
 
         log.info("프리셋 방 상태 저장 완료 - 커플 ID: {}, 프리셋 ID: {}, 이미지: {}",
                 coupleId, presetId, imageUrl != null ? "저장됨" : "없음");
+
+        return RoomOperationResponseDTO.forPresetApply(collectionRoom.getId(), presetId);
     }
 
     /**
@@ -150,7 +154,7 @@ public class RoomCollectionService {
     /**
      * 공유된 방 상태 저장
      */
-    public void saveSharedRoom(Long coupleId, Long sharedRoomId, MultipartFile thumbnail) {
+    public RoomOperationResponseDTO saveSharedRoom(Long coupleId, Long sharedRoomId, MultipartFile thumbnail) {
         Room sharedRoom = roomRepository.findById(sharedRoomId)
                 .orElseThrow(RoomNotFoundException::new);
 
@@ -158,7 +162,6 @@ public class RoomCollectionService {
             throw new RoomNotSharedException();
         }
 
-        // 자신의 방은 저장 불가
         if (sharedRoom.getCouple().getId().equals(coupleId)) {
             throw new InvalidOperationException();
         }
@@ -175,6 +178,11 @@ public class RoomCollectionService {
 
         collection.getSavedRooms().add(collectionRoom);
         collectionRepository.save(collection);
+
+        return RoomOperationResponseDTO.builder("공유된 방이 성공적으로 저장되었습니다.")
+                .addData("sharedRoomId", sharedRoomId)
+                .addData("thumbnailUrl", imageUrl)
+                .build();
     }
 
     /**

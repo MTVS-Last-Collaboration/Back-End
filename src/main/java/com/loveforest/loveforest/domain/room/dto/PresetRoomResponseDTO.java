@@ -27,6 +27,9 @@ public class PresetRoomResponseDTO {
     @Schema(description = "가구 배치 정보 목록")
     private List<PresetFurnitureLayoutDTO> furnitureLayouts;
 
+    @Schema(description = "썸네일 URL", example = "https://example.com/thumbnail.jpg")
+    private String thumbnailUrl;
+
     public static PresetRoomResponseDTO from(PresetRoom preset) {
         return PresetRoomResponseDTO.builder()
                 .presetId(preset.getId())
@@ -36,6 +39,7 @@ public class PresetRoomResponseDTO {
                 .furnitureLayouts(preset.getFurnitureLayouts().stream()
                         .map(PresetFurnitureLayoutDTO::from)
                         .collect(Collectors.toList()))
+                .thumbnailUrl(preset.getThumbnailUrl())
                 .build();
     }
 }

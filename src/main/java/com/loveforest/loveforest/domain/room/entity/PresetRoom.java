@@ -37,15 +37,23 @@ public class PresetRoom extends BaseTimeEntity {
     @OneToMany(mappedBy = "presetRoom", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PresetFurnitureLayout> furnitureLayouts = new ArrayList<>();
 
+    @Column(nullable = true)
+    private String thumbnailUrl;
+
     @Builder
-    public PresetRoom(String name, Wallpaper wallpaper, Floor floor) {
+    public PresetRoom(String name, Wallpaper wallpaper, Floor floor, String thumbnailUrl) {
         this.name = name;
         this.wallpaper = wallpaper;
         this.floor = floor;
+        this.thumbnailUrl = thumbnailUrl;
     }
 
     public void addFurnitureLayout(PresetFurnitureLayout layout) {
         this.furnitureLayouts.add(layout);
         layout.setPresetRoom(this);
+    }
+
+    public void updateThumbnail(String thumbnailUrl) {
+        this.thumbnailUrl = thumbnailUrl;
     }
 }

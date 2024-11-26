@@ -13,4 +13,5 @@ public class CollectionRoomResponseDTO {
     private RoomStateSource source;
     private LocalDateTime savedAt;
     private RoomPreviewDTO roomPreview;
+    private String thumbnailUrl;
 }

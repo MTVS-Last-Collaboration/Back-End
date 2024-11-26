@@ -692,68 +692,58 @@ public class RoomController {
      */
     @Operation(
             summary = "프리셋 방 저장",
-            description = "선택한 프리셋 방을 컬렉션에 저장합니다. 방의 스크린샷도 함께 저장할 수 있습니다."
+            description = """
+        선택한 방을 프리셋으로 저장합니다.
+        - 프리셋 저장 시 썸네일 이미지를 함께 업로드할 수 있습니다.
+        - 썸네일은 선택 사항이며, 최대 5MB 크기 제한과 JPEG/PNG 형식을 지원합니다.
+    """,
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "프리셋 방 저장 성공",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    schema = @Schema(implementation = PresetRoomResponseDTO.class),
+                                    examples = @ExampleObject(value = """
+                {
+                    "presetId": 1,
+                    "name": "클래식 룸",
+                    "wallpaper": {
+                        "id": 1,
+                        "name": "모던 벽지",
+                        "wallpaperNumber": 1
+                    },
+                    "floor": {
+                        "id": 1,
+                        "name": "원목 바닥",
+                        "floorNumber": 1
+                    },
+                    "furnitureLayouts": [
+                        {
+                            "furnitureId": 1,
+                            "name": "클래식 소파",
+                            "positionX": 100,
+                            "positionY": 200,
+                            "rotation": 90
+                        }
+                    ],
+                    "thumbnailUrl": "https://example.com/thumbnail.jpg"
+                }
+                """)
+                            )
+                    ),
+                    @ApiResponse(
+                            responseCode = "400",
+                            description = "잘못된 요청 (이미지 형식 오류, 크기 초과 등)",
+                            content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+                    ),
+                    @ApiResponse(
+                            responseCode = "401",
+                            description = "인증되지 않은 사용자",
+                            content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+                    )
+            }
     )
-    @ApiResponses({
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "프리셋 방 저장 성공"
-            ),
-            @ApiResponse(
-                    responseCode = "400",
-                    description = "잘못된 요청 (이미지 형식 오류, 크기 초과 등)",
-                    content = @Content(
-                            mediaType = "application/json",
-                            schema = @Schema(implementation = ErrorResponse.class),
-                            examples = @ExampleObject(
-                                    value = """
-                {
-                    "status": 400,
-                    "errorType": "Invalid Image Format",
-                    "message": "지원하지 않는 이미지 형식입니다.",
-                    "code": "ROOM-016"
-                }
-                """
-                            )
-                    )
-            ),
-            @ApiResponse(
-                    responseCode = "401",
-                    description = "인증되지 않은 사용자",
-                    content = @Content(
-                            mediaType = "application/json",
-                            schema = @Schema(implementation = ErrorResponse.class),
-                            examples = @ExampleObject(
-                                    value = """
-                {
-                    "status": 401,
-                    "errorType": "Unauthorized",
-                    "message": "로그인이 필요합니다.",
-                    "code": "USER-004"
-                }
-                """
-                            )
-                    )
-            ),
-            @ApiResponse(
-                    responseCode = "404",
-                    description = "프리셋을 찾을 수 없음",
-                    content = @Content(
-                            mediaType = "application/json",
-                            schema = @Schema(implementation = ErrorResponse.class),
-                            examples = @ExampleObject(
-                                    value = """
-                {
-                    "status": 404,
-                    "errorType": "Preset Not Found",
-                    "message": "프리셋을 찾을 수 없습니다.",
-                    "code": "ROOM-019"
-                }
-                """
-                            )
-                    )
-            )
-    })
     @PostMapping(value = "/collection/preset/{presetId}",
             consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<RoomOperationResponseDTO> savePresetRoom(
@@ -869,58 +859,6 @@ public class RoomController {
     }
 
     /**
-     * 저장된 방 목록 조회 API
-     */
-    @Operation(
-            summary = "저장된 방 목록 조회",
-            description = "컬렉션에 저장된 모든 방 상태를 조회합니다.",
-            responses = {
-                    @ApiResponse(
-                            responseCode = "200",
-                            description = "저장된 방 목록 조회 성공",
-                            content = @Content(
-                                    mediaType = "application/json",
-                                    schema = @Schema(implementation = CollectionRoomResponseDTO.class),
-                                    examples = @ExampleObject(value = """
-                                [
-                                    {
-                                        "roomId": 1,
-                                        "name": "클래식 룸",
-                                        "wallpaper": "모던 벽지",
-                                        "floor": "원목 바닥"
-                                    },
-                                    {
-                                        "roomId": 2,
-                                        "name": "모던 룸",
-                                        "wallpaper": "북유럽 벽지",
-                                        "floor": "대리석 바닥"
-                                    }
-                                ]
-                                """)
-                            )
-                    ),
-                    @ApiResponse(
-                            responseCode = "401",
-                            description = "로그인 필요",
-                            content = @Content(schema = @Schema(implementation = ErrorResponse.class))
-                    )
-            }
-    )
-    @GetMapping("/collection")
-    public ResponseEntity<List<CollectionRoomResponseDTO>> getSavedRooms(
-            @AuthenticationPrincipal LoginInfo loginInfo) {
-        if (loginInfo == null) {
-            throw new LoginRequiredException();
-        }
-
-        log.info("저장된 방 목록 조회 요청 - 커플 ID: {}", loginInfo.getCoupleId());
-        List<CollectionRoomResponseDTO> rooms =
-                collectionService.getSavedRooms(loginInfo.getCoupleId());
-
-        return ResponseEntity.ok(rooms);
-    }
-
-    /**
      * 저장된 방 상태 적용 API
      */
     @Operation(
@@ -957,23 +895,62 @@ public class RoomController {
     }
 
     /**
-     * 방 공유 설정
-     * @param loginInfo
-     * @param isShared
-     * @return
+     * 저장된 방 목록 조회 API
      */
-    @Operation(summary = "방 공유 설정", description = "현재 방의 공유 상태를 설정합니다.")
-    @PostMapping("/sharing")
-    public ResponseEntity<RoomOperationResponseDTO> setRoomSharing(@AuthenticationPrincipal LoginInfo loginInfo, @RequestParam boolean isShared) {
+    @Operation(
+            summary = "저장된 방 목록 조회",
+            description = """
+        컬렉션에 저장된 모든 방 상태를 조회합니다.
+        - 각 방의 ID, 소스(프리셋/공유/현재 방), 저장 날짜
+        - 간략한 방 정보(벽지, 바닥, 썸네일 URL 등)
+    """,
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "저장된 방 목록 조회 성공",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    schema = @Schema(implementation = CollectionRoomResponseDTO.class),
+                                    examples = @ExampleObject(value = """
+                [
+                    {
+                        "id": 1,
+                        "source": "PRESET",
+                        "savedAt": "2024-03-19T15:30:00",
+                        "roomPreview": {
+                            "wallpaperName": "모던 벽지",
+                            "floorName": "대리석 바닥",
+                            "thumbnailUrl": "https://example.com/thumbnails/room1.jpg"
+                        }
+                    },
+                    {
+                        "id": 2,
+                        "source": "CURRENT",
+                        "savedAt": "2024-03-20T12:00:00",
+                        "roomPreview": {
+                            "wallpaperName": "북유럽 벽지",
+                            "floorName": "원목 바닥",
+                            "thumbnailUrl": "https://example.com/thumbnails/room2.jpg"
+                        }
+                    }
+                ]
+                """)
+                            )
+                    )
+            }
+    )
+    @GetMapping("/collection")
+    public ResponseEntity<List<CollectionRoomResponseDTO>> getSavedRooms(
+            @AuthenticationPrincipal LoginInfo loginInfo) {
         if (loginInfo == null) {
             throw new LoginRequiredException();
         }
 
-        log.info("방 공유 설정 요청 - 커플 ID: {}, 공유 상태: {}",
-                loginInfo.getCoupleId(), isShared);
-        RoomOperationResponseDTO response = sharedRoomService.setRoomSharing(loginInfo.getCoupleId(), isShared);
+        log.info("저장된 방 목록 조회 요청 - 커플 ID: {}", loginInfo.getCoupleId());
+        List<CollectionRoomResponseDTO> rooms =
+                collectionService.getSavedRooms(loginInfo.getCoupleId());
 
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(rooms);
     }
 
     /**
@@ -981,7 +958,58 @@ public class RoomController {
      * @param loginInfo
      * @return
      */
-    @Operation(summary = "공유된 방 목록 조회", description = "다른 커플들이 공유한 방 목록을 조회합니다.")
+    @Operation(
+            summary = "공유된 방 목록 조회",
+            description = """
+        다른 커플들이 공유한 방 목록을 조회합니다.
+        - 각 방의 ID, 커플 이름, 방의 간단한 미리보기 정보
+        - 공유된 시간과 썸네일 URL 포함
+    """,
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "공유된 방 목록 조회 성공",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    schema = @Schema(implementation = SharedRoomResponseDTO.class),
+                                    examples = @ExampleObject(value = """
+                [
+                    {
+                        "roomId": 1,
+                        "coupleName": "철수♥영희",
+                        "roomPreview": {
+                            "wallpaperName": "모던 벽지",
+                            "floorName": "대리석 바닥",
+                            "thumbnailUrl": "https://example.com/thumbnails/shared_room1.jpg"
+                        },
+                        "sharedAt": "2024-03-19T15:30:00"
+                    },
+                    {
+                        "roomId": 2,
+                        "coupleName": "민수♥수진",
+                        "roomPreview": {
+                            "wallpaperName": "북유럽 벽지",
+                            "floorName": "원목 바닥",
+                            "thumbnailUrl": "https://example.com/thumbnails/shared_room2.jpg"
+                        },
+                        "sharedAt": "2024-03-20T12:00:00"
+                    }
+                ]
+                """)
+                            )
+                    ),
+                    @ApiResponse(
+                            responseCode = "401",
+                            description = "로그인 필요",
+                            content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+                    ),
+                    @ApiResponse(
+                            responseCode = "404",
+                            description = "공유된 방을 찾을 수 없음",
+                            content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+                    )
+            }
+    )
     @GetMapping("/shared")
     public ResponseEntity<List<SharedRoomResponseDTO>> getSharedRooms(@AuthenticationPrincipal LoginInfo loginInfo) {
         if (loginInfo == null) {
@@ -1002,7 +1030,10 @@ public class RoomController {
      */
     @Operation(
             summary = "프리셋 방 목록 조회",
-            description = "서비스에서 제공하는 모든 프리셋 방 목록을 조회합니다.",
+            description = """
+        서비스에서 제공하는 모든 프리셋 방 목록을 조회합니다.
+        각 프리셋 방은 고유한 ID, 이름, 벽지 및 바닥 정보, 가구 배치 정보, 썸네일 URL을 포함합니다.
+        """,
             responses = {
                     @ApiResponse(
                             responseCode = "200",
@@ -1011,47 +1042,49 @@ public class RoomController {
                                     mediaType = "application/json",
                                     schema = @Schema(implementation = PresetRoomResponseDTO.class),
                                     examples = @ExampleObject(value = """
-                                [
-                                    {
-                                        "presetId": 1,
-                                        "name": "클래식 룸",
-                                        "wallpaper": {
-                                            "id": 1,
-                                            "name": "모던 벽지",
-                                            "wallpaperNumber": 1
-                                        },
-                                        "floor": {
-                                            "id": 1,
-                                            "name": "원목 바닥",
-                                            "floorNumber": 1
-                                        },
-                                        "furnitureLayouts": [
-                                            {
-                                                "furnitureId": 1,
-                                                "name": "클래식 소파",
-                                                "positionX": 100,
-                                                "positionY": 200,
-                                                "rotation": 90
-                                            }
-                                        ]
-                                    },
-                                    {
-                                        "presetId": 2,
-                                        "name": "모던 룸",
-                                        "wallpaper": {
-                                            "id": 2,
-                                            "name": "북유럽 벽지",
-                                            "wallpaperNumber": 2
-                                        },
-                                        "floor": {
-                                            "id": 2,
-                                            "name": "대리석 바닥",
-                                            "floorNumber": 2
-                                        },
-                                        "furnitureLayouts": []
-                                    }
-                                ]
-                                """)
+                    [
+                        {
+                            "presetId": 1,
+                            "name": "클래식 룸",
+                            "wallpaper": {
+                                "id": 1,
+                                "name": "모던 벽지",
+                                "wallpaperNumber": 1
+                            },
+                            "floor": {
+                                "id": 1,
+                                "name": "원목 바닥",
+                                "floorNumber": 1
+                            },
+                            "furnitureLayouts": [
+                                {
+                                    "furnitureId": 1,
+                                    "name": "클래식 소파",
+                                    "positionX": 100,
+                                    "positionY": 200,
+                                    "rotation": 90
+                                }
+                            ],
+                            "thumbnailUrl": "https://example.com/thumbnail.jpg"
+                        },
+                        {
+                            "presetId": 2,
+                            "name": "모던 룸",
+                            "wallpaper": {
+                                "id": 2,
+                                "name": "북유럽 벽지",
+                                "wallpaperNumber": 2
+                            },
+                            "floor": {
+                                "id": 2,
+                                "name": "대리석 바닥",
+                                "floorNumber": 2
+                            },
+                            "furnitureLayouts": [],
+                            "thumbnailUrl": "https://example.com/thumbnail2.jpg"
+                        }
+                    ]
+                """)
                             )
                     ),
                     @ApiResponse(
@@ -1072,6 +1105,57 @@ public class RoomController {
         List<PresetRoomResponseDTO> presetRooms = presetRoomService.getAllPresetRooms();
 
         return ResponseEntity.ok(presetRooms);
+    }
+
+    /**
+     * 방 공유 설정
+     * @param loginInfo
+     * @param isShared
+     * @return
+     */
+    @Operation(
+            summary = "방 공유 상태 설정",
+            description = """
+        현재 방의 공유 상태를 변경합니다.
+        - 공유 상태가 `true`로 설정되면 다른 사용자들이 방을 볼 수 있습니다.
+        - 공유 상태가 `false`로 설정되면 방은 비공개 상태가 됩니다.
+    """,
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "공유 상태 변경 성공",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    schema = @Schema(implementation = RoomOperationResponseDTO.class),
+                                    examples = @ExampleObject(value = """
+                {
+                    "message": "방 공유가 활성화되었습니다.",
+                    "timestamp": "2024-03-19T15:30:00",
+                    "data": {
+                        "isShared": true
+                    }
+                }
+                """)
+                            )
+                    ),
+                    @ApiResponse(
+                            responseCode = "401",
+                            description = "인증되지 않은 사용자",
+                            content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+                    )
+            }
+    )
+    @PostMapping("/sharing")
+    public ResponseEntity<RoomOperationResponseDTO> setRoomSharing(@AuthenticationPrincipal LoginInfo loginInfo, @RequestParam boolean isShared) {
+        if (loginInfo == null) {
+            throw new LoginRequiredException();
+        }
+
+        log.info("방 공유 설정 요청 - 커플 ID: {}, 공유 상태: {}",
+                loginInfo.getCoupleId(), isShared);
+        RoomOperationResponseDTO response = sharedRoomService.setRoomSharing(loginInfo.getCoupleId(), isShared);
+
+        return ResponseEntity.ok(response);
     }
 
 }

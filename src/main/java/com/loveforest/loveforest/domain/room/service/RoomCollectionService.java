@@ -245,6 +245,7 @@ public class RoomCollectionService {
                 .source(room.getSource())
                 .savedAt(room.getSavedAt())
                 .roomPreview(roomPreviewMapper.createFromJson(room.getRoomData()))
+                .thumbnailUrl(room.getThumbnailUrl())
                 .build();
     }
 

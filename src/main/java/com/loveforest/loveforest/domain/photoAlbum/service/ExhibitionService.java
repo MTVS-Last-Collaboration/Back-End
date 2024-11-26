@@ -65,7 +65,7 @@ public class ExhibitionService {
         Exhibition exhibition = exhibitionRepository.findById(exhibitionId)
                 .orElseThrow(ExhibitionNotFoundException::new);
 
-        validateUserAccess(exhibition, userId);
+//        validateUserAccess(exhibition, userId);
 
         return convertToDTO(exhibition);
     }
@@ -76,7 +76,7 @@ public class ExhibitionService {
         Exhibition exhibition = exhibitionRepository.findById(exhibitionId)
                 .orElseThrow(ExhibitionNotFoundException::new);
 
-        validateUserAccess(exhibition, userId);
+//        validateUserAccess(exhibition, userId);
         exhibitionRepository.delete(exhibition);
 
         // 관련된 PhotoAlbum의 전시 상태 초기화는 필요하지 않음
@@ -106,11 +106,11 @@ public class ExhibitionService {
         return exhibitionRepository.existsByPhotoId(photoId);
     }
 
-    private void validateUserAccess(Exhibition exhibition, Long userId) {
-        if (!exhibition.getPhoto().getUser().getId().equals(userId)) {
-            throw new UnauthorizedException();
-        }
-    }
+//    private void validateUserAccess(Exhibition exhibition, Long userId) {
+//        if (!exhibition.getPhoto().getUser().getId().equals(userId)) {
+//            throw new UnauthorizedException();
+//        }
+//    }
 
     private void validateUserAccess(PhotoAlbum photo, Long userId) {
         if (!photo.getUser().getId().equals(userId)) {

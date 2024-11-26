@@ -147,9 +147,9 @@ public class PhotoAlbumService {
         PhotoAlbum photoAlbum = photoAlbumRepository.findById(photoId)
                 .orElseThrow(PhotoNotFoundException::new);
 
-        if (!photoAlbum.getUser().getId().equals(userId)) {
-            throw new UnauthorizedException();
-        }
+//        if (!photoAlbum.getUser().getId().equals(userId)) {
+//            throw new UnauthorizedException();
+//        }
 
         try {
             // AI 서버에 변환 요청

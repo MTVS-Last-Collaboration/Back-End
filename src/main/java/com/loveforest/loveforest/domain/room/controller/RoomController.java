@@ -607,14 +607,6 @@ public class RoomController {
             방의 썸네일 이미지를 함께 업로드할 수 있습니다.
             썸네일 이미지는 선택적으로 제공 가능하며, 최대 크기와 지원 형식을 준수해야 합니다.
         """,
-            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
-                    description = "썸네일 이미지를 포함한 현재 방 상태 저장 요청",
-                    content = @Content(
-                            mediaType = MediaType.MULTIPART_FORM_DATA_VALUE,
-                            schema = @Schema(implementation = MultipartFile.class)
-                    ),
-                    required = false
-            ),
             responses = {
                     @ApiResponse(
                             responseCode = "200",
@@ -672,7 +664,8 @@ public class RoomController {
                     )
             }
     )
-    @PostMapping("/collection/current")
+    @PostMapping(value = "/collection/current",
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<RoomOperationResponseDTO> saveCurrentRoom(@AuthenticationPrincipal LoginInfo loginInfo,
                                                 @RequestParam(value = "thumbnail",required = false) MultipartFile thumbnail) {
         if (loginInfo == null) {

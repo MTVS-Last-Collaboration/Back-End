@@ -88,12 +88,12 @@ public class RoomCollectionService {
      * 프리셋 방 상태 저장
      */
     @Transactional
-    public RoomOperationResponseDTO savePresetRoom(Long coupleId, Long presetId, MultipartFile thumbnail) {
+    public RoomOperationResponseDTO savePresetRoom(Long coupleId, Long presetId) {
         PresetRoom preset = presetRoomRepository.findById(presetId)
                 .orElseThrow(PresetNotFoundException::new);
+        String imageUrl = preset.getThumbnailUrl();
 
         RoomCollection collection = getOrCreateCollection(coupleId);
-        String imageUrl = processAndUploadImage(thumbnail);
 
         CollectionRoom collectionRoom = CollectionRoom.builder()
                 .collection(collection)
@@ -109,6 +109,40 @@ public class RoomCollectionService {
                 coupleId, presetId, imageUrl != null ? "저장됨" : "없음");
 
         return RoomOperationResponseDTO.forPresetApply(collectionRoom.getId(), presetId);
+    }
+
+    /**
+     * 공유된 방 상태 저장
+     */
+    public RoomOperationResponseDTO saveSharedRoom(Long coupleId, Long sharedRoomId, MultipartFile thumbnail) {
+        Room sharedRoom = roomRepository.findById(sharedRoomId)
+                .orElseThrow(RoomNotFoundException::new);
+
+        if (!sharedRoom.isShared()) {
+            throw new RoomNotSharedException();
+        }
+
+        if (sharedRoom.getCouple().getId().equals(coupleId)) {
+            throw new InvalidOperationException();
+        }
+
+        RoomCollection collection = getOrCreateCollection(coupleId);
+        String imageUrl = processAndUploadImage(thumbnail);
+
+        CollectionRoom collectionRoom = CollectionRoom.builder()
+                .collection(collection)
+                .roomData(sharedRoom.serializeState())
+                .source(RoomStateSource.SHARED)
+                .thumbnailUrl(imageUrl)
+                .build();
+
+        collection.getSavedRooms().add(collectionRoom);
+        collectionRepository.save(collection);
+
+        return RoomOperationResponseDTO.builder("공유된 방이 성공적으로 저장되었습니다.")
+                .addData("sharedRoomId", sharedRoomId)
+                .addData("thumbnailUrl", imageUrl)
+                .build();
     }
 
     /**
@@ -150,40 +184,6 @@ public class RoomCollectionService {
         }
     }
 
-
-    /**
-     * 공유된 방 상태 저장
-     */
-    public RoomOperationResponseDTO saveSharedRoom(Long coupleId, Long sharedRoomId, MultipartFile thumbnail) {
-        Room sharedRoom = roomRepository.findById(sharedRoomId)
-                .orElseThrow(RoomNotFoundException::new);
-
-        if (!sharedRoom.isShared()) {
-            throw new RoomNotSharedException();
-        }
-
-        if (sharedRoom.getCouple().getId().equals(coupleId)) {
-            throw new InvalidOperationException();
-        }
-
-        RoomCollection collection = getOrCreateCollection(coupleId);
-        String imageUrl = processAndUploadImage(thumbnail);
-
-        CollectionRoom collectionRoom = CollectionRoom.builder()
-                .collection(collection)
-                .roomData(sharedRoom.serializeState())
-                .source(RoomStateSource.SHARED)
-                .thumbnailUrl(imageUrl)
-                .build();
-
-        collection.getSavedRooms().add(collectionRoom);
-        collectionRepository.save(collection);
-
-        return RoomOperationResponseDTO.builder("공유된 방이 성공적으로 저장되었습니다.")
-                .addData("sharedRoomId", sharedRoomId)
-                .addData("thumbnailUrl", imageUrl)
-                .build();
-    }
 
     /**
      * 저장된 방 상태를 현재 방에 적용

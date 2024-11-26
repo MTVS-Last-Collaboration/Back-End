@@ -26,6 +26,9 @@ public class RoomResponseDTO {
     @Schema(description = "방의 벽지 정보")
     private WallpaperDTO wallpaper;
 
+    @Schema(description = "방 썸네일 이미지 URL")
+    private String thumbnailUrl;
+
     @Getter
     @AllArgsConstructor
     public static class FurnitureLayoutDTO {

@@ -14,15 +14,21 @@ import com.loveforest.loveforest.domain.room.enums.RoomStateSource;
 import com.loveforest.loveforest.domain.room.exception.*;
 import com.loveforest.loveforest.domain.room.repository.*;
 import com.loveforest.loveforest.domain.room.util.RoomPreviewMapper;
+import com.loveforest.loveforest.exception.CustomException;
+import com.loveforest.loveforest.exception.ErrorCode;
 import com.loveforest.loveforest.exception.common.UnauthorizedException;
+import com.loveforest.loveforest.s3.service.S3Service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -39,44 +45,66 @@ public class RoomCollectionService {
     private final FurnitureRepository furnitureRepository;
     private final WallpaperRepository wallpaperRepository;
     private final FloorRepository floorRepository;
+    private final S3Service s3Service;
 
     /**
      * 컬렉션에 현재 방 상태 저장
      */
-    public void saveCurrentRoom(Long coupleId) {
+    public void saveCurrentRoom(Long coupleId, MultipartFile thumbnail) {
         Room currentRoom = roomRepository.findByCoupleId(coupleId)
                 .orElseThrow(RoomNotFoundException::new);
 
         RoomCollection collection = getOrCreateCollection(coupleId);
-        collection.addRoom(currentRoom, RoomStateSource.CURRENT);
 
+        String imageUrl = null;
+        if(thumbnail != null && !thumbnail.isEmpty()) {
+            try{
+                validateImage(thumbnail);
+                imageUrl = uploadImage(thumbnail);
+            } catch (Exception e) {
+                log.error("이미지 업로드 실패: {}", e.getMessage());
+                throw new CustomException(ErrorCode.ROOM_IMAGE_UPLOAD_FAILED);
+            }
+        }
+
+        CollectionRoom collectionRoom = CollectionRoom.builder()
+                .collection(collection)
+                .roomData(currentRoom.serializeState())
+                .source(RoomStateSource.CURRENT)
+                .thumbnailUrl(imageUrl)
+                .build();
+
+        collection.getSavedRooms().add(collectionRoom);
         collectionRepository.save(collection);
-        log.info("현재 방 상태 저장 완료 - 커플 ID: {}", coupleId);
+
+        log.info("현재 방 상태 저장 완료 - 커플 ID: {}, 이미지: {}",
+                coupleId, imageUrl != null ? "저장됨" : "없음");
     }
 
     /**
      * 프리셋 방 상태 저장
      */
-    public void savePresetRoom(Long coupleId, Long presetId) {
+    @Transactional
+    public void savePresetRoom(Long coupleId, Long presetId, MultipartFile thumbnail) {
         PresetRoom preset = presetRoomRepository.findById(presetId)
                 .orElseThrow(PresetNotFoundException::new);
 
         RoomCollection collection = getOrCreateCollection(coupleId);
-
-        // 프리셋의 방 상태를 JSON으로 변환
-        String roomStateJson = createRoomStateJson(preset);
+        String imageUrl = processAndUploadImage(thumbnail);
 
         // 컬렉션 룸 생성 및 저장
-        CollectionRoom collectionRoom = new CollectionRoom(
-                collection,
-                roomStateJson,
-                RoomStateSource.PRESET
-        );
+        CollectionRoom collectionRoom = CollectionRoom.builder()
+                .collection(collection)
+                .roomData(createRoomStateJson(preset))
+                .source(RoomStateSource.PRESET)
+                .thumbnailUrl(imageUrl)
+                .build();
 
         collection.getSavedRooms().add(collectionRoom);
         collectionRepository.save(collection);
 
-        log.info("프리셋 방 상태 저장 완료 - 커플 ID: {}, 프리셋 ID: {}", coupleId, presetId);
+        log.info("프리셋 방 상태 저장 완료 - 커플 ID: {}, 프리셋 ID: {}, 이미지: {}",
+                coupleId, presetId, imageUrl != null ? "저장됨" : "없음");
     }
 
     /**
@@ -122,11 +150,10 @@ public class RoomCollectionService {
     /**
      * 공유된 방 상태 저장
      */
-    public void saveSharedRoom(Long coupleId, Long sharedRoomId) {
+    public void saveSharedRoom(Long coupleId, Long sharedRoomId, MultipartFile thumbnail) {
         Room sharedRoom = roomRepository.findById(sharedRoomId)
                 .orElseThrow(RoomNotFoundException::new);
 
-        // 공유 상태 확인
         if (!sharedRoom.isShared()) {
             throw new RoomNotSharedException();
         }
@@ -137,10 +164,17 @@ public class RoomCollectionService {
         }
 
         RoomCollection collection = getOrCreateCollection(coupleId);
-        collection.addRoom(sharedRoom, RoomStateSource.SHARED);
+        String imageUrl = processAndUploadImage(thumbnail);
 
+        CollectionRoom collectionRoom = CollectionRoom.builder()
+                .collection(collection)
+                .roomData(sharedRoom.serializeState())
+                .source(RoomStateSource.SHARED)
+                .thumbnailUrl(imageUrl)
+                .build();
+
+        collection.getSavedRooms().add(collectionRoom);
         collectionRepository.save(collection);
-        log.info("공유 방 상태 저장 완료 - 커플 ID: {}, 공유방 ID: {}", coupleId, sharedRoomId);
     }
 
     /**
@@ -204,6 +238,52 @@ public class RoomCollectionService {
                 .savedAt(room.getSavedAt())
                 .roomPreview(roomPreviewMapper.createFromJson(room.getRoomData()))
                 .build();
+    }
+
+    // 이미지 처리를 위한 유틸리티 메서드들
+    private void validateImage(MultipartFile file) {
+        if (file == null || file.isEmpty()) {
+            return;
+        }
+
+        String contentType = file.getContentType();
+        if (contentType == null || !contentType.startsWith("image/")) {
+            throw new CustomException(ErrorCode.INVALID_IMAGE_FORMAT);
+        }
+
+        if (file.getSize() > 5_000_000) { // 5MB
+            throw new CustomException(ErrorCode.IMAGE_SIZE_EXCEEDED);
+        }
+    }
+
+    private String processAndUploadImage(MultipartFile thumbnail) {
+        if (thumbnail == null || thumbnail.isEmpty()) {
+            return null;
+        }
+
+        try {
+            validateImage(thumbnail);
+            return uploadImage(thumbnail);
+        } catch (IOException e) {
+            log.error("이미지 업로드 실패: {}", e.getMessage());
+            throw new CustomException(ErrorCode.ROOM_IMAGE_UPLOAD_FAILED);
+        }
+    }
+
+    private String uploadImage(MultipartFile file) throws IOException {
+        return s3Service.uploadFile(
+                file.getBytes(),
+                getFileExtension(file.getOriginalFilename()),
+                file.getContentType(),
+                file.getSize()
+        );
+    }
+
+    private String getFileExtension(String filename) {
+        return Optional.ofNullable(filename)
+                .filter(f -> f.contains("."))
+                .map(f -> f.substring(f.lastIndexOf(".")))
+                .orElse(".jpg");
     }
 
 }

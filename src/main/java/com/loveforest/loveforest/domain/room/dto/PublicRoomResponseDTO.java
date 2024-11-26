@@ -30,6 +30,9 @@ public class PublicRoomResponseDTO {
     @Schema(description = "방에 배치된 가구 목록")
     private final List<PublicFurnitureDTO> furnitureLayouts;
 
+    @Schema(description = "방 썸네일 사진")
+    private final String thumbnailUrl;
+
     @Getter
     @Builder
     public static class RoomStyleDTO {

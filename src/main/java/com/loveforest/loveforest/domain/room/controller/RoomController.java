@@ -14,13 +14,16 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -612,13 +615,16 @@ public class RoomController {
             }
     )
     @PostMapping("/collection/current")
-    public ResponseEntity<Void> saveCurrentRoom(@AuthenticationPrincipal LoginInfo loginInfo) {
+    public ResponseEntity<Void> saveCurrentRoom(@AuthenticationPrincipal LoginInfo loginInfo,
+                                                @RequestParam(value = "thumbnail",required = false) MultipartFile thumbnail) {
         if (loginInfo == null) {
             throw new LoginRequiredException();
         }
 
-        log.info("현재 방 상태 저장 요청 - 커플 ID: {}", loginInfo.getCoupleId());
-        collectionService.saveCurrentRoom(loginInfo.getCoupleId());
+        log.info("현재 방 상태 저장 요청 - 커플 ID: {}, 이미지 크기: {}",
+                loginInfo.getCoupleId(),
+                thumbnail != null ? thumbnail.getSize() : 0);
+        collectionService.saveCurrentRoom(loginInfo.getCoupleId(), thumbnail);
 
         return ResponseEntity.ok().build();
     }
@@ -628,31 +634,88 @@ public class RoomController {
      */
     @Operation(
             summary = "프리셋 방 저장",
-            description = "선택한 프리셋 방을 컬렉션에 저장합니다.",
-            responses = {
-                    @ApiResponse(
-                            responseCode = "200",
-                            description = "프리셋 방 저장 성공",
-                            content = @Content(mediaType = "application/json")
-                    ),
-                    @ApiResponse(
-                            responseCode = "401",
-                            description = "로그인 필요",
-                            content = @Content(schema = @Schema(implementation = ErrorResponse.class))
-                    )
-            }
+            description = "선택한 프리셋 방을 컬렉션에 저장합니다. 방의 스크린샷도 함께 저장할 수 있습니다."
     )
-    @PostMapping("/collection/preset/{presetId}")
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "프리셋 방 저장 성공"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "잘못된 요청 (이미지 형식 오류, 크기 초과 등)",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorResponse.class),
+                            examples = @ExampleObject(
+                                    value = """
+                {
+                    "status": 400,
+                    "errorType": "Invalid Image Format",
+                    "message": "지원하지 않는 이미지 형식입니다.",
+                    "code": "ROOM-016"
+                }
+                """
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "인증되지 않은 사용자",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorResponse.class),
+                            examples = @ExampleObject(
+                                    value = """
+                {
+                    "status": 401,
+                    "errorType": "Unauthorized",
+                    "message": "로그인이 필요합니다.",
+                    "code": "USER-004"
+                }
+                """
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "프리셋을 찾을 수 없음",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorResponse.class),
+                            examples = @ExampleObject(
+                                    value = """
+                {
+                    "status": 404,
+                    "errorType": "Preset Not Found",
+                    "message": "프리셋을 찾을 수 없습니다.",
+                    "code": "ROOM-019"
+                }
+                """
+                            )
+                    )
+            )
+    })
+    @PostMapping(value = "/collection/preset/{presetId}",
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<Void> savePresetRoom(
             @AuthenticationPrincipal LoginInfo loginInfo,
-            @PathVariable("presetId") Long presetId) {
+            @PathVariable("presetId") Long presetId,
+            @RequestParam(value = "thumbnail", required = false) MultipartFile thumbnail) {
         if (loginInfo == null) {
             throw new LoginRequiredException();
         }
 
-        log.info("프리셋 방 저장 요청 - 커플 ID: {}, 프리셋 ID: {}",
-                loginInfo.getCoupleId(), presetId);
-        collectionService.savePresetRoom(loginInfo.getCoupleId(), presetId);
+        log.info("프리셋 방 저장 요청 - 커플 ID: {}, 프리셋 ID: {}, 이미지 여부: {}",
+                loginInfo.getCoupleId(),
+                presetId,
+                thumbnail != null && !thumbnail.isEmpty());
+        collectionService.savePresetRoom(
+                loginInfo.getCoupleId(),
+                presetId,
+                thumbnail
+        );
+
 
         return ResponseEntity.ok().build();
     }
@@ -662,31 +725,88 @@ public class RoomController {
      */
     @Operation(
             summary = "공유된 방 저장",
-            description = "공유된 다른 커플의 방을 컬렉션에 저장합니다.",
-            responses = {
-                    @ApiResponse(
-                            responseCode = "200",
-                            description = "공유된 방 저장 성공",
-                            content = @Content(mediaType = "application/json")
-                    ),
-                    @ApiResponse(
-                            responseCode = "401",
-                            description = "로그인 필요",
-                            content = @Content(schema = @Schema(implementation = ErrorResponse.class))
-                    )
-            }
+            description = "공유된 다른 커플의 방을 컬렉션에 저장합니다. 방의 스크린샷도 함께 저장할 수 있습니다."
     )
-    @PostMapping("/collection/shared/{sharedRoomId}")
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "공유된 방 저장 성공"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "잘못된 요청 (이미지 형식 오류, 크기 초과 등)",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorResponse.class),
+                            examples = @ExampleObject(
+                                    value = """
+                {
+                    "status": 400,
+                    "errorType": "Invalid Image Format",
+                    "message": "지원하지 않는 이미지 형식입니다.",
+                    "code": "ROOM-016"
+                }
+                """
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "인증되지 않은 사용자",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorResponse.class),
+                            examples = @ExampleObject(
+                                    value = """
+                {
+                    "status": 401,
+                    "errorType": "Unauthorized",
+                    "message": "로그인이 필요합니다.",
+                    "code": "USER-004"
+                }
+                """
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "공유된 방을 찾을 수 없음",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorResponse.class),
+                            examples = @ExampleObject(
+                                    value = """
+                {
+                    "status": 404,
+                    "errorType": "Room Not Found",
+                    "message": "공유된 방을 찾을 수 없습니다.",
+                    "code": "ROOM-001"
+                }
+                """
+                            )
+                    )
+            )
+    })
+    @PostMapping(value = "/collection/shared/{sharedRoomId}",
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<Void> saveSharedRoom(
             @AuthenticationPrincipal LoginInfo loginInfo,
-            @PathVariable Long sharedRoomId) {
+            @PathVariable("sharedRoomId") Long sharedRoomId,
+            @RequestParam(value = "thumbnail", required = false) MultipartFile thumbnail) {
         if (loginInfo == null) {
             throw new LoginRequiredException();
         }
 
-        log.info("공유 방 저장 요청 - 커플 ID: {}, 공유방 ID: {}",
-                loginInfo.getCoupleId(), sharedRoomId);
-        collectionService.saveSharedRoom(loginInfo.getCoupleId(), sharedRoomId);
+        log.info("공유 방 저장 요청 - 커플 ID: {}, 공유방 ID: {}, 이미지 여부: {}",
+                loginInfo.getCoupleId(),
+                sharedRoomId,
+                thumbnail != null && !thumbnail.isEmpty());
+
+        collectionService.saveSharedRoom(
+                loginInfo.getCoupleId(),
+                sharedRoomId,
+                thumbnail
+        );
 
         return ResponseEntity.ok().build();
     }

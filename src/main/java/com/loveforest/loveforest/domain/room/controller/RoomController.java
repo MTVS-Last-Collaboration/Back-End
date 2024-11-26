@@ -664,7 +664,8 @@ public class RoomController {
                     )
             }
     )
-    @PostMapping("/collection/current")
+    @PostMapping(value = "/collection/current",
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<RoomOperationResponseDTO> saveCurrentRoom(@AuthenticationPrincipal LoginInfo loginInfo,
                                                 @RequestParam(value = "thumbnail",required = false) MultipartFile thumbnail) {
         if (loginInfo == null) {
@@ -685,8 +686,8 @@ public class RoomController {
     @Operation(
             summary = "프리셋 방 저장",
             description = """
-        선택한 방을 프리셋으로 저장합니다.
-        - 프리셋 저장 시 썸네일 이미지를 함께 업로드할 수 있습니다.
+       프리셋을 컬렉션에 저장합니다.
+        - 저장 시 썸네일 이미지를 함께 업로드할 수 있습니다.
         - 썸네일은 선택 사항이며, 최대 5MB 크기 제한과 JPEG/PNG 형식을 지원합니다.
     """,
             responses = {
@@ -736,7 +737,8 @@ public class RoomController {
                     )
             }
     )
-    @PostMapping("/collection/preset/{presetId}")
+    @PostMapping(value = "/collection/preset/{presetId}",
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<RoomOperationResponseDTO> savePresetRoom(
             @AuthenticationPrincipal LoginInfo loginInfo,
             @PathVariable("presetId") Long presetId,
@@ -825,7 +827,8 @@ public class RoomController {
                     )
             )
     })
-    @PostMapping("/collection/shared/{sharedRoomId}")
+    @PostMapping(value = "/collection/shared/{sharedRoomId}",
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<RoomOperationResponseDTO> saveSharedRoom(
             @AuthenticationPrincipal LoginInfo loginInfo,
             @PathVariable("sharedRoomId") Long sharedRoomId,

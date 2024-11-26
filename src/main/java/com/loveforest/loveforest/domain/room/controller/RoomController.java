@@ -741,20 +741,17 @@ public class RoomController {
             consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<RoomOperationResponseDTO> savePresetRoom(
             @AuthenticationPrincipal LoginInfo loginInfo,
-            @PathVariable("presetId") Long presetId,
-            @RequestParam(value = "thumbnail", required = false) MultipartFile thumbnail) {
+            @PathVariable("presetId") Long presetId) {
         if (loginInfo == null) {
             throw new LoginRequiredException();
         }
 
         log.info("프리셋 방 저장 요청 - 커플 ID: {}, 프리셋 ID: {}, 이미지 여부: {}",
                 loginInfo.getCoupleId(),
-                presetId,
-                thumbnail != null && !thumbnail.isEmpty());
+                presetId);
         RoomOperationResponseDTO response = collectionService.savePresetRoom(
                 loginInfo.getCoupleId(),
-                presetId,
-                thumbnail
+                presetId
         );
 
         return ResponseEntity.ok(response);

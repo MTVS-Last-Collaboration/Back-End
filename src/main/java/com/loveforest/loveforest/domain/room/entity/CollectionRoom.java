@@ -31,14 +31,23 @@ public class CollectionRoom {
     @Column(name = "thumbnail_url")
     private String thumbnailUrl;
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     private LocalDateTime savedAt;
+
+    @Builder
+    public CollectionRoom(RoomCollection collection, String roomData, RoomStateSource source, String thumbnailUrl) {
+        this.collection = collection;
+        this.roomData = roomData;
+        this.source = source;
+        this.thumbnailUrl = thumbnailUrl;
+        this.savedAt = LocalDateTime.now(); // 초기화
+    }
 
     public CollectionRoom(RoomCollection collection, String roomData, RoomStateSource source) {
         this.collection = collection;
         this.roomData = roomData;
         this.source = source;
-        this.savedAt = LocalDateTime.now();
+        this.savedAt = LocalDateTime.now(); // 기본값 설정
     }
 
     public void updateRoomData(String newRoomData) {

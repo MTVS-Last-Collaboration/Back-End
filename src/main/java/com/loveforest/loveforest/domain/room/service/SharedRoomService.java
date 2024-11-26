@@ -1,6 +1,7 @@
 package com.loveforest.loveforest.domain.room.service;
 
 import com.loveforest.loveforest.domain.couple.entity.Couple;
+import com.loveforest.loveforest.domain.room.dto.RoomOperationResponseDTO;
 import com.loveforest.loveforest.domain.room.dto.RoomPreviewDTO;
 import com.loveforest.loveforest.domain.room.dto.SharedRoomResponseDTO;
 import com.loveforest.loveforest.domain.room.entity.Room;
@@ -28,7 +29,7 @@ public class SharedRoomService {
     /**
      * 방 공유 설정
      */
-    public void setRoomSharing(Long coupleId, boolean isShared) {
+    public RoomOperationResponseDTO setRoomSharing(Long coupleId, boolean isShared) {
         Room room = roomRepository.findByCoupleId(coupleId)
                 .orElseThrow(RoomNotFoundException::new);
 
@@ -36,6 +37,8 @@ public class SharedRoomService {
         roomRepository.save(room);
 
         log.info("방 공유 상태 변경 - 커플 ID: {}, 공유 상태: {}", coupleId, isShared);
+
+        return RoomOperationResponseDTO.forSharing(isShared);
     }
 
     /**

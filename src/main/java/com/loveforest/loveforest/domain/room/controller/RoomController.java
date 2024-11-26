@@ -664,8 +664,7 @@ public class RoomController {
                     )
             }
     )
-    @PostMapping(value = "/collection/current",
-            consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping("/collection/current")
     public ResponseEntity<RoomOperationResponseDTO> saveCurrentRoom(@AuthenticationPrincipal LoginInfo loginInfo,
                                                 @RequestParam(value = "thumbnail",required = false) MultipartFile thumbnail) {
         if (loginInfo == null) {
@@ -737,8 +736,7 @@ public class RoomController {
                     )
             }
     )
-    @PostMapping(value = "/collection/preset/{presetId}",
-            consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping("/collection/preset/{presetId}")
     public ResponseEntity<RoomOperationResponseDTO> savePresetRoom(
             @AuthenticationPrincipal LoginInfo loginInfo,
             @PathVariable("presetId") Long presetId,
@@ -827,8 +825,7 @@ public class RoomController {
                     )
             )
     })
-    @PostMapping(value = "/collection/shared/{sharedRoomId}",
-            consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping("/collection/shared/{sharedRoomId}")
     public ResponseEntity<RoomOperationResponseDTO> saveSharedRoom(
             @AuthenticationPrincipal LoginInfo loginInfo,
             @PathVariable("sharedRoomId") Long sharedRoomId,

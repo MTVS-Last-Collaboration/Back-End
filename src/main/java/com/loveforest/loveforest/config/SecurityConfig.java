@@ -51,7 +51,7 @@ public class SecurityConfig {
                         .requestMatchers(mvc.pattern("/api/users/**")).permitAll()  // "/api/users/**"는 인증 필요
 //                        .requestMatchers(mvc.pattern("/api/chat/**")).permitAll()  // "/api/users/**"는 인증 필요
                         .requestMatchers(this.createMvcRequestMatcherForWhiteList(mvc)).permitAll() // 화이트리스트는 인증 없이 접근 가능
-                        .anyRequest().authenticated()) // 그 외 모든 요청은 인증 필요
+                        .anyRequest().permitAll()) // 그 외 모든 요청은 인증 필요
                 .exceptionHandling(exceptionHandling ->
                         exceptionHandling.authenticationEntryPoint(customAuthenticationEntryPoint)) // CustomAuthenticationEntryPoint 설정 추가
                 .addFilterBefore(new JwtTokenFilter(jwtTokenProvider), UsernamePasswordAuthenticationFilter.class);  // JWT 필터 추가

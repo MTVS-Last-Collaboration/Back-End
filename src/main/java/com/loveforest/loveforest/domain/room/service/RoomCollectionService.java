@@ -117,7 +117,7 @@ public class RoomCollectionService {
     /**
      * 공유된 방 상태 저장
      */
-    public RoomOperationResponseDTO saveSharedRoom(Long coupleId, Long sharedRoomId, MultipartFile thumbnail) {
+    public RoomOperationResponseDTO saveSharedRoom(Long coupleId, Long sharedRoomId/*, MultipartFile thumbnail*/) {
         Room sharedRoom = roomRepository.findById(sharedRoomId)
                 .orElseThrow(RoomNotFoundException::new);
 
@@ -128,9 +128,9 @@ public class RoomCollectionService {
         if (sharedRoom.getCouple().getId().equals(coupleId)) {
             throw new InvalidOperationException();
         }
+        String imageUrl = sharedRoom.getThumbnailUrl();
 
         RoomCollection collection = getOrCreateCollection(coupleId);
-        String imageUrl = processAndUploadImage(thumbnail);
 
         CollectionRoom collectionRoom = CollectionRoom.builder()
                 .collection(collection)

@@ -1119,10 +1119,12 @@ public class RoomController {
                                     schema = @Schema(implementation = RoomOperationResponseDTO.class),
                                     examples = @ExampleObject(value = """
                 {
-                    "message": "방 공유가 활성화되었습니다.",
-                    "timestamp": "2024-03-19T15:30:00",
+                    "message": "방 공유 상태가 변경되었습니다.",
+                    "timestamp": "2024-11-26T15:30:00",
                     "data": {
-                        "isShared": true
+                      "isShared": true,
+                      "thumbnailUrl": "https://example.com/thumbnail.jpg",
+                      "updatedAt": "2024-11-26T15:30:00"
                     }
                 }
                 """)

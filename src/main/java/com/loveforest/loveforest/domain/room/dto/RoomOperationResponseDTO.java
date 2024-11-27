@@ -94,17 +94,6 @@ public class RoomOperationResponseDTO {
     }
 
     /**
-     * 공유 설정 변경 응답 생성을 위한 유틸리티 메서드
-     */
-    public static RoomOperationResponseDTO forSharing(boolean isShared) {
-        return new ResponseBuilder(
-                isShared ? "방 공유가 활성화되었습니다." : "방 공유가 비활성화되었습니다.")
-                .addData("isShared", isShared)
-                .addData("updatedAt", LocalDateTime.now())
-                .build();
-    }
-
-    /**
      * 방 상태 저장 응답 생성을 위한 유틸리티 메서드
      */
     public static RoomOperationResponseDTO forSaveState(String thumbnailUrl) {

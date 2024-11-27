@@ -1,11 +1,17 @@
 package com.loveforest.loveforest.domain.room.service;
 
 import com.loveforest.loveforest.domain.couple.entity.Couple;
+import com.loveforest.loveforest.domain.couple.exception.CoupleNotFoundException;
+import com.loveforest.loveforest.domain.couple.repository.CoupleRepository;
 import com.loveforest.loveforest.domain.room.dto.RoomOperationResponseDTO;
 import com.loveforest.loveforest.domain.room.dto.RoomPreviewDTO;
 import com.loveforest.loveforest.domain.room.dto.SharedRoomResponseDTO;
+import com.loveforest.loveforest.domain.room.entity.CollectionRoom;
 import com.loveforest.loveforest.domain.room.entity.Room;
+import com.loveforest.loveforest.domain.room.entity.RoomCollection;
 import com.loveforest.loveforest.domain.room.exception.RoomNotFoundException;
+import com.loveforest.loveforest.domain.room.repository.CollectionRoomRepository;
+import com.loveforest.loveforest.domain.room.repository.RoomCollectionRepository;
 import com.loveforest.loveforest.domain.room.repository.RoomRepository;
 import com.loveforest.loveforest.domain.room.util.RoomPreviewMapper;
 import com.loveforest.loveforest.domain.user.entity.User;
@@ -14,7 +20,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -23,8 +31,8 @@ import java.util.stream.Collectors;
 @Slf4j
 public class SharedRoomService {
     private final RoomRepository roomRepository;
-    private final RoomCollectionService roomCollectionService;
     private final RoomPreviewMapper roomPreviewMapper;
+
 
     /**
      * 방 공유 설정
@@ -33,12 +41,30 @@ public class SharedRoomService {
         Room room = roomRepository.findByCoupleId(coupleId)
                 .orElseThrow(RoomNotFoundException::new);
 
+//        RoomCollection roomCollection = roomCollectionRepository.findByCoupleId(coupleId)
+//                .orElseGet(() -> {
+//                    Couple couple = coupleRepository.findById(coupleId)
+//                            .orElseThrow(CoupleNotFoundException::new);
+//                    return new RoomCollection(couple);
+//                });
+//        Long roomCollectionId = roomCollection.getId();
+//        List<CollectionRoom> byCollectionCoupleId = collectionRoomRepository.findByCollectionCoupleId(roomCollectionId);
+
+
+
         room.updateSharing(isShared);
         roomRepository.save(room);
 
         log.info("방 공유 상태 변경 - 커플 ID: {}, 공유 상태: {}", coupleId, isShared);
 
-        return RoomOperationResponseDTO.forSharing(isShared);
+        // 공유 상태가 true일 경우 thumbnailUrl 포함
+        String thumbnailUrl = isShared ? room.getThumbnailUrl() : null;
+
+        return RoomOperationResponseDTO.builder("방 공유 상태가 변경되었습니다.")
+                .addData("isShared", isShared)
+                .addData("thumbnailUrl", thumbnailUrl)
+                .addData("updatedAt", LocalDateTime.now())
+                .build();
     }
 
     /**

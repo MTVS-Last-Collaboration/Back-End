@@ -68,6 +68,8 @@ public class RoomCollectionService {
             }
         }
 
+        currentRoom.updateThumbnail(imageUrl);
+
         CollectionRoom collectionRoom = CollectionRoom.builder()
                 .collection(collection)
                 .roomData(currentRoom.serializeState())

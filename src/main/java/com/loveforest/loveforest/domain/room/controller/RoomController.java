@@ -664,8 +664,7 @@ public class RoomController {
                     )
             }
     )
-    @PostMapping(value = "/collection/current",
-            consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping(value = "/collection/current")
     public ResponseEntity<RoomOperationResponseDTO> saveCurrentRoom(@AuthenticationPrincipal LoginInfo loginInfo,
                                                 @RequestParam(value = "thumbnail",required = false) MultipartFile thumbnail) {
         if (loginInfo == null) {
@@ -737,8 +736,7 @@ public class RoomController {
                     )
             }
     )
-    @PostMapping(value = "/collection/preset/{presetId}",
-            consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping(value = "/collection/preset/{presetId}")
     public ResponseEntity<RoomOperationResponseDTO> savePresetRoom(
             @AuthenticationPrincipal LoginInfo loginInfo,
             @PathVariable("presetId") Long presetId) {
@@ -824,25 +822,22 @@ public class RoomController {
                     )
             )
     })
-    @PostMapping(value = "/collection/shared/{sharedRoomId}",
-            consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping(value = "/collection/shared/{sharedRoomId}")
     public ResponseEntity<RoomOperationResponseDTO> saveSharedRoom(
             @AuthenticationPrincipal LoginInfo loginInfo,
-            @PathVariable("sharedRoomId") Long sharedRoomId,
-            @RequestParam(value = "thumbnail", required = false) MultipartFile thumbnail) {
+            @PathVariable("sharedRoomId") Long sharedRoomId/*,
+            @RequestParam(value = "thumbnail", required = false) MultipartFile thumbnail*/) {
         if (loginInfo == null) {
             throw new LoginRequiredException();
         }
 
         log.info("공유 방 저장 요청 - 커플 ID: {}, 공유방 ID: {}, 이미지 여부: {}",
                 loginInfo.getCoupleId(),
-                sharedRoomId,
-                thumbnail != null && !thumbnail.isEmpty());
+                sharedRoomId);
 
         RoomOperationResponseDTO response = collectionService.saveSharedRoom(
                 loginInfo.getCoupleId(),
-                sharedRoomId,
-                thumbnail
+                sharedRoomId
         );
 
         return ResponseEntity.ok(response);

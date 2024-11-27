@@ -828,21 +828,19 @@ public class RoomController {
             consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<RoomOperationResponseDTO> saveSharedRoom(
             @AuthenticationPrincipal LoginInfo loginInfo,
-            @PathVariable("sharedRoomId") Long sharedRoomId,
-            @RequestParam(value = "thumbnail", required = false) MultipartFile thumbnail) {
+            @PathVariable("sharedRoomId") Long sharedRoomId/*,
+            @RequestParam(value = "thumbnail", required = false) MultipartFile thumbnail*/) {
         if (loginInfo == null) {
             throw new LoginRequiredException();
         }
 
         log.info("공유 방 저장 요청 - 커플 ID: {}, 공유방 ID: {}, 이미지 여부: {}",
                 loginInfo.getCoupleId(),
-                sharedRoomId,
-                thumbnail != null && !thumbnail.isEmpty());
+                sharedRoomId);
 
         RoomOperationResponseDTO response = collectionService.saveSharedRoom(
                 loginInfo.getCoupleId(),
-                sharedRoomId,
-                thumbnail
+                sharedRoomId
         );
 
         return ResponseEntity.ok(response);

@@ -14,4 +14,6 @@ public interface CollectionRoomRepository extends JpaRepository<CollectionRoom, 
 
     @Query("SELECT cr FROM CollectionRoom cr WHERE cr.collection.couple.id = :coupleId")
     List<CollectionRoom> findByCollectionCoupleId(@Param("coupleId") Long coupleId);
+
+
 }

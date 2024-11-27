@@ -84,6 +84,7 @@ public class SharedRoomService {
                 .coupleName(generateCoupleName(room.getCouple()))
                 .roomPreview(roomPreviewMapper.createFromRoom(room))
                 .sharedAt(room.getSharing().getLastModified())
+                .thumbnailUrl(room.getThumbnailUrl())
                 .build();
     }
 

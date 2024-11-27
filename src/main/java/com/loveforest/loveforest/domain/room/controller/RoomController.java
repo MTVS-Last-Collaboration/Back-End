@@ -749,7 +749,7 @@ public class RoomController {
         log.info("프리셋 방 저장 요청 - 커플 ID: {}, 프리셋 ID: {}, 이미지 여부: {}",
                 loginInfo.getCoupleId(),
                 presetId);
-        RoomOperationResponseDTO response = collectionService.savePresetRoom(
+        RoomOperationResponseDTO response = collectionService. savePresetRoom(
                 loginInfo.getCoupleId(),
                 presetId
         );

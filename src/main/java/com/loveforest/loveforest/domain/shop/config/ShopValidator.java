@@ -1,6 +1,5 @@
 package com.loveforest.loveforest.domain.shop.config;
 
-import com.loveforest.loveforest.domain.couple.entity.Couple;
 import com.loveforest.loveforest.domain.shop.entity.ShopItem;
 import com.loveforest.loveforest.domain.shop.exception.InsufficientPointsException;
 import com.loveforest.loveforest.domain.shop.exception.ItemNotAvailableException;

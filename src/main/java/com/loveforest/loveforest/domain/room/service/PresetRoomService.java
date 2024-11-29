@@ -1,6 +1,5 @@
 package com.loveforest.loveforest.domain.room.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.loveforest.loveforest.domain.room.dto.PresetRoomResponseDTO;
 import com.loveforest.loveforest.domain.room.entity.FurnitureLayout;
 import com.loveforest.loveforest.domain.room.entity.PresetFurnitureLayout;
@@ -8,7 +7,6 @@ import com.loveforest.loveforest.domain.room.entity.PresetRoom;
 import com.loveforest.loveforest.domain.room.entity.Room;
 import com.loveforest.loveforest.domain.room.exception.PresetSaveFailedException;
 import com.loveforest.loveforest.domain.room.exception.RoomNotFoundException;
-import com.loveforest.loveforest.domain.room.repository.PresetFurnitureLayoutRepository;
 import com.loveforest.loveforest.domain.room.repository.PresetRoomRepository;
 import com.loveforest.loveforest.domain.room.repository.RoomRepository;
 import lombok.RequiredArgsConstructor;

@@ -1,17 +1,10 @@
 package com.loveforest.loveforest.domain.room.service;
 
 import com.loveforest.loveforest.domain.couple.entity.Couple;
-import com.loveforest.loveforest.domain.couple.exception.CoupleNotFoundException;
-import com.loveforest.loveforest.domain.couple.repository.CoupleRepository;
 import com.loveforest.loveforest.domain.room.dto.RoomOperationResponseDTO;
-import com.loveforest.loveforest.domain.room.dto.RoomPreviewDTO;
 import com.loveforest.loveforest.domain.room.dto.SharedRoomResponseDTO;
-import com.loveforest.loveforest.domain.room.entity.CollectionRoom;
 import com.loveforest.loveforest.domain.room.entity.Room;
-import com.loveforest.loveforest.domain.room.entity.RoomCollection;
 import com.loveforest.loveforest.domain.room.exception.RoomNotFoundException;
-import com.loveforest.loveforest.domain.room.repository.CollectionRoomRepository;
-import com.loveforest.loveforest.domain.room.repository.RoomCollectionRepository;
 import com.loveforest.loveforest.domain.room.repository.RoomRepository;
 import com.loveforest.loveforest.domain.room.util.RoomPreviewMapper;
 import com.loveforest.loveforest.domain.user.entity.User;
@@ -22,7 +15,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service

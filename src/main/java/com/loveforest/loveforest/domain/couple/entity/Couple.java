@@ -1,6 +1,7 @@
 package com.loveforest.loveforest.domain.couple.entity;
 
 import com.loveforest.loveforest.BaseTimeEntity;
+import com.loveforest.loveforest.domain.room.entity.RoomCollection;
 import com.loveforest.loveforest.domain.shop.exception.InsufficientPointsException;
 import com.loveforest.loveforest.domain.user.entity.User;
 import jakarta.persistence.*;
@@ -27,6 +28,10 @@ public class Couple extends BaseTimeEntity {
 
     @Column(nullable = false)
     private int points = 0;  // 커플 포인트 필드 추가
+
+    @OneToOne(mappedBy = "couple", cascade = CascadeType.REMOVE, orphanRemoval = true)
+    private RoomCollection roomCollection;
+
 
 
     // 사용자들 (1:N 관계로 한 커플에 2명의 사용자 연결)

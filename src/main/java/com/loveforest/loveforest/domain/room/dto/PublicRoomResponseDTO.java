@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -23,6 +24,9 @@ public class PublicRoomResponseDTO {
 
     @Schema(description = "커플 닉네임", example = "행복한 커플")
     private final String coupleName;
+
+    @Schema(description = "연애 시작일", example = "2024-01-01")
+    private final LocalDate anniversaryDate;
 
     @Schema(description = "방 스타일 정보")
     private final RoomStyleDTO style;

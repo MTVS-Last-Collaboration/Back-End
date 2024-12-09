@@ -21,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -321,6 +322,9 @@ public class RoomServiceImpl implements RoomService {
         Couple couple = coupleRepository.findById(coupleId)
                 .orElseThrow(CoupleNotFoundException::new);
 
+        LocalDate anniversaryDate = couple.getUsers().isEmpty() ? null
+                : couple.getUsers().get(0).getAnniversaryDate();
+
         // 가구 정보 변환
         List<PublicRoomResponseDTO.PublicFurnitureDTO> furnitureLayouts = room.getFurnitureLayouts()
                 .stream()
@@ -340,6 +344,7 @@ public class RoomServiceImpl implements RoomService {
                 .roomId(room.getId())
                 .coupleId(coupleId)
                 .coupleName(coupleName)
+                .anniversaryDate(anniversaryDate)
                 .style(styleDTO)
                 .furnitureLayouts(furnitureLayouts)
                 .thumbnailUrl(room.getThumbnailUrl())  // 썸네일 URL 추가

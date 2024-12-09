@@ -21,11 +21,17 @@ public class DailyMissionResponseDTO {
     @Schema(description = "미션 내용", example = "오늘 하루 동안 가장 행복했던 순간은?")
     private String missionContent;
 
+    @Schema(description = "첫 번째 파트너의 이름", example = "파트너1")
+    private String partner1Name;
+
     @Schema(description = "첫 번째 파트너의 기분", example = "행복")
     private String partner1Mood;
 
     @Schema(description = "첫 번째 파트너의 답변", example = "함께 산책할 때입니다.")
     private String partner1Answer;
+
+    @Schema(description = "두 번째 파트너의 이름", example = "파트너2")
+    private String partner2Name;
 
     @Schema(description = "두 번째 파트너의 기분", example = "기쁨")
     private String partner2Mood;

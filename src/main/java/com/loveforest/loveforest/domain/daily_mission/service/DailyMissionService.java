@@ -9,6 +9,7 @@ import com.loveforest.loveforest.domain.daily_mission.dto.WeeklyMissionResponseD
 import com.loveforest.loveforest.domain.daily_mission.entity.DailyMission;
 import com.loveforest.loveforest.domain.daily_mission.exception.*;
 import com.loveforest.loveforest.domain.daily_mission.repository.DailyMissionRepository;
+import com.loveforest.loveforest.domain.user.entity.User;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -274,12 +275,18 @@ public class DailyMissionService {
     }
 
     private DailyMissionResponseDTO convertToDTO(DailyMission mission) {
+        List<User> users = mission.getCouple().getUsers();
+        // 커플의 두 사용자 정보 가져오기
+        String partner1Name = users.size() > 0 ? users.get(0).getNickname() : "Unknown";
+        String partner2Name = users.size() > 1 ? users.get(1).getNickname() : "Unknown";
         return DailyMissionResponseDTO.builder()
                 .missionNumber(mission.getMissionNumber())
                 .missionDate(mission.getMissionDate())
                 .missionContent(mission.getMissionContent())
+                .partner1Name(partner1Name)
                 .partner1Mood(mission.getPartner1Mood())
                 .partner1Answer(mission.getPartner1Answer())
+                .partner2Name(partner2Name)
                 .partner2Mood(mission.getPartner2Mood())
                 .partner2Answer(mission.getPartner2Answer())
                 .isCompleted(mission.isCompleted())

@@ -515,6 +515,10 @@ public class RoomServiceImpl implements RoomService {
         int randomIndex = new Random().nextInt(sharedRooms.size());
         Room selectedRoom = sharedRooms.get(randomIndex);
 
+
+        LocalDate anniversaryDate = selectedRoom.getCouple().getUsers().isEmpty() ? null
+                : selectedRoom.getCouple().getUsers().get(0).getAnniversaryDate();
+
         log.info("랜덤 커플방 선택 완료 - 선택된 방 ID: {}, 커플 ID: {}",
                 selectedRoom.getId(), selectedRoom.getCouple().getId());
 
@@ -535,6 +539,7 @@ public class RoomServiceImpl implements RoomService {
                 .roomId(selectedRoom.getId())
                 .coupleId(selectedRoom.getCouple().getId())
                 .coupleName(generateCoupleName(selectedRoom.getCouple()))
+                .anniversaryDate(anniversaryDate)
                 .style(styleDTO)
                 .furnitureLayouts(furnitureLayouts)
                 .thumbnailUrl(selectedRoom.getThumbnailUrl())

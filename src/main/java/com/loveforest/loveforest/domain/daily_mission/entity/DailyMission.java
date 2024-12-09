@@ -27,7 +27,7 @@ public class DailyMission {
     @Column(nullable = false)
     private Integer missionNumber;
 
-    @Column(nullable = false)
+    @Column(name = "mission_date", nullable = false)
     private LocalDate missionDate;
 
     @Column(nullable = false)

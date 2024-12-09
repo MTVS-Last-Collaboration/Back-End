@@ -194,6 +194,11 @@ public class DailyMissionService {
         log.debug("현재 미션 조회 - 커플 ID: {}", coupleId);
         LocalDate today = LocalDate.now();
 
+        // 미션 존재 여부 먼저 확인
+        if (!dailyMissionRepository.existsByCouple_IdAndMissionDate(coupleId, today)) {
+            throw new MissionNotFoundException();
+        }
+
         DailyMission mission = dailyMissionRepository.findByCouple_IdAndMissionDate(coupleId, today)
                 .orElseThrow(() -> {
                     log.warn("미션을 찾을 수 없음 - 커플 ID: {}, 날짜: {}", coupleId, today);

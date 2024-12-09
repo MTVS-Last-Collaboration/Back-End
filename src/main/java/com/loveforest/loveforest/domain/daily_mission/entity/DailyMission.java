@@ -10,7 +10,13 @@ import java.time.LocalDate;
 
 @Slf4j
 @Entity
-@Table(name = "tbl_daily_mission")
+@Table(name = "daily_mission",
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        columnNames = {"couple_id", "mission_date"},
+                        name = "uk_daily_mission_couple_date"
+                )
+        })
 @Getter
 @NoArgsConstructor
 public class DailyMission {

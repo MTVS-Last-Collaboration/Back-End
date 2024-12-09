@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.Random;
 import java.util.stream.Collectors;
 
 /**
@@ -490,6 +491,49 @@ public class RoomServiceImpl implements RoomService {
             log.error("방 이미지 업데이트 실패", e);
             throw new RoomImageUploadException();
         }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PublicRoomResponseDTO getRandomRoom(Long requesterId) {
+        // 1. 공유된 방 중 자신의 방을 제외한 모든 방 조회
+        List<Room> sharedRooms = roomRepository.findBySharing_IsSharedTrue().stream()
+                .filter(room -> !isRequestingOwnRoom(room.getCouple().getId(), requesterId))
+                .toList();
+
+        // 2. 조회 가능한 방이 없는 경우 예외 처리
+        if (sharedRooms.isEmpty()) {
+            throw new RoomNotFoundException();
+        }
+
+        // 3. 랜덤으로 하나의 방 선택
+        int randomIndex = new Random().nextInt(sharedRooms.size());
+        Room selectedRoom = sharedRooms.get(randomIndex);
+
+        log.info("랜덤 커플방 선택 완료 - 선택된 방 ID: {}, 커플 ID: {}",
+                selectedRoom.getId(), selectedRoom.getCouple().getId());
+
+        // 가구 정보 변환
+        List<PublicRoomResponseDTO.PublicFurnitureDTO> furnitureLayouts = selectedRoom.getFurnitureLayouts()
+                .stream()
+                .map(this::convertToPublicFurnitureDTO)
+                .collect(Collectors.toList());
+
+        // 방 스타일 정보 생성
+        PublicRoomResponseDTO.RoomStyleDTO styleDTO = PublicRoomResponseDTO.RoomStyleDTO.builder()
+                .wallpaperName(selectedRoom.getWallpaper() != null ? selectedRoom.getWallpaper().getName() : null)
+                .floorName(selectedRoom.getFloor() != null ? selectedRoom.getFloor().getName() : null)
+                .build();
+
+        // 4. 선택된 방의 정보를 DTO로 변환하여 반환
+        return PublicRoomResponseDTO.builder()
+                .roomId(selectedRoom.getId())
+                .coupleId(selectedRoom.getCouple().getId())
+                .coupleName(generateCoupleName(selectedRoom.getCouple()))
+                .style(styleDTO)
+                .furnitureLayouts(furnitureLayouts)
+                .thumbnailUrl(selectedRoom.getThumbnailUrl())
+                .build();
     }
 
 }

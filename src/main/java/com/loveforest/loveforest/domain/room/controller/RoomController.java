@@ -1145,4 +1145,41 @@ public class RoomController {
         return ResponseEntity.ok(response);
     }
 
+
+    /**
+     * 랜덤 커플방 조회
+     * @param loginInfo
+     * @return
+     */
+    @GetMapping("/random")
+    @Operation(
+            summary = "랜덤 커플방 조회",
+            description = "공유된 커플방 중 하나를 무작위로 조회합니다. 자신의 방은 제외됩니다."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "랜덤 커플방 조회 성공",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = PublicRoomResponseDTO.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "조회 가능한 공유방이 없음",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+            )
+    })
+    public ResponseEntity<PublicRoomResponseDTO> getRandomRoom(
+            @AuthenticationPrincipal LoginInfo loginInfo) {
+        if (loginInfo == null) {
+            throw new LoginRequiredException();
+        }
+
+        log.info("랜덤 커플방 조회 요청 - 요청자: {}", loginInfo.getUserId());
+        PublicRoomResponseDTO response = roomServiceImpl.getRandomRoom(loginInfo.getUserId());
+        return ResponseEntity.ok(response);
+    }
+
 }

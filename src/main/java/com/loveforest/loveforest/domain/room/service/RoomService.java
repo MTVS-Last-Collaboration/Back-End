@@ -29,4 +29,6 @@ public interface RoomService {
     PublicRoomResponseDTO getPublicRoomInfo(Long coupleId, Long requesterId);
 
     Optional<Room> findById(Long roomId);
+
+    PublicRoomResponseDTO getRandomRoom(Long requesterId);
 }

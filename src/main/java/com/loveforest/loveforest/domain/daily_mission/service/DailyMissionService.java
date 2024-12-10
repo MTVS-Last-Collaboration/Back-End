@@ -16,7 +16,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.interceptor.TransactionAspectSupport;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
@@ -147,6 +149,7 @@ public class DailyMissionService {
      * 모든 커플에 대해 미션을 생성하는 메서드
      * LSP(리스코프 치환 원칙)를 준수하여 커플별 미션 생성 로직을 분리
      */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     private void createMissionsForAllCouples(List<WeeklyMissionResponseDTO.DailyMissionContent> missions) {
         List<Couple> couples = coupleRepository.findAll();
 
@@ -156,6 +159,8 @@ public class DailyMissionService {
                 log.debug("커플 ID: {}에 대한 미션 생성 완료", couple.getId());
             } catch (Exception e) {
                 log.error("커플 ID: {}에 대한 미션 생성 실패", couple.getId(), e);
+                TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+                throw new MissionGenerationException();
             }
         }
     }

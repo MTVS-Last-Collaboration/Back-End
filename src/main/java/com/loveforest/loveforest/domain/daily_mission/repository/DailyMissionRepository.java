@@ -14,5 +14,7 @@ public interface DailyMissionRepository extends JpaRepository<DailyMission, Long
 
     // 존재 여부 확인 메서드 추가
     boolean existsByCouple_IdAndMissionDate(Long coupleId, LocalDate date);
+
+    boolean existsByCoupleIdAndMissionDate(Long coupleId, LocalDate missionDate);
 }
 

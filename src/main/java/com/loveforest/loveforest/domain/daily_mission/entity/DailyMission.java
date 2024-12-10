@@ -64,6 +64,18 @@ public class DailyMission {
         this.partner2Answer = "null";
     }
 
+    public DailyMission(LocalDate missionDate, String missionContent, Couple couple) {
+        this.missionNumber = 1; // 기본값 설정 (필요시 다른 방식으로 번호 생성)
+        this.missionDate = missionDate;
+        this.missionContent = missionContent;
+        this.couple = couple;
+        this.partner1Mood = "null";
+        this.partner1Answer = "null";
+        this.partner2Mood = "null";
+        this.partner2Answer = "null";
+    }
+
+
     // 답변 업데이트 메서드
     public void updateAnswer(String mood, String answer, boolean isPartner1) {
         if (isPartner1) {

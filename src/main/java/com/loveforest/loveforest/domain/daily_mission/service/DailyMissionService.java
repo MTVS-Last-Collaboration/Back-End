@@ -170,18 +170,23 @@ public class DailyMissionService {
      * 특정 커플에 대한 미션을 생성하는 메서드
      * ISP(인터페이스 분리 원칙)를 준수하여 미션 생성의 세부 로직을 분리
      */
+    @Transactional
     private void createMissionsForCouple(Couple couple, List<WeeklyMissionResponseDTO.DailyMissionContent> missions) {
-        for (int i = 0; i < missions.size(); i++) {
-            WeeklyMissionResponseDTO.DailyMissionContent mission = missions.get(i);
+        for (WeeklyMissionResponseDTO.DailyMissionContent mission : missions) {
+            // 중복 데이터 확인
+            boolean exists = dailyMissionRepository.existsByCoupleIdAndMissionDate(couple.getId(), mission.getDate());
+            if (exists) {
+                log.warn("이미 존재하는 미션입니다: 커플 ID: {}, 날짜: {}", couple.getId(), mission.getDate());
+                continue; // 중복된 데이터는 건너뜁니다
+            }
+
+            // 중복되지 않은 경우에만 저장
             DailyMission dailyMission = new DailyMission(
-                    i + 1,
                     mission.getDate(),
                     mission.getContent(),
                     couple
             );
             dailyMissionRepository.save(dailyMission);
-            log.debug("미션 생성 완료 - 커플ID: {}, 날짜: {}, 미션번호: {}",
-                    couple.getId(), mission.getDate(), i + 1);
         }
     }
 

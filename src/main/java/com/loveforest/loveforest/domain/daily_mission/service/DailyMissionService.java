@@ -43,31 +43,23 @@ public class DailyMissionService {
      */
     @Transactional
     public void generateWeeklyMissionsManually(Long coupleId) {
-        validateAndGenerateMissions(coupleId);
+        List<WeeklyMissionResponseDTO.DailyMissionContent> weeklyMissions = getMissionsFromAI(coupleId); // 트랜잭션 외부
+        validateAndGenerateMissions(weeklyMissions);
     }
-
-//    /**
-//     * 스케줄링된 주간 미션 생성
-//     */
-//    @Scheduled(cron = "0 0 1 * * MON")
-//    @Transactional
-//    public void generateWeeklyMissions(Long coupleId) {
-//        validateAndGenerateMissions(coupleId);
-//    }
 
     /**
      * 미션 생성의 공통 로직
      * DRY 원칙을 적용하여 중복 코드 제거
      */
-    private void validateAndGenerateMissions(Long coupleId) {
+    private void validateAndGenerateMissions(List<WeeklyMissionResponseDTO.DailyMissionContent> weeklyMissions) {
 
         try {
-            List<WeeklyMissionResponseDTO.DailyMissionContent> weeklyMissions = getMissionsFromAI(coupleId);
             validateMissions(weeklyMissions); // 미션 데이터 검증 로직 분리
 
             createMissionsForAllCouples(weeklyMissions);
             log.info("주간 미션 생성 완료");
         } catch (AIServerException | MissionGenerationException e) {
+            log.error("주간 미션 생성 실패: {}", e.getMessage());
             throw e; // 이미 처리된 예외는 그대로 전파
         } catch (Exception e) {
             log.error("예상치 못한 오류 발생", e);

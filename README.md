@@ -14,23 +14,8 @@ LoveForest는 커플들을 위한 메타버스 플랫폼으로, 커플만의 가
 
 ## 🛠 기술 스택
 
-### Backend
-- **Framework**: Spring Boot 3.3.4
-- **Language**: Java 17
-- **Build Tool**: Gradle
-- **Database**: 
-  - MySQL (주 데이터베이스)
-  - Redis (세션 관리, 토큰 저장)
-- **Security**: Spring Security, JWT
-- **File Storage**: AWS S3
-- **API Documentation**: Swagger (SpringDoc)
+<img width="657" alt="image" src="https://github.com/user-attachments/assets/08ad19aa-022f-4956-b187-51420f074cf0">
 
-### Infrastructure
-- **Cloud Platform**: AWS
-- **Monitoring**: 
-  - Spring Actuator
-  - Prometheus
-- **Container**: Docker
 
 ## 📐 설계 및 아키텍처
 ![image](https://github.com/user-attachments/assets/77563ad3-b313-429a-8cab-862387bf82a7)

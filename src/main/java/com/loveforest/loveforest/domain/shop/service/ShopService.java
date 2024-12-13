@@ -55,6 +55,7 @@ public class ShopService {
         ShopItem shopItem = findShopItemById(itemId);
         User user = findUserById(userId);
         Couple couple = findCoupleById(coupleId);
+//        List<User> users = couple.getUsers();
 
         // 2. 구매 가능 여부 검증
         shopValidator.validatePurchase(shopItem, couple.getPoints());
@@ -63,17 +64,15 @@ public class ShopService {
             // 3. 포인트 차감 및 구매 처리
             couple.deductPoints(shopItem.getPrice());
             coupleRepository.save(couple);
+            for(User coupleUser : couple.getUsers()) {
+                savePurchaseHistory(coupleUser, shopItem);
+                addItemToUserInventory(coupleUser, shopItem);
 
-            // 4. 구매 이력 저장
-            PurchaseHistory purchaseHistory = savePurchaseHistory(user, shopItem);
+                log.info("아이템 구매 성공 - userId: {}, itemId: {}, itemType: {}",
+                        coupleUser.getId(), itemId, shopItem.getItemType());
+            }
 
-            // 5. UserInventory에 아이템 추가
-            addItemToUserInventory(user, shopItem);
-
-            log.info("아이템 구매 성공 - userId: {}, itemId: {}, itemType: {}",
-                    userId, itemId, shopItem.getItemType());
-
-            return createPurchaseResponse(purchaseHistory);
+            return createPurchaseResponse(savePurchaseHistory(user, shopItem));
         } catch (Exception e) {
             log.error("구매 처리 중 오류 발생", e);
             throw new PurchaseProcessingException();

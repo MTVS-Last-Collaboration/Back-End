@@ -291,20 +291,13 @@ public class FlowerService {
      * 음성 파일 업로드 및 URL 생성
      */
     private String uploadVoiceFile(MultipartFile file) throws IOException {
-        // 파일 저장 (실제 파일시스템에 저장)
-        String savedFileName = storageService.uploadFile(
+        // 전체 URL 생성 및 반환 (http://서버주소/s3/파일명)
+        return storageService.uploadFile(
                 file.getBytes(),
                 getExtension(file.getOriginalFilename()),
                 file.getContentType(),
                 file.getSize()
         );
-
-        // 전체 URL 생성 및 반환 (http://서버주소/s3/파일명)
-        return UriComponentsBuilder.fromUriString(serverUrl1)
-                .pathSegment(storagePath)
-                .pathSegment(savedFileName)
-                .build()
-                .toUriString();
     }
 
 

@@ -27,12 +27,14 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -48,6 +50,12 @@ public class FlowerService {
 
     @Value("${ai.server.url}")
     private String serverUrl;
+
+    @Value("${server.url}") // 서버 URL
+    private String serverUrl1;
+
+    @Value("${file.storage.path}") // 저장소 경로
+    private String storagePath;
 
     /**
      * 사용자에게 새로운 꽃을 생성
@@ -247,24 +255,25 @@ public class FlowerService {
             // 기존 음성 파일이 있다면 삭제
             if (flower.getVoiceUrl() != null) {
 //                s3Service.deleteFile(flower.getVoiceUrl());
-                storageService.deleteFile(flower.getVoiceUrl());
-
+                storageService.deleteFile(extractFileNameFromUrl(flower.getVoiceUrl()));
             }
 
             // 새로운 음성 파일 업로드
 //            String voiceUrl = s3Service.uploadFile(
-                    String savedFileName = storageService.uploadFile(
-                    voiceFile.getBytes(),
-                    getExtension(voiceFile.getOriginalFilename()),
-                    voiceFile.getContentType(),
-                    voiceFile.getSize()
-            );
+//                    voiceFile.getBytes(),
+//                    getExtension(voiceFile.getOriginalFilename()),
+//                    voiceFile.getContentType(),
+//                    voiceFile.getSize()
+//            );
+
+            // 새로운 음성 파일 업로드 및 URL 생성
+            String savedFileName = uploadVoiceFile(voiceFile);
 
             // 꽃 상태 업데이트
             flower.updateVoiceMessage(savedFileName);
             flowerRepository.save(flower);
 
-            log.info("음성 메시지 저장 완료 - 사용자: {}, 파일명: {}", userId, savedFileName);
+            log.info("음성 메시지 저장 완료 - 사용자: {}, URL: {}", userId, savedFileName);
         } catch (IOException e) {
             log.error("음성 파일 처리 실패", e);
             throw new VoiceMessageUploadFailedException();
@@ -277,6 +286,30 @@ public class FlowerService {
                 .map(f -> f.substring(f.lastIndexOf(".")))
                 .orElse(".m4a");  // 기본 확장자 설정
     }
+
+    /**
+     * 음성 파일 업로드 및 URL 생성
+     */
+    private String uploadVoiceFile(MultipartFile file) throws IOException {
+        // UUID를 사용하여 고유한 파일명 생성
+        String uniqueFileName = UUID.randomUUID().toString() + getExtension(file.getOriginalFilename());
+
+        // 파일 저장 (실제 파일시스템에 저장)
+        String savedFileName = storageService.uploadFile(
+                file.getBytes(),
+                getExtension(file.getOriginalFilename()),
+                file.getContentType(),
+                file.getSize()
+        );
+
+        // 전체 URL 생성 및 반환 (http://서버주소/s3/파일명)
+        return UriComponentsBuilder.fromUriString(serverUrl1)
+                .pathSegment(storagePath)
+                .pathSegment(savedFileName)
+                .build()
+                .toUriString();
+    }
+
 
     /**
      * 음성 메시지 URL 가져오기
@@ -366,5 +399,12 @@ public class FlowerService {
             }
         }
         log.info("자정 음성메시지 삭제 작업 완료");
+    }
+
+    /**
+     * URL에서 파일명 추출
+     */
+    private String extractFileNameFromUrl(String url) {
+        return url.substring(url.lastIndexOf('/') + 1);
     }
 }

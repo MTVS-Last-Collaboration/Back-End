@@ -52,6 +52,12 @@ public class PhotoAlbumService {
     @Value("${cloud.aws.s3.bucket}")
     private String bucketName;
 
+    @Value("${server.url}") // application.yml에서 서버 URL 가져오기
+    private String serverUrl;
+
+    @Value("${file.storage.path}") // 저장소 경로 설정
+    private String storagePath;
+
     private final AtomicInteger counter = new AtomicInteger(0);
 
 
@@ -427,13 +433,13 @@ public class PhotoAlbumService {
     private String uploadOriginalImage(MultipartFile photo) {
         try {
             String extension = getExtension(photo.getOriginalFilename());
-            return storageService.uploadFile(
-//            return s3Service.uploadFile(
+            String savedFileName = storageService.uploadFile(
                     photo.getBytes(),
                     extension,
                     photo.getContentType(),
                     photo.getSize()
             );
+            return String.format("%s/%s/%s", serverUrl, storagePath, savedFileName);
         } catch (IOException e) {
             throw new PhotoUploadFailedException();
         }

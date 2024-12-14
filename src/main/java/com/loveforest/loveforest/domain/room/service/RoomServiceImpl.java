@@ -117,20 +117,6 @@ public class RoomServiceImpl implements RoomService {
                 .orElseThrow(FurnitureNotFoundException::new);
     }
 
-
-    private boolean isFurnitureOverlapping(FurnitureLayout existing, RoomDecorationRequestDTO request) {
-        // 가구 충돌 감지 로직 구현
-        int existingRight = existing.getPositionX() + existing.getFurniture().getWidth();
-        int existingBottom = existing.getPositionY() + existing.getFurniture().getHeight();
-        int newRight = request.getPositionX() + request.getWidth();
-        int newBottom = request.getPositionY() + request.getHeight();
-
-        return !(newRight <= existing.getPositionX() ||
-                request.getPositionX() >= existingRight ||
-                newBottom <= existing.getPositionY() ||
-                request.getPositionY() >= existingBottom);
-    }
-
     private RoomDecorationResponseDTO createDecorationResponse(Room room, FurnitureLayout layout) {
         return RoomDecorationResponseDTO.builder()
                 .layoutId(layout.getId())
@@ -288,27 +274,6 @@ public class RoomServiceImpl implements RoomService {
         return layout;
     }
 
-    // 가구 충돌 검사를 위해 메서드 시그니처 수정
-    private boolean isFurnitureOverlapping(FurnitureLayout existing, RoomFurnitureUpdateRequestDTO request) {
-        return isOverlapping(
-                existing.getPositionX(),
-                existing.getPositionY(),
-                existing.getFurniture().getWidth(),
-                existing.getFurniture().getHeight(),
-                request.getPositionX(),
-                request.getPositionY(),
-                existing.getFurniture().getWidth(),
-                existing.getFurniture().getHeight()
-        );
-    }
-
-    // 가구 충돌 검사 공통 로직
-    private boolean isOverlapping(int x1, int y1, int w1, int h1, int x2, int y2, int w2, int h2) {
-        return !(x2 >= x1 + w1 ||    // 두 번째 가구가 첫 번째 가구의 오른쪽에 있음
-                x2 + w2 <= x1 ||     // 두 번째 가구가 첫 번째 가구의 왼쪽에 있음
-                y2 >= y1 + h1 ||     // 두 번째 가구가 첫 번째 가구의 위에 있음
-                y2 + h2 <= y1);      // 두 번째 가구가 첫 번째 가구의 아래에 있음
-    }
 
     @Override
     @Transactional(readOnly = true)
@@ -425,44 +390,6 @@ public class RoomServiceImpl implements RoomService {
         }
     }
 
-    // 방 저장 시 썸네일 처리
-    private String saveThumbnail(MultipartFile file) {
-        try {
-            String extension = getExtension(file.getOriginalFilename());
-            return /*s3Service*/storageService.uploadFile(
-                    file.getBytes(),
-                    extension,
-                    file.getContentType(),
-                    file.getSize()
-            );
-        } catch (IOException e) {
-            log.error("썸네일 저장 실패: {}", e.getMessage());
-            throw new RoomImageUploadException();
-        }
-    }
-
-    // 기존 썸네일 삭제
-    private void deletePreviousThumbnail(String fileName/*thumbnailUrl*/) {
-//        if (thumbnailUrl != null) {
-//            s3Service.deleteFile(thumbnailUrl);
-//        }
-        if (fileName != null) {
-            try {
-                storageService.deleteFile(fileName);
-                log.info("이전 썸네일 삭제 완료: {}", fileName);
-            } catch (Exception e) {
-                log.error("썸네일 삭제 실패: {}", fileName, e);
-            }
-        }
-    }
-
-    // 파일 확장자 추출
-    private String getExtension(String filename) {
-        return Optional.ofNullable(filename)
-                .filter(f -> f.contains("."))
-                .map(f -> f.substring(f.lastIndexOf(".")))
-                .orElse(".jpg");
-    }
 
     @Override
     @Transactional(readOnly = true)

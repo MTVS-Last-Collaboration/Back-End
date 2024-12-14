@@ -22,15 +22,14 @@ import com.loveforest.loveforest.s3.service.LocalStorageService;
 import com.loveforest.loveforest.s3.service.S3Service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -50,6 +49,12 @@ public class RoomCollectionService {
 //    private final S3Service s3Service;
     private final LocalStorageService storageService;
 
+    @Value("${server.url}")
+    private String serverUrl;
+
+    @Value("${file.storage.path}")
+    private String storagePath;
+
     /**
      * 컬렉션에 현재 방 상태 저장
      */
@@ -60,12 +65,12 @@ public class RoomCollectionService {
         RoomCollection collection = getOrCreateCollection(coupleId);
 
 //        String imageUrl = null;
-        String savedFileName = null;
+        String fileUrl = null;
         if (thumbnail != null && !thumbnail.isEmpty()) {
             try {
                 validateImage(thumbnail);
 //                imageUrl = uploadImage(thumbnail);
-                savedFileName = uploadImage(thumbnail);
+                fileUrl = uploadImage(thumbnail);
             } catch (Exception e) {
                 log.error("이미지 업로드 실패: {}", e.getMessage());
                 throw new CustomException(ErrorCode.ROOM_IMAGE_UPLOAD_FAILED);
@@ -73,7 +78,7 @@ public class RoomCollectionService {
         }
 
 //        currentRoom.updateThumbnail(imageUrl);
-        currentRoom.updateThumbnail(savedFileName);
+        currentRoom.updateThumbnail(fileUrl);
         roomRepository.save(currentRoom);
 
         CollectionRoom collectionRoom = CollectionRoom.builder()
@@ -81,16 +86,16 @@ public class RoomCollectionService {
                 .roomData(currentRoom.serializeState())
                 .source(RoomStateSource.CURRENT)
 //                .thumbnailUrl(imageUrl)
-                .thumbnailUrl(savedFileName)
+                .thumbnailUrl(fileUrl)
                 .build();
 
         collection.getSavedRooms().add(collectionRoom);
         collectionRepository.save(collection);
 
         log.info("현재 방 상태 저장 완료 - 커플 ID: {}, 이미지: {}",
-                coupleId, /*imageUrl*/savedFileName != null ? savedFileName : "없음");
+                coupleId, /*imageUrl*/fileUrl != null ? fileUrl : "없음");
 
-        return RoomOperationResponseDTO.forSaveState(/*imageUrl*/savedFileName);
+        return RoomOperationResponseDTO.forSaveState(/*imageUrl*/fileUrl);
     }
 
     /**
@@ -289,12 +294,29 @@ public class RoomCollectionService {
     }
 
     private String uploadImage(MultipartFile file) throws IOException {
-        return /*s3Service*/storageService.uploadFile(
+//        return s3Service.uploadFile(
+//                file.getBytes(),
+//                getFileExtension(file.getOriginalFilename()),
+//                file.getContentType(),
+//                file.getSize()
+//        );
+        // UUID를 사용하여 고유한 파일명 생성
+        String uniqueFileName = UUID.randomUUID().toString() + getFileExtension(file.getOriginalFilename());
+
+        // 파일 저장
+        String savedFileName = storageService.uploadFile(
                 file.getBytes(),
                 getFileExtension(file.getOriginalFilename()),
                 file.getContentType(),
                 file.getSize()
         );
+
+        // 전체 URL 생성 및 반환
+        return UriComponentsBuilder.fromUriString(serverUrl)
+                .pathSegment(storagePath)
+                .pathSegment(savedFileName)
+                .build()
+                .toUriString();
     }
 
     private String getFileExtension(String filename) {

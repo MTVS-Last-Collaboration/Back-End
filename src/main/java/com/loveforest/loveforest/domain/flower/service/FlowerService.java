@@ -291,9 +291,6 @@ public class FlowerService {
      * 음성 파일 업로드 및 URL 생성
      */
     private String uploadVoiceFile(MultipartFile file) throws IOException {
-        // UUID를 사용하여 고유한 파일명 생성
-        String uniqueFileName = UUID.randomUUID().toString() + getExtension(file.getOriginalFilename());
-
         // 파일 저장 (실제 파일시스템에 저장)
         String savedFileName = storageService.uploadFile(
                 file.getBytes(),

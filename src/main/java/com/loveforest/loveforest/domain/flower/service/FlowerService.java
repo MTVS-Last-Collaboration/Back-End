@@ -15,6 +15,7 @@ import com.loveforest.loveforest.domain.user.exception.UserNotFoundException;
 import com.loveforest.loveforest.domain.user.repository.UserRepository;
 import com.loveforest.loveforest.exception.ErrorCode;
 import com.loveforest.loveforest.exception.common.InvalidInputException;
+import com.loveforest.loveforest.s3.service.LocalStorageService;
 import com.loveforest.loveforest.s3.service.S3Service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -42,7 +43,8 @@ public class FlowerService {
     private final UserRepository userRepository;
     private final WebClient.Builder webClientBuilder; // WebClient.Builder 주입
     private static final int MAX_FLOWER_NAME_LENGTH = 50;
-    private final S3Service s3Service;
+//    private final S3Service s3Service;
+    private final LocalStorageService storageService;
 
     @Value("${ai.server.url}")
     private String serverUrl;
@@ -244,11 +246,14 @@ public class FlowerService {
         try {
             // 기존 음성 파일이 있다면 삭제
             if (flower.getVoiceUrl() != null) {
-                s3Service.deleteFile(flower.getVoiceUrl());
+//                s3Service.deleteFile(flower.getVoiceUrl());
+                storageService.deleteFile(flower.getVoiceUrl());
+
             }
 
             // 새로운 음성 파일 업로드
-            String voiceUrl = s3Service.uploadFile(
+//            String voiceUrl = s3Service.uploadFile(
+                    String savedFileName = storageService.uploadFile(
                     voiceFile.getBytes(),
                     getExtension(voiceFile.getOriginalFilename()),
                     voiceFile.getContentType(),
@@ -256,10 +261,10 @@ public class FlowerService {
             );
 
             // 꽃 상태 업데이트
-            flower.updateVoiceMessage(voiceUrl);
+            flower.updateVoiceMessage(savedFileName);
             flowerRepository.save(flower);
 
-            log.info("음성 메시지 저장 완료 - 사용자: {}, URL: {}", userId, voiceUrl);
+            log.info("음성 메시지 저장 완료 - 사용자: {}, 파일명: {}", userId, savedFileName);
         } catch (IOException e) {
             log.error("음성 파일 처리 실패", e);
             throw new VoiceMessageUploadFailedException();
@@ -352,8 +357,8 @@ public class FlowerService {
         for (Flower flower : flowers) {
             if (flower.getVoiceSavedAt().isBefore(yesterday)) {
                 // S3에서 파일 삭제
-                s3Service.deleteFile(flower.getVoiceUrl());
-                // 엔티티에서 URL 제거
+//                s3Service.deleteFile(flower.getVoiceUrl());
+                storageService.deleteFile(flower.getVoiceUrl());
                 flower.clearVoiceMessage();
                 flowerRepository.save(flower);
 

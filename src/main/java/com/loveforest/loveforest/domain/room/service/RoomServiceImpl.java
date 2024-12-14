@@ -13,6 +13,7 @@ import com.loveforest.loveforest.domain.user.repository.UserInventoryRepository;
 import com.loveforest.loveforest.exception.CustomException;
 import com.loveforest.loveforest.exception.ErrorCode;
 import com.loveforest.loveforest.exception.common.InvalidInputException;
+import com.loveforest.loveforest.s3.service.LocalStorageService;
 import com.loveforest.loveforest.s3.service.S3Service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -44,7 +45,8 @@ public class RoomServiceImpl implements RoomService {
     private final UserInventoryRepository userInventoryRepository;
     private final FurnitureLayoutRepository furnitureLayoutRepository;
     private final CoupleRepository coupleRepository;
-    private final S3Service s3Service;
+//    private final S3Service s3Service;
+    private final LocalStorageService storageService;
 
     private static final long MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
     private static final List<String> ALLOWED_CONTENT_TYPES = Arrays.asList(
@@ -427,41 +429,30 @@ public class RoomServiceImpl implements RoomService {
     private String saveThumbnail(MultipartFile file) {
         try {
             String extension = getExtension(file.getOriginalFilename());
-            return s3Service.uploadFile(
+            return /*s3Service*/storageService.uploadFile(
                     file.getBytes(),
                     extension,
                     file.getContentType(),
                     file.getSize()
             );
         } catch (IOException e) {
+            log.error("썸네일 저장 실패: {}", e.getMessage());
             throw new RoomImageUploadException();
         }
     }
 
     // 기존 썸네일 삭제
-    private void deletePreviousThumbnail(String thumbnailUrl) {
-        if (thumbnailUrl != null) {
-            s3Service.deleteFile(thumbnailUrl);
-        }
-    }
-
-    // 이미지 유효성 검사
-    private void validateImage(MultipartFile file) {
-        if (file == null || file.isEmpty()) {
-            throw new InvalidInputException();
-        }
-
-        // 파일 타입 검사
-        String contentType = file.getContentType();
-        if (contentType == null || !ALLOWED_CONTENT_TYPES.contains(contentType)) {
-            log.error("지원하지 않는 이미지 형식: {}", contentType);
-            throw new CustomException(ErrorCode.INVALID_IMAGE_FORMAT);
-        }
-
-        // 파일 크기 검사
-        if (file.getSize() > MAX_FILE_SIZE) {
-            log.error("파일 크기 초과: {}bytes", file.getSize());
-            throw new CustomException(ErrorCode.IMAGE_SIZE_EXCEEDED);
+    private void deletePreviousThumbnail(String fileName/*thumbnailUrl*/) {
+//        if (thumbnailUrl != null) {
+//            s3Service.deleteFile(thumbnailUrl);
+//        }
+        if (fileName != null) {
+            try {
+                storageService.deleteFile(fileName);
+                log.info("이전 썸네일 삭제 완료: {}", fileName);
+            } catch (Exception e) {
+                log.error("썸네일 삭제 실패: {}", fileName, e);
+            }
         }
     }
 
@@ -471,31 +462,6 @@ public class RoomServiceImpl implements RoomService {
                 .filter(f -> f.contains("."))
                 .map(f -> f.substring(f.lastIndexOf(".")))
                 .orElse(".jpg");
-    }
-
-    // 방 이미지 업데이트
-    @Transactional
-    public void updateRoomImage(Long coupleId, MultipartFile thumbnailFile) {
-        Room room = findRoomByCouple(coupleId);
-
-        try {
-            // 기존 이미지가 있다면 삭제
-            deletePreviousThumbnail(room.getThumbnailUrl());
-
-            // 새 이미지 저장
-            if (thumbnailFile != null && !thumbnailFile.isEmpty()) {
-                validateImage(thumbnailFile);
-                String newImageUrl = saveThumbnail(thumbnailFile);
-                room.updateThumbnail(newImageUrl);
-                roomRepository.save(room);
-
-                log.info("방 이미지 업데이트 완료 - 커플 ID: {}, 새 이미지 URL: {}",
-                        coupleId, newImageUrl);
-            }
-        } catch (Exception e) {
-            log.error("방 이미지 업데이트 실패", e);
-            throw new RoomImageUploadException();
-        }
     }
 
     @Override

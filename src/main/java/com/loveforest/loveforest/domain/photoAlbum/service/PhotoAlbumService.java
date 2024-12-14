@@ -15,6 +15,7 @@ import com.loveforest.loveforest.domain.user.exception.UserNotFoundException;
 import com.loveforest.loveforest.domain.user.repository.UserRepository;
 import com.loveforest.loveforest.exception.common.InvalidInputException;
 import com.loveforest.loveforest.exception.common.UnauthorizedException;
+import com.loveforest.loveforest.s3.service.LocalStorageService;
 import com.loveforest.loveforest.s3.service.S3Service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -40,7 +41,8 @@ import java.util.stream.Collectors;
 @Transactional
 public class PhotoAlbumService {
     private final PhotoAlbumRepository photoAlbumRepository;
-    private final S3Service s3Service;
+//    private final S3Service s3Service;
+    private final LocalStorageService storageService;
     private final WebClient.Builder webClientBuilder;
     private final UserRepository userRepository;
 
@@ -287,57 +289,9 @@ public class PhotoAlbumService {
     }
 
 
-    /**
-     * 3D 모델 파일 저장
-     *
-     * @return 저장된 파일의 S3 URL 리스트
-     */
-//    private List<String> saveModelFiles(List<String> modelData) {
-//        List<String> urls = new ArrayList<>();
-//        try {
-//            log.info("저장할 모델 데이터 개수: {}", modelData.size());
-//
-//            for (int i = 0; i < modelData.size(); i++) {
-//                log.info("모델 데이터 [{}] 길이: {}", i, modelData.get(i).length());
-//
-//                String extension = switch (i) {
-//                    case 0 -> ".obj";
-//                    case 1 -> ".png";
-//                    case 2 -> ".mtl";
-//                    default -> throw new IllegalStateException("Unexpected value: " + i);
-//                };
-//
-//                String contentType = switch (i) {
-//                    case 0, 2 -> "application/octet-stream";
-//                    case 1 -> "image/png";
-//                    default -> "application/octet-stream";
-//                };
-//
-//                // Base64 데이터가 유효한지 확인
-//                if (!isValidBase64(modelData.get(i))) {
-//                    log.error("모델 데이터 [{}]가 Base64 형식이 아님: {}", i, modelData.get(i));
-//                    throw new PhotoUploadFailedException();
-//                }
-//
-//                // Base64 디코딩
-//                byte[] fileBytes = Base64.getDecoder().decode(modelData.get(i));
-//                log.info("Base64 디코딩 성공 - 모델 데이터 [{}]", i);
-//
-//                // S3 업로드
-//                String url = s3Service.uploadFile(fileBytes, extension, contentType, fileBytes.length);
-//                urls.add(url);
-//                log.info("S3 업로드 완료 - URL: {}", url);
-//            }
-//
-//            return urls;
-//        } catch (Exception e) {
-//            log.error("모델 파일 저장 중 에러 발생: {}", e.getMessage());
-//            throw new PhotoUploadFailedException();
-//        }
-//    }
-
     private List<String> saveModelFiles(Map<String, byte[]> fileParts) {
-        List<String> urls = new ArrayList<>();
+//        List<String> urls = new ArrayList<>();
+        List<String> fileNames = new ArrayList<>();
         try {
             fileParts.forEach((fileName, fileData) -> {
                 log.info("파일명: {}, 데이터 크기: {} bytes", fileName, fileData.length);
@@ -346,12 +300,23 @@ public class PhotoAlbumService {
                 String contentType = determineContentType(extension); // Content-Type 설정
 
                 // S3 업로드
-                String url = s3Service.uploadFile(fileData, extension, contentType, fileData.length);
-                urls.add(url);
-                log.info("S3 업로드 완료 - URL: {}", url);
+//                String url = s3Service.uploadFile(fileData, extension, contentType, fileData.length);
+//                urls.add(url);
+//                log.info("S3 업로드 완료 - URL: {}", url);
+
+                // 로컬 저장소에 저장
+                String savedFileName = storageService.uploadFile(
+                        fileData,
+                        extension,
+                        contentType,
+                        fileData.length
+                );
+                fileNames.add(savedFileName);
+                log.info("파일 저장 완료 - 파일명: {}", savedFileName);
             });
 
-            return urls;
+//            return urls;
+            return fileNames;
         } catch (Exception e) {
             log.error("모델 파일 저장 중 에러 발생: {}", e.getMessage());
             throw new PhotoUploadFailedException();
@@ -396,9 +361,10 @@ public class PhotoAlbumService {
     /**
      * S3에서 이미지 다운로드 및 Base64 인코딩
      */
-    private String downloadAndEncodeImage(String imageUrl) {
+    private String downloadAndEncodeImage(String fileName/*imageUrl*/) {
         try {
-            byte[] imageBytes = s3Service.downloadFile(imageUrl);
+//            byte[] imageBytes = s3Service.downloadFile(imageUrl);
+            byte[] imageBytes = storageService.downloadFile(fileName);
             return Base64.getEncoder().encodeToString(imageBytes);
         } catch (Exception e) {
             log.error("이미지 다운로드 및 Base64 인코딩 실패: {}", e.getMessage());
@@ -429,10 +395,17 @@ public class PhotoAlbumService {
 
         try {
             // S3에서 이미지와 3D 모델 파일 삭제
-            s3Service.deleteFile(photo.getImageUrl());
+//            s3Service.deleteFile(photo.getImageUrl());
+//            if (photo.getObjectUrl() != null) {
+//                s3Service.deleteFile(photo.getObjectUrl());
+//            }
+
+            // 로컬 저장소에서 파일 삭제
+            storageService.deleteFile(photo.getImageUrl());
             if (photo.getObjectUrl() != null) {
-                s3Service.deleteFile(photo.getObjectUrl());
+                storageService.deleteFile(photo.getObjectUrl());
             }
+
 
             // DB에서 데이터 삭제
             photoAlbumRepository.delete(photo);
@@ -454,7 +427,8 @@ public class PhotoAlbumService {
     private String uploadOriginalImage(MultipartFile photo) {
         try {
             String extension = getExtension(photo.getOriginalFilename());
-            return s3Service.uploadFile(
+            return storageService.uploadFile(
+//            return s3Service.uploadFile(
                     photo.getBytes(),
                     extension,
                     photo.getContentType(),

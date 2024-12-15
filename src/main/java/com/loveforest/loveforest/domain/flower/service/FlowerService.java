@@ -255,7 +255,7 @@ public class FlowerService {
             // 기존 음성 파일이 있다면 삭제
             if (flower.getVoiceUrl() != null) {
 //                s3Service.deleteFile(flower.getVoiceUrl());
-                storageService.deleteFile(extractFileNameFromUrl(flower.getVoiceUrl()));
+                storageService.deleteFile(flower.getVoiceUrl());
             }
 
             // 새로운 음성 파일 업로드

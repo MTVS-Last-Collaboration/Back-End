@@ -1,5 +1,6 @@
 package com.loveforest.loveforest.domain.daily_mission.repository;
 
+import com.loveforest.loveforest.domain.couple.entity.Couple;
 import com.loveforest.loveforest.domain.daily_mission.entity.DailyMission;
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -16,5 +17,7 @@ public interface DailyMissionRepository extends JpaRepository<DailyMission, Long
     boolean existsByCouple_IdAndMissionDate(Long coupleId, LocalDate date);
 
     boolean existsByCoupleIdAndMissionDate(Long coupleId, LocalDate missionDate);
+
+    void deleteByCouple(Couple currentCouple);
 }
 

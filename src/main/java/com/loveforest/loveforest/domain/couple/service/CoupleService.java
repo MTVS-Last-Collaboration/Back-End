@@ -6,6 +6,7 @@ import com.loveforest.loveforest.domain.couple.entity.Couple;
 import com.loveforest.loveforest.domain.couple.exception.CoupleCodeAlreadyUsedException;
 import com.loveforest.loveforest.domain.couple.exception.CoupleNotFoundException;
 import com.loveforest.loveforest.domain.couple.repository.CoupleRepository;
+import com.loveforest.loveforest.domain.daily_mission.repository.DailyMissionRepository;
 import com.loveforest.loveforest.domain.flower.service.FlowerService;
 import com.loveforest.loveforest.domain.pet.service.PetService;
 import com.loveforest.loveforest.domain.room.service.RoomServiceImpl;
@@ -31,6 +32,7 @@ public class CoupleService {
     private final PetService petService; // PetService 추가
     private final RoomServiceImpl roomServiceImpl;
     private final FlowerService flowerService;
+    private final DailyMissionRepository dailyMissionRepository;
 
 
     public String generateCoupleCode() {
@@ -56,6 +58,7 @@ public class CoupleService {
         Couple currentCouple = requestUser.getCouple();
         if (currentCouple != null) {
             if (currentCouple.getUsers().size() < 2) {
+                dailyMissionRepository.deleteByCouple(currentCouple);
                 // 기존 Couple의 모든 User들의 couple 속성을 null로 설정
                 for (User existingUser : currentCouple.getUsers()) {
                     existingUser.setCouple(null);

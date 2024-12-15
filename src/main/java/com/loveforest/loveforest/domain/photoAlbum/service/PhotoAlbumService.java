@@ -433,13 +433,12 @@ public class PhotoAlbumService {
     private String uploadOriginalImage(MultipartFile photo) {
         try {
             String extension = getExtension(photo.getOriginalFilename());
-            String savedFileName = storageService.uploadFile(
+            return storageService.uploadFile(
                     photo.getBytes(),
                     extension,
                     photo.getContentType(),
                     photo.getSize()
             );
-            return String.format("%s/%s/%s", serverUrl, storagePath, savedFileName);
         } catch (IOException e) {
             throw new PhotoUploadFailedException();
         }

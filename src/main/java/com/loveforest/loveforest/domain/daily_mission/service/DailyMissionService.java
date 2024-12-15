@@ -9,6 +9,7 @@ import com.loveforest.loveforest.domain.daily_mission.dto.WeeklyMissionResponseD
 import com.loveforest.loveforest.domain.daily_mission.entity.DailyMission;
 import com.loveforest.loveforest.domain.daily_mission.exception.*;
 import com.loveforest.loveforest.domain.daily_mission.repository.DailyMissionRepository;
+import com.loveforest.loveforest.domain.pet.service.PetService;
 import com.loveforest.loveforest.domain.user.entity.User;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -36,6 +37,7 @@ public class DailyMissionService {
     private final CoupleRepository coupleRepository;
     private static final String DEFAULT_ANSWER = "null";
     private static final String AI_ENDPOINT = "/generate_question";
+    private final PetService petService;
 
     @Value("${ai.server.url}")
     private String aiServerUrl;
@@ -150,7 +152,7 @@ public class DailyMissionService {
      * LSP(리스코프 치환 원칙)를 준수하여 커플별 미션 생성 로직을 분리
      */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    private void createMissionsForAllCouples(List<WeeklyMissionResponseDTO.DailyMissionContent> missions) {
+    protected void createMissionsForAllCouples(List<WeeklyMissionResponseDTO.DailyMissionContent> missions) {
         List<Couple> couples = coupleRepository.findAll();
 
         for (Couple couple : couples) {
@@ -171,7 +173,7 @@ public class DailyMissionService {
      * ISP(인터페이스 분리 원칙)를 준수하여 미션 생성의 세부 로직을 분리
      */
     @Transactional
-    private void createMissionsForCouple(Couple couple, List<WeeklyMissionResponseDTO.DailyMissionContent> missions) {
+    protected void createMissionsForCouple(Couple couple, List<WeeklyMissionResponseDTO.DailyMissionContent> missions) {
         for (WeeklyMissionResponseDTO.DailyMissionContent mission : missions) {
             // 중복 데이터 확인
             boolean exists = dailyMissionRepository.existsByCoupleIdAndMissionDate(couple.getId(), mission.getDate());
@@ -216,13 +218,7 @@ public class DailyMissionService {
         log.debug("미션 답변 저장/수정 시작 - 커플 ID: {}, 사용자 ID: {}", coupleId, userId);
 
         DailyMission mission = getCurrentDailyMission(coupleId);
-
-        // 미션이 완료된 경우 수정 불가
-//        if (mission.isCompleted()) {
-//            log.warn("이미 완료된 미션은 수정할 수 없음 - 커플 ID: {}, 미션 ID: {}", coupleId, mission.getId());
-//            throw new MissionAlreadyCompletedException();
-//        }
-
+        boolean wasCompletedBefore = mission.isCompleted();
         boolean isPartner1 = isFirstPartner(coupleId, userId);
 
         // 자신의 이전 답변 로깅
@@ -243,8 +239,10 @@ public class DailyMissionService {
                 savedMission.getPartner1Answer(),
                 savedMission.getPartner2Answer());
 
-        if (savedMission.isCompleted()) {
-            log.info("미션 완료됨 - 포인트 지급 완료");
+        if (!wasCompletedBefore && mission.isNewlyCompleted()) {
+//            mission.getCouple().addPoints(50);  // 포인트 추가
+            petService.addExperience(mission.getCouple(), 10);  // 펫 경험치 추가
+            log.info("미션 완료 보상 지급 - 커플 ID: {}, 펫 경험치: 10", coupleId);
         }
     }
 

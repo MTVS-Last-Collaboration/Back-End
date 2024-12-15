@@ -97,8 +97,15 @@ public class DailyMission {
     private void checkCompletion() {
         if (!this.partner1Answer.equals("null") && !this.partner2Answer.equals("null")) {
             this.isCompleted = true;
-            this.couple.addPoints(50);  // 미션 완료 시 포인트 추가
+//            this.couple.addPoints(50);  // 미션 완료 시 포인트 추가
             log.info("미션 완료 처리 - 커플 포인트 50 추가됨");
         }
+    }
+
+    // 완료 여부를 외부에서 확인할 수 있는 메서드
+    public boolean isNewlyCompleted() {
+        return this.isCompleted &&
+                !this.partner1Answer.equals("null") &&
+                !this.partner2Answer.equals("null");
     }
 }

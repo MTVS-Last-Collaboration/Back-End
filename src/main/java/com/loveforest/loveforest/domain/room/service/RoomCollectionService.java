@@ -279,19 +279,6 @@ public class RoomCollectionService {
         }
     }
 
-    private String processAndUploadImage(MultipartFile thumbnail) {
-        if (thumbnail == null || thumbnail.isEmpty()) {
-            return null;
-        }
-
-        try {
-            validateImage(thumbnail);
-            return uploadImage(thumbnail);
-        } catch (IOException e) {
-            log.error("이미지 업로드 실패: {}", e.getMessage());
-            throw new CustomException(ErrorCode.ROOM_IMAGE_UPLOAD_FAILED);
-        }
-    }
 
     private String uploadImage(MultipartFile file) throws IOException {
 //        return s3Service.uploadFile(
@@ -300,23 +287,13 @@ public class RoomCollectionService {
 //                file.getContentType(),
 //                file.getSize()
 //        );
-        // UUID를 사용하여 고유한 파일명 생성
-        String uniqueFileName = UUID.randomUUID().toString() + getFileExtension(file.getOriginalFilename());
-
-        // 파일 저장
-        String savedFileName = storageService.uploadFile(
+        // 전체 URL 생성 및 반환
+        return storageService.uploadFile(
                 file.getBytes(),
                 getFileExtension(file.getOriginalFilename()),
                 file.getContentType(),
                 file.getSize()
         );
-
-        // 전체 URL 생성 및 반환
-        return UriComponentsBuilder.fromUriString(serverUrl)
-                .pathSegment(storagePath)
-                .pathSegment(savedFileName)
-                .build()
-                .toUriString();
     }
 
     private String getFileExtension(String filename) {

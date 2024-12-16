@@ -113,7 +113,11 @@ public class ExhibitionService {
 //    }
 
     private void validateUserAccess(PhotoAlbum photo, Long userId) {
-        if (!photo.getUser().getId().equals(userId)) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(UserNotFoundException::new);
+
+        // 사용자의 커플 ID와 사진의 커플 ID가 일치하는지 확인
+        if (user.getCouple() == null || !user.getCouple().getId().equals(photo.getCouple().getId())) {
             throw new UnauthorizedException();
         }
     }

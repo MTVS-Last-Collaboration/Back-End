@@ -31,9 +31,9 @@ public class AnswerService {
     private final AnswerLikeRepository answerLikeRepository;
     private final CommentLikeRepository commentLikeRepository;
 
-    public AnswerResponseDTO createAnswer(AnswerRequestDTO answerRequestDTO, String nickname, DailyTopic dailyTopic) {
+    public AnswerResponseDTO createAnswer(AnswerRequestDTO answerRequestDTO, Long userId, DailyTopic dailyTopic) {
 
-        User author = userRepository.findByNickname(nickname)
+        User author = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
         // Answer 엔티티 생성
         Answer answer = new Answer(answerRequestDTO.getTitle() ,answerRequestDTO.getContent(), author, dailyTopic);

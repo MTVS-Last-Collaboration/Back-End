@@ -142,7 +142,7 @@ public class BoardController {
         DailyTopic dailyTopic = dailyTopicService.getDailyTopicById(answerRequestDTO.getDailyTopicId())
                 .orElseThrow(DailyTopicNotFoundException::new);
 
-        AnswerResponseDTO answerResponse = answerService.createAnswer(answerRequestDTO, loginInfo.getNickname(), dailyTopic);
+        AnswerResponseDTO answerResponse = answerService.createAnswer(answerRequestDTO, loginInfo.getUserId(), dailyTopic);
 
         log.info("게시글 생성 성공 - 게시글 ID: {}", answerResponse.getId());
         return ResponseEntity.ok(answerResponse);
